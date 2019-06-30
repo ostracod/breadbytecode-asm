@@ -1,0 +1,174 @@
+
+# Example program which prints "Hello world" to a terminal.
+
+BYTECODE_VER 1.0.0
+
+VER_DEP termDriverIface, 1, ":system/ifaces/termDriver", 1.0.0
+VER_DEP termProducerIface, 1, ":system/ifaces/termProducer", 1.0.0
+VER_DEP termArbiterIface, 1, ":system/ifaces/termArbiter", 1.0.0
+IFACE_DEP termArbiter, 1, ":system/apps/termArbiter", termArbiterIface
+
+# Create a text allocation from application data.
+MACRO newTextAlloc, dest, startLbl, endLbl
+    newAlloc dest, 0, endLbl - startLbl
+    wrtBuff dest[0]:u8, startLbl, endLbl - startLbl
+END
+
+ENTRY_POINT
+    # To be populated by setDriver.
+    VAR driver, p
+    
+    # Retrieve the current agent.
+    VAR thisAgent, p
+    thisAgent thisAgent
+    
+    # Retrieve the terminal arbiter.
+    VAR arbiter, p
+    VAR arbiterPath, p
+    depPath arbiterPath, termArbiter
+    findOrLaunch arbiter, arbiterPath, null
+    
+    # Get the function handle for termArbiter.termProducerProtab.
+    VAR getProtabHandle, p
+    VAR termArbiterIfacePath, p
+    VAR getProtabName, p
+    depPath termArbiterIfacePath, termArbiterIface
+    newTextAlloc getProtabName, getProtabNameStart, getProtabNameEnd
+    publicFuncHandle getProtabHandle, arbiter, termArbiterIfacePath, getProtabName
+    
+    # Get termProducerProtab on this agent.
+    VAR termProducerProtab, p
+    newArgFrame 2, 0
+    wrt nextArgFrame[1]:p, thisAgent
+    callHandle getProtabHandle
+    wrt termProducerProtab, nextArgFrame[0]:p
+    
+    # Get permission for termProducerProtab held by this agent.
+    VAR termProducerPerm, p
+    VAR tempPermList, p
+    perms tempPermList, thisAgent, arbiter, termProducerProtab
+    wrt termProducerPerm, tempPermList[0]:p
+    
+    # Give permission for termProducerProtab to the launcher.
+    VAR launcher, p
+    agentLauncher launcher, thisAgent
+    givePerm launcher, termProducerPerm, -1
+END
+
+PRIVATE_FUNC checkPerm
+    ARG caller, p
+    
+    # Determine whether caller has permission to termProducerProtab.
+    VAR condition
+    hasPerm condition, caller, arbiter, termProducerProtab
+    jmpZ skip1, condition
+    ret
+    
+    # Throw an error if caller has insufficient permission.
+    LBL skip1
+    VAR tempError
+    newAlloc tempError, 1, 2
+    newTextAlloc tempError[0]:p, errorMessageStart, errorMessageEnd
+    wrt tempError[0]:u16, permError
+    throw tempError
+END
+
+PUBLIC_FUNC driver, termProducerIface
+    ARG dest, p
+    
+    # Check caller permission.
+    newArgFrame 1, 0
+    caller nextArgFrame[0]:p
+    callIndex checkPerm
+    
+    # Return the driver.
+    wrt dest, driver
+END
+
+PUBLIC_FUNC setDriver, termProducerIface
+    ARG inputDriver, p
+    
+    # Check caller permission.
+    newArgFrame 1, 0
+    caller nextArgFrame[0]:p
+    callIndex checkPerm
+    
+    # Set the terminal driver.
+    wrt driver, inputDriver
+    
+    # Return if driver is null.
+    VAR condition
+    equ condition, driver, null
+    jmpNZ skip1, condition
+    ret
+    
+    # Get the function handles for termDriver.setProducer
+    # and termDriver.writeText.
+    LBL skip1
+    VAR setProducerHandle, p
+    VAR writeTextHandle, p
+    VAR termDriverIfacePath, p
+    VAR setProducerName, p
+    VAR writeTextName, p
+    depPath termDriverIfacePath, termDriverIface
+    newTextAlloc setProducerName, setProducerNameStart, setProducerNameEnd
+    newTextAlloc writeTextName, writeTextNameStart, writeTextNameEnd
+    publicFuncHandle setProducerHandle, driver, termDriverIfacePath, setProducerName
+    publicFuncHandle writeTextHandle, driver, termDriverIfacePath, writeTextName
+    
+    # Invoke setProducer on the driver.
+    newArgFrame 1, 0
+    wrt nextArgFrame[0]:p, thisAgent
+    callHandle setProducerHandle
+    
+    # Print "Hello world" on the terminal.
+    newArgFrame 1, 0
+    newTextAlloc nextArgFrame[0]:p, welcomeMessageStart, welcomeMessageEnd
+    callHandle setProducerHandle
+END
+
+PUBLIC_FUNC sizeChanged, termProducerIface
+    
+    # Check caller permission.
+    newArgFrame 1, 0
+    caller nextArgFrame[0]:p
+    callIndex checkPerm
+    
+    # Do nothing.
+END
+
+PUBLIC_FUNC keyTyped, termProducerIface
+    ARG key, u32
+    ARG modifiers, u8
+    
+    # Check caller permission.
+    newArgFrame 1, 0
+    caller nextArgFrame[0]:p
+    callIndex checkPerm
+    
+    # Do nothing.
+END
+
+APP_DATA
+    LBL getProtabNameStart
+    DATA "termProducerProtab"
+    LBL getProtabNameEnd
+    
+    LBL setProducerNameStart
+    DATA "setProducer"
+    LBL setProducerNameEnd
+    
+    LBL writeTextNameStart
+    DATA "writeText"
+    LBL writeTextNameEnd
+    
+    LBL errorMessageStart
+    DATA "Caller must hold permission to termProducerProtab on this agent."
+    LBL errorMessageStart
+    
+    LBL welcomeMessageStart
+    DATA "Hello world!"
+    LBL welcomeMessageEnd
+END
+
+
