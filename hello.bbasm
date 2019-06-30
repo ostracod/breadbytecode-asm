@@ -99,7 +99,7 @@ PUBLIC_FUNC setDriver, termProducerIface
     # Return if driver is null.
     VAR condition
     equ condition, driver, null
-    jmpNZ skip1, condition
+    jmpZ skip1, condition
     ret
     
     # Get the function handles for termDriver.setProducer
@@ -128,7 +128,6 @@ PUBLIC_FUNC setDriver, termProducerIface
 END
 
 PUBLIC_FUNC sizeChanged, termProducerIface
-    
     # Check caller permission.
     newArgFrame 1, 0
     caller nextArgFrame[0]:p
@@ -167,7 +166,7 @@ APP_DATA
     LBL errorMessageStart
     
     LBL welcomeMessageStart
-    DATA "Hello world!"
+    DATA "Hello world!\n"
     LBL welcomeMessageEnd
 END
 
