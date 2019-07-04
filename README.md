@@ -48,6 +48,11 @@ Literal values which may only be used in directive arguments:
 * Version number expressed as `major.minor.patch` (Ex: `1.4.0`)
 * String literal enclosed in quotation marks (Ex: `"Hello"`)
 
+Dependency modifiers:
+
+* `optional`
+* `implemented`
+
 An argument permission modifier consists of a sequence of letters with the following format:
 
 `(r/w/s)(i/o)(r?)(p?)(t?)`
@@ -80,13 +85,13 @@ Declares the bytecode version number to be used in the application.
 `DEF name, constant`  
 Declares a constant.
 
-`PATH_DEP name, isRequired, path`  
+`PATH_DEP name, path, depModifiers`  
 Declares a simple dependency with an explicit path.
 
-`VER_DEP name, isRequired, path, ver`  
+`VER_DEP name, path, ver, depModifiers`  
 Declares a bundle dependency with the given version number.
 
-`IFACE_DEP name, isRequired, path, depIndexes`  
+`IFACE_DEP name, path, depIndexes, depModifiers`  
 Declares an application dependency with the given interfaces.
 
 `ENTRY_FUNC ... END`  

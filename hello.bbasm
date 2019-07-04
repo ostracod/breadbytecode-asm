@@ -3,10 +3,10 @@
 
 BYTECODE_VER 1.0.0
 
-VER_DEP termDriverIface, 1, ":system/ifaces/termDriver", 1.0.0
-VER_DEP termProducerIface, 1, ":system/ifaces/termProducer", 1.0.0
-VER_DEP termArbiterIface, 1, ":system/ifaces/termArbiter", 1.0.0
-IFACE_DEP termArbiter, 1, ":system/apps/termArbiter", termArbiterIface
+VER_DEP termDriverIface, ":system/ifaces/termDriver", 1.0.0
+VER_DEP termProducerIface, ":system/ifaces/termProducer", 1.0.0, implemented
+VER_DEP termArbiterIface, ":system/ifaces/termArbiter", 1.0.0
+IFACE_DEP termArbiter, ":system/apps/termArbiter", termArbiterIface
 
 # Create a text allocation from application data.
 MACRO newTextAlloc, dest, startLbl, endLbl
