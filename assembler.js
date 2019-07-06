@@ -2,12 +2,61 @@
 var fs = require("fs");
 
 var assemblyFileExtension = ".bbasm";
-var unaryOperatorTextList = ["-", "~"];
-var binaryOperatorTextList = [
-    "+", "-", "*", "/", "%",
-    "&", "|", "^", ">>", "<<",
-    ":"
-];
+var unaryOperatorList = [];
+var binaryOperatorList = [];
+
+function UnaryOperator(text) {
+    this.text = text;
+    unaryOperatorList.push(this);
+}
+
+function BinaryOperator(text, precedence) {
+    this.text = text;
+    this.precedence = precedence;
+    binaryOperatorList.push(this);
+}
+
+new UnaryOperator("-");
+new UnaryOperator("~");
+
+new BinaryOperator(":", 1);
+new BinaryOperator("*", 2);
+new BinaryOperator("/", 2);
+new BinaryOperator("%", 2);
+new BinaryOperator("+", 3);
+new BinaryOperator("-", 3);
+new BinaryOperator(">>", 4);
+new BinaryOperator("<<", 4);
+new BinaryOperator("&", 5);
+new BinaryOperator("^", 6);
+new BinaryOperator("|", 7);
+
+function ArgTerm(text) {
+    this.text = text;
+}
+
+ArgTerm.prototype.toString = function() {
+    return this.text;
+}
+
+function UnaryExpression(operator, operand) {
+    this.operator = operator;
+    this.operand = operand;
+}
+
+UnaryExpression.prototype.toString = function() {
+    return this.operator.text + this.operand.toString();
+}
+
+function BinaryExpression(operator, operand1, operand2) {
+    this.operator = operator;
+    this.operand1 = operand1;
+    this.operand2 = operand2;
+}
+
+BinaryExpression.prototype.toString = function() {
+    return "(" + this.operand1.toString() + " " + this.operator.text + " " + this.operand2.toString() + ")";
+}
 
 function AssemblyLine(directiveName, argTextList) {
     this.directiveName = directiveName;
@@ -19,6 +68,17 @@ function AssemblyLine(directiveName, argTextList) {
         this.argList.push(tempArg);
         index += 1;
     }
+}
+
+AssemblyLine.prototype.toString = function() {
+    var tempTextList = [];
+    var index = 0;
+    while (index < this.argList.length) {
+        var tempArg = this.argList[index];
+        tempTextList.push(tempArg.toString());
+        index += 1;
+    }
+    return this.directiveName + " " + tempTextList.join(", ");
 }
 
 function LineParseError(message) {
@@ -121,19 +181,21 @@ function skipArgTermCharacters(text, index) {
     } else {
         while (index < text.length) {
             var tempCharacter = text.substring(index, index + 1);
-            index += 1;
             if (!isArgTermCharacter(tempCharacter)) {
                 break;
             }
+            index += 1;
         }
         return index;
     }
 }
 
-function skipArgOperator(text, index, operatorTextList) {
+// Returns [Operator, index].
+function parseArgOperator(text, index, operatorList) {
     var tempIndex = 0;
-    while (tempIndex < operatorTextList.length) {
-        var tempOperatorText = operatorTextList[tempIndex];
+    while (tempIndex < operatorList.length) {
+        var tempOperator = operatorList[tempIndex];
+        var tempOperatorText = tempOperator.text;
         tempIndex += 1;
         var tempEndIndex = index + tempOperatorText.length;
         if (tempEndIndex > text.length) {
@@ -141,49 +203,79 @@ function skipArgOperator(text, index, operatorTextList) {
         }
         var tempText = text.substring(index, tempEndIndex);
         if (tempText == tempOperatorText) {
-            return tempEndIndex;
+            return [tempOperator, tempEndIndex];
         }
     }
-    return index;
+    return [null, index];
+}
+
+// Returns [Expression, index].
+function parseArgExpression(text, index, precedence) {
+    index = skipWhitespace(text, index);
+    if (index >= text.length) {
+        throw new LineParseError("Expected expression.");
+    }
+    var outputExpression;
+    // Look for unary operator.
+    var tempResult = parseArgOperator(text, index, unaryOperatorList);
+    var tempOperator = tempResult[0];
+    if (tempOperator === null) {
+        var tempCharacter = text.substring(index, index + 1);
+        if (isArgTermCharacter(tempCharacter)) {
+            // Parse a single term.
+            var tempStartIndex = index;
+            index = skipArgTermCharacters(text, index);
+            var tempEndIndex = index;
+            var tempTermText = text.substring(tempStartIndex, tempEndIndex);
+            outputExpression = new ArgTerm(tempTermText);
+        } else {
+            throw new LineParseError("Unexpected symbol.");
+        }
+    } else {
+        index = tempResult[1];
+        // Create a unary expression.
+        var tempResult = parseArgExpression(text, index, 0);
+        var tempExpression = tempResult[0];
+        outputExpression = new UnaryExpression(tempOperator, tempExpression);
+        index = tempResult[1];
+    }
+    // Keep parsing binary expressions until we
+    // meet input precedence or reach the end.
+    while (true) {
+        index = skipWhitespace(text, index);
+        var tempResult = parseArgOperator(text, index, binaryOperatorList);
+        var tempOperator = tempResult[0];
+        if (tempOperator === null) {
+            break;
+        }
+        if (tempOperator.precedence >= precedence) {
+            break;
+        }
+        index = tempResult[1];
+        var tempResult = parseArgExpression(text, index, tempOperator.precedence);
+        var tempExpression = tempResult[0];
+        outputExpression = new BinaryExpression(
+            tempOperator,
+            outputExpression,
+            tempExpression
+        );
+        index = tempResult[1];
+    }
+    return [outputExpression, index];
 }
 
 function parseArgText(text) {
     if (text.length <= 0) {
         return null;
     }
-    var index = 0;
-    while (index < text.length) {
-        index = skipWhitespace(text, index);
-        if (index >= text.length) {
-            break;
-        }
-        var tempCharacter = text.substring(index, index + 1);
-        if (isArgTermCharacter(tempCharacter)) {
-            var tempStartIndex = index;
-            index = skipArgTermCharacters(text, index);
-            var tempEndIndex = index;
-            var tempTermText = text.substring(tempStartIndex, tempEndIndex);
-            console.log(tempTermText);
-            continue;
-        }
-        var tempEndIndex = skipArgOperator(text, index, unaryOperatorTextList);
-        if (tempEndIndex != index) {
-            var tempOperatorText = text.substring(index, tempEndIndex);
-            index = tempEndIndex;
-            console.log(tempOperatorText);
-            continue;
-        }
-        var tempEndIndex = skipArgOperator(text, index, binaryOperatorTextList);
-        if (tempEndIndex != index) {
-            var tempOperatorText = text.substring(index, tempEndIndex);
-            index = tempEndIndex;
-            console.log(tempOperatorText);
-            continue;
-        }
+    var tempResult = parseArgExpression(text, 0, 99);
+    var output = tempResult[0];
+    var index = tempResult[1];
+    index = skipWhitespace(text, index);
+    if (index < text.length) {
         throw new LineParseError("Unexpected symbol.");
     }
-    // TODO: Process order of operations and
-    // produce actual output.
+    return output;
 }
 
 function parseLineText(text) {
@@ -264,7 +356,7 @@ function assembleCodeFile(sourcePath, destinationPath) {
         if (tempLine === null) {
             continue;
         }
-        console.log([tempLine.directiveName, tempLine.argTextList]);
+        console.log(tempLine.toString());
     }
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");
