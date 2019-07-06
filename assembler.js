@@ -2,10 +2,23 @@
 var fs = require("fs");
 
 var assemblyFileExtension = ".bbasm";
+var unaryOperatorTextList = ["-", "~"];
+var binaryOperatorTextList = [
+    "+", "-", "*", "/", "%",
+    "&", "|", "^", ">>", "<<",
+    ":"
+];
 
-function AssemblyLine(directiveName, argList) {
+function AssemblyLine(directiveName, argTextList) {
     this.directiveName = directiveName;
-    this.argList = argList;
+    this.argTextList = argTextList;
+    this.argList = [];
+    var index = 0;
+    while (index < this.argTextList.length) {
+        var tempArg = parseArgText(this.argTextList[index]);
+        this.argList.push(tempArg);
+        index += 1;
+    }
 }
 
 function LineParseError(message) {
@@ -35,30 +48,44 @@ function skipDirectiveCharacters(text, index) {
     return index;
 }
 
+function skipArgStringTermCharacters(text, index) {
+    if (index >= text.length) {
+        return index;
+    }
+    var tempFirstCharacter = text.substring(index, index + 1);
+    if (tempFirstCharacter != "\"") {
+        return index;
+    }
+    index += 1;
+    var tempIsEscaped = false;
+    while (index < text.length) {
+        var tempCharacter = text.substring(index, index + 1);
+        index += 1;
+        if (tempIsEscaped) {
+            tempIsEscaped = false;
+        } else {
+            if (tempCharacter == "\"") {
+                return index;
+            }
+            if (tempCharacter == "\\") {
+                tempIsEscaped = true;
+            }
+        }
+    }
+    throw new LineParseError("Missing end quotation mark.");
+}
+
 function skipArgCharacters(text, index) {
     var output = index;
     var tempIsInString = false;
     var tempIsEscaped = false;
     while (index < text.length) {
         var tempCharacter = text.substring(index, index + 1);
-        index += 1;
         if (tempCharacter == "\"") {
-            if (tempIsInString) {
-                if (!tempIsEscaped) {
-                    tempIsInString = false;
-                }
-            } else {
-                tempIsInString = true;
-            }
-        }
-        if (tempIsInString) {
-            if (tempIsEscaped) {
-                tempIsEscaped = false;
-            } else if (tempCharacter == "\\") {
-                tempIsEscaped = true;
-            }
+            index = skipArgStringTermCharacters(text, index);
             output = index;
         } else {
+            index += 1;
             if (tempCharacter == "," || tempCharacter == "#") {
                 break;
             }
@@ -71,6 +98,92 @@ function skipArgCharacters(text, index) {
         throw new LineParseError("Missing end quotation mark.");
     }
     return output;
+}
+
+function isArgTermCharacter(character) {
+    if (character == "." || character == "_" || character == "\"") {
+        return true;
+    }
+    var tempNumber = character.charCodeAt(0);
+    // Numbers, uppercase letters, or lowercase letters.
+    return ((tempNumber >= 48 && tempNumber <= 57)
+        || (tempNumber >= 65 && tempNumber <= 90)
+        || (tempNumber >= 97 && tempNumber <= 122));
+}
+
+function skipArgTermCharacters(text, index) {
+    if (index >= text.length) {
+        return index;
+    }
+    var tempFirstCharacter = text.substring(index, index + 1);
+    if (tempFirstCharacter == "\"") {
+        return skipArgStringTermCharacters(text, index);
+    } else {
+        while (index < text.length) {
+            var tempCharacter = text.substring(index, index + 1);
+            index += 1;
+            if (!isArgTermCharacter(tempCharacter)) {
+                break;
+            }
+        }
+        return index;
+    }
+}
+
+function skipArgOperator(text, index, operatorTextList) {
+    var tempIndex = 0;
+    while (tempIndex < operatorTextList.length) {
+        var tempOperatorText = operatorTextList[tempIndex];
+        tempIndex += 1;
+        var tempEndIndex = index + tempOperatorText.length;
+        if (tempEndIndex > text.length) {
+            continue;
+        }
+        var tempText = text.substring(index, tempEndIndex);
+        if (tempText == tempOperatorText) {
+            return tempEndIndex;
+        }
+    }
+    return index;
+}
+
+function parseArgText(text) {
+    if (text.length <= 0) {
+        return null;
+    }
+    var index = 0;
+    while (index < text.length) {
+        index = skipWhitespace(text, index);
+        if (index >= text.length) {
+            break;
+        }
+        var tempCharacter = text.substring(index, index + 1);
+        if (isArgTermCharacter(tempCharacter)) {
+            var tempStartIndex = index;
+            index = skipArgTermCharacters(text, index);
+            var tempEndIndex = index;
+            var tempTermText = text.substring(tempStartIndex, tempEndIndex);
+            console.log(tempTermText);
+            continue;
+        }
+        var tempEndIndex = skipArgOperator(text, index, unaryOperatorTextList);
+        if (tempEndIndex != index) {
+            var tempOperatorText = text.substring(index, tempEndIndex);
+            index = tempEndIndex;
+            console.log(tempOperatorText);
+            continue;
+        }
+        var tempEndIndex = skipArgOperator(text, index, binaryOperatorTextList);
+        if (tempEndIndex != index) {
+            var tempOperatorText = text.substring(index, tempEndIndex);
+            index = tempEndIndex;
+            console.log(tempOperatorText);
+            continue;
+        }
+        throw new LineParseError("Unexpected symbol.");
+    }
+    // TODO: Process order of operations and
+    // produce actual output.
 }
 
 function parseLineText(text) {
@@ -88,11 +201,11 @@ function parseLineText(text) {
     var tempDirectiveName = text.substring(tempStartIndex, tempEndIndex);
     
     // Parse the argument list.
-    var tempArgList = [];
+    var tempArgTextList = [];
     while (true) {
         index = skipWhitespace(text, index);
         // Handle empty argument list.
-        if (tempArgList.length == 0) {
+        if (tempArgTextList.length == 0) {
             if (index >= text.length) {
                 break;
             }
@@ -108,8 +221,8 @@ function parseLineText(text) {
         if (tempStartIndex == tempEndIndex) {
             throw new LineParseError("Expected argument.");
         }
-        var tempTerm = text.substring(tempStartIndex, tempEndIndex);
-        tempArgList.push(tempTerm);
+        var tempArgText = text.substring(tempStartIndex, tempEndIndex);
+        tempArgTextList.push(tempArgText);
         index = skipWhitespace(text, index);
         if (index >= text.length) {
             break;
@@ -124,7 +237,7 @@ function parseLineText(text) {
         }
         index += 1;
     }
-    return new AssemblyLine(tempDirectiveName, tempArgList);
+    return new AssemblyLine(tempDirectiveName, tempArgTextList);
 }
 
 function assembleCodeFile(sourcePath, destinationPath) {
@@ -151,7 +264,7 @@ function assembleCodeFile(sourcePath, destinationPath) {
         if (tempLine === null) {
             continue;
         }
-        console.log([tempLine.directiveName, tempLine.argList]);
+        console.log([tempLine.directiveName, tempLine.argTextList]);
     }
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");

@@ -16,7 +16,7 @@ Number literals:
 Expression operators:
 
 * `+`, `-`, `*`, `/`, and `%` perform arithmetic operations on constants
-* `&`, `|`, `^`, `>>`, and `<<` perform bitwise operations on constants
+* `~`, `&`, `|`, `^`, `>>`, and `<<` perform bitwise operations on constants
 * `(` and `)` manipulate order of operations
 * `value:dataType` specifies the data type of a value
 * `value[index]:dataType` accesses an element of a frame, region, or heap allocation
