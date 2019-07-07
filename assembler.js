@@ -20,16 +20,16 @@ new UnaryOperator("-");
 new UnaryOperator("~");
 
 new BinaryOperator(":", 1);
-new BinaryOperator("*", 2);
-new BinaryOperator("/", 2);
-new BinaryOperator("%", 2);
-new BinaryOperator("+", 3);
-new BinaryOperator("-", 3);
-new BinaryOperator(">>", 4);
-new BinaryOperator("<<", 4);
-new BinaryOperator("&", 5);
-new BinaryOperator("^", 6);
-new BinaryOperator("|", 7);
+new BinaryOperator("*", 3);
+new BinaryOperator("/", 3);
+new BinaryOperator("%", 3);
+new BinaryOperator("+", 4);
+new BinaryOperator("-", 4);
+new BinaryOperator(">>", 5);
+new BinaryOperator("<<", 5);
+new BinaryOperator("&", 6);
+new BinaryOperator("^", 7);
+new BinaryOperator("|", 8);
 
 function ArgTerm(text) {
     this.text = text;
@@ -56,6 +56,16 @@ function BinaryExpression(operator, operand1, operand2) {
 
 BinaryExpression.prototype.toString = function() {
     return "(" + this.operand1.toString() + " " + this.operator.text + " " + this.operand2.toString() + ")";
+}
+
+function SubscriptExpression(sequence, index, dataType) {
+    this.sequence = sequence;
+    this.index = index;
+    this.dataType = dataType;
+}
+
+SubscriptExpression.prototype.toString = function() {
+    return "(" + this.sequence.toString() + "[" + this.index.toString() + "]:" + this.dataType.toString() + ")";
 }
 
 function AssemblyLine(directiveName, argTextList) {
@@ -228,6 +238,21 @@ function parseArgExpression(text, index, precedence) {
             var tempEndIndex = index;
             var tempTermText = text.substring(tempStartIndex, tempEndIndex);
             outputExpression = new ArgTerm(tempTermText);
+        } else if (tempCharacter == "(") {
+            // Parse expression in parentheses.
+            index += 1;
+            var tempResult = parseArgExpression(text, index, 99);
+            outputExpression = tempResult[0];
+            index = tempResult[1];
+            index = skipWhitespace(text, index);
+            if (index >= text.length) {
+                throw new LineParseError("Expected closing parenthesis.");
+            }
+            var tempCharacter = text.substring(index, index + 1);
+            if (tempCharacter != ")") {
+                throw new LineParseError("Expected closing parenthesis.");
+            }
+            index += 1;
         } else {
             throw new LineParseError("Unexpected symbol.");
         }
@@ -239,10 +264,43 @@ function parseArgExpression(text, index, precedence) {
         outputExpression = new UnaryExpression(tempOperator, tempExpression);
         index = tempResult[1];
     }
-    // Keep parsing binary expressions until we
-    // meet input precedence or reach the end.
+    // Keep parsing binary and ternary expressions until
+    // we meet input precedence or reach the end.
     while (true) {
         index = skipWhitespace(text, index);
+        if (index >= text.length) {
+            break;
+        }
+        var tempCharacter = text.substring(index, index + 1);
+        if (tempCharacter == "[") {
+            if (precedence <= 2) {
+                break;
+            }
+            // Create a subscript expression.
+            index += 1;
+            var tempResult = parseArgExpression(text, index, 99);
+            var tempIndexExpression = tempResult[0];
+            index = tempResult[1];
+            index = skipWhitespace(text, index);
+            if (index >= text.length - 1) {
+                throw new LineParseError("Expected subscript data type.");
+            }
+            var tempText = text.substring(index, index + 2);
+            if (tempText != "]:") {
+                throw new LineParseError("Expected subscript data type.");
+            }
+            index += 2;
+            var tempResult = parseArgExpression(text, index, 1);
+            var tempDataTypeExpression = tempResult[0];
+            index = tempResult[1];
+            outputExpression = new SubscriptExpression(
+                outputExpression,
+                tempIndexExpression,
+                tempDataTypeExpression
+            );
+            continue;
+        }
+        // Look for binary operator.
         var tempResult = parseArgOperator(text, index, binaryOperatorList);
         var tempOperator = tempResult[0];
         if (tempOperator === null) {
@@ -252,6 +310,7 @@ function parseArgExpression(text, index, precedence) {
             break;
         }
         index = tempResult[1];
+        // Create a binary expression.
         var tempResult = parseArgExpression(text, index, tempOperator.precedence);
         var tempExpression = tempResult[0];
         outputExpression = new BinaryExpression(
