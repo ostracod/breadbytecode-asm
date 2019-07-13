@@ -1,9 +1,13 @@
 
 var fs = require("fs");
 
+var lineTextList;
+var assemblyLineList;
+
 var assemblyFileExtension = ".bbasm";
 var unaryOperatorList = [];
 var binaryOperatorList = [];
+var codeBlockDirectiveNameSet = ["ENTRY_FUNC", "PRIVATE_FUNC", "PUBLIC_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
 
 function UnaryOperator(text) {
     this.text = text;
@@ -78,9 +82,21 @@ function AssemblyLine(directiveName, argTextList) {
         this.argList.push(tempArg);
         index += 1;
     }
+    this.lineNumber = null;
+    // List of AssemblyLine or null.
+    this.codeBlock = null;
 }
 
-AssemblyLine.prototype.toString = function() {
+AssemblyLine.prototype.toString = function(indentationLevel) {
+    if (typeof indentationLevel === "undefined") {
+        indentationLevel = 0;
+    }
+    var tempIndentation = "";
+    var tempCount = 0;
+    while (tempCount < indentationLevel) {
+        tempIndentation = tempIndentation + "    ";
+        tempCount += 1;
+    }
     var tempTextList = [];
     var index = 0;
     while (index < this.argList.length) {
@@ -88,12 +104,29 @@ AssemblyLine.prototype.toString = function() {
         tempTextList.push(tempArg.toString());
         index += 1;
     }
-    return this.directiveName + " " + tempTextList.join(", ");
+    var tempLineText = tempIndentation + this.directiveName + " " + tempTextList.join(", ");
+    if (this.codeBlock === null) {
+        return tempLineText;
+    } else {
+        var tempLineTextList = [tempLineText];
+        var index = 0;
+        while (index < this.codeBlock.length) {
+            var tempLine = this.codeBlock[index];
+            tempLineTextList.push(tempLine.toString(indentationLevel + 1));
+            index += 1;
+        }
+        tempLineTextList.push("END");
+        return tempLineTextList.join("\n");
+    }
 }
 
-function LineParseError(message) {
+function AssemblyError(message, lineNumber) {
     this.message = message;
-    this.lineNumber = null;
+    if (typeof lineNumber === "undefined") {
+        this.lineNumber = null;
+    } else {
+        this.lineNumber = lineNumber;
+    }
 }
 
 function skipWhitespace(text, index) {
@@ -142,7 +175,7 @@ function skipArgStringTermCharacters(text, index) {
             }
         }
     }
-    throw new LineParseError("Missing end quotation mark.");
+    throw new AssemblyError("Missing end quotation mark.");
 }
 
 function skipArgCharacters(text, index) {
@@ -165,7 +198,7 @@ function skipArgCharacters(text, index) {
         }
     }
     if (tempIsInString) {
-        throw new LineParseError("Missing end quotation mark.");
+        throw new AssemblyError("Missing end quotation mark.");
     }
     return output;
 }
@@ -223,7 +256,7 @@ function parseArgOperator(text, index, operatorList) {
 function parseArgExpression(text, index, precedence) {
     index = skipWhitespace(text, index);
     if (index >= text.length) {
-        throw new LineParseError("Expected expression.");
+        throw new AssemblyError("Expected expression.");
     }
     var outputExpression;
     // Look for unary operator.
@@ -246,15 +279,15 @@ function parseArgExpression(text, index, precedence) {
             index = tempResult[1];
             index = skipWhitespace(text, index);
             if (index >= text.length) {
-                throw new LineParseError("Expected closing parenthesis.");
+                throw new AssemblyError("Expected closing parenthesis.");
             }
             var tempCharacter = text.substring(index, index + 1);
             if (tempCharacter != ")") {
-                throw new LineParseError("Expected closing parenthesis.");
+                throw new AssemblyError("Expected closing parenthesis.");
             }
             index += 1;
         } else {
-            throw new LineParseError("Unexpected symbol.");
+            throw new AssemblyError("Unexpected symbol.");
         }
     } else {
         index = tempResult[1];
@@ -283,11 +316,11 @@ function parseArgExpression(text, index, precedence) {
             index = tempResult[1];
             index = skipWhitespace(text, index);
             if (index >= text.length - 1) {
-                throw new LineParseError("Expected subscript data type.");
+                throw new AssemblyError("Expected subscript data type.");
             }
             var tempText = text.substring(index, index + 2);
             if (tempText != "]:") {
-                throw new LineParseError("Expected subscript data type.");
+                throw new AssemblyError("Expected subscript data type.");
             }
             index += 2;
             var tempResult = parseArgExpression(text, index, 1);
@@ -332,7 +365,7 @@ function parseArgText(text) {
     var index = tempResult[1];
     index = skipWhitespace(text, index);
     if (index < text.length) {
-        throw new LineParseError("Unexpected symbol.");
+        throw new AssemblyError("Unexpected symbol.");
     }
     return output;
 }
@@ -370,7 +403,7 @@ function parseLineText(text) {
         index = skipArgCharacters(text, index);
         var tempEndIndex = index;
         if (tempStartIndex == tempEndIndex) {
-            throw new LineParseError("Expected argument.");
+            throw new AssemblyError("Expected argument.");
         }
         var tempArgText = text.substring(tempStartIndex, tempEndIndex);
         tempArgTextList.push(tempArgText);
@@ -384,38 +417,103 @@ function parseLineText(text) {
             break;
         }
         if (tempCharacter != ",") {
-            throw new LineParseError("Expected comma.");
+            throw new AssemblyError("Expected comma.");
         }
         index += 1;
     }
     return new AssemblyLine(tempDirectiveName, tempArgTextList);
 }
 
-function assembleCodeFile(sourcePath, destinationPath) {
+function loadAssemblyFileContent(sourcePath) {
     var tempContent = fs.readFileSync(sourcePath, "utf8");
-    var lineTextList = tempContent.split("\n");
-    
+    lineTextList = tempContent.split("\n");
+}
+
+function parseAssemblyLines() {
+    assemblyLineList = [];
     var index = 0;
     while (index < lineTextList.length) {
         var tempText = lineTextList[index];
         var tempLineNumber = index + 1;
         index += 1;
-        console.log(tempText);
         var tempLine;
         try {
             tempLine = parseLineText(tempText);
         } catch(error) {
-            if (error instanceof LineParseError) {
-                console.log("Parse error on line " + tempLineNumber + ": " + error.message);
-                return;
-            } else {
-                throw error;
+            if (error instanceof AssemblyError) {
+                error.lineNumber = tempLineNumber;
             }
+            throw error;
         }
         if (tempLine === null) {
             continue;
         }
+        tempLine.lineNumber = tempLineNumber;
+        assemblyLineList.push(tempLine);
+    }
+}
+
+function collapseCodeBlocks() {
+    var nextAssemblyLineList = [];
+    // List of assembly lines which begin code blocks.
+    var branchList = [];
+    var index = 0;
+    while (index < assemblyLineList.length) {
+        var tempLine = assemblyLineList[index];
+        var tempDirectiveName = tempLine.directiveName;
+        if (tempDirectiveName == "END") {
+            if (tempLine.argList.length > 0) {
+                throw new AssemblyError("Expected 0 arguments", tempLine.lineNumber);
+            }
+            if (branchList.length <= 0) {
+                throw new AssemblyError("Unexpected END statement.", tempLine.lineNumber);
+            }
+            branchList.pop();
+        } else {
+            if (branchList.length > 0) {
+                var tempCurrentBranch = branchList[branchList.length - 1];
+                tempCurrentBranch.codeBlock.push(tempLine);
+            } else {
+                nextAssemblyLineList.push(tempLine);
+            }
+            if (codeBlockDirectiveNameSet.indexOf(tempDirectiveName) >= 0) {
+                tempLine.codeBlock = [];
+                branchList.push(tempLine);
+            }
+        }
+        index += 1;
+    }
+    if (branchList.length > 0) {
+        throw new AssemblyError("Missing END statement.");
+    }
+    assemblyLineList = nextAssemblyLineList;
+}
+
+function assembleCodeFile(sourcePath, destinationPath) {
+    
+    try {
+        loadAssemblyFileContent(sourcePath);
+        parseAssemblyLines();
+        collapseCodeBlocks();
+    } catch(error) {
+        if (error instanceof AssemblyError) {
+            if (error.lineNumber === null) {
+                console.log("Error: " + error.message);
+            } else {
+                console.log("Error on line " + error.lineNumber + ": " + error.message);
+            }
+            return;
+        } else {
+            throw error;
+        }
+    }
+    
+    // Test code to print how everything was parsed.
+    var index = 0;
+    while (index < assemblyLineList.length) {
+        var tempLine = assemblyLineList[index];
         console.log(tempLine.toString());
+        index += 1;
     }
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");

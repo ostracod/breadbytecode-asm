@@ -14,7 +14,7 @@ MACRO newTextAlloc, dest, startLbl, endLbl
     wrtBuff dest[0]:u8, startLbl, endLbl - startLbl
 END
 
-ENTRY_POINT
+ENTRY_FUNC
     # To be populated by setDriver.
     VAR driver, p
     
