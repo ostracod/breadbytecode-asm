@@ -1,17 +1,20 @@
 
 var fs = require("fs");
 
+var assemblyFileExtension = ".bbasm";
+var unaryOperatorList = [];
+var binaryOperatorList = [];
+var codeBlockDirectiveNameSet = ["ENTRY_FUNC", "PRIVATE_FUNC", "PUBLIC_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
+
 var lineTextList;
 var assemblyLineList;
 // Map from name to Expression.
 var constantDefinitionMap;
 // Map from name to MacroDefinition.
 var macroDefinitionMap;
-
-var assemblyFileExtension = ".bbasm";
-var unaryOperatorList = [];
-var binaryOperatorList = [];
-var codeBlockDirectiveNameSet = ["ENTRY_FUNC", "PRIVATE_FUNC", "PUBLIC_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
+var entryPointFunctionDefinition;
+// Map from name to FunctionDefinition.
+var functionDefinitionMap;
 
 function UnaryOperator(text) {
     this.text = text;
@@ -140,6 +143,25 @@ function MacroDefinition(name, argNameList, lineList) {
     this.argNameList = argNameList;
     this.lineList = lineList;
     macroDefinitionMap[this.name] = this;
+}
+
+function FunctionDefinition(name, dependencyIndexExpression, lineList) {
+    if (name === null) {
+        if (entryPointFunctionDefinition !== null) {
+            throw new AssemblyError("Application must contain exactly one entry point.");
+        }
+        entryPointFunctionDefinition = this;
+    } else {
+        this.name = name;
+        functionDefinitionMap[this.name] = this;
+    }
+    if (dependencyIndexExpression === null) {
+        this.isPublic = false;
+    } else {
+        this.isPublic = true;
+        this.dependencyIndexExpression = dependencyIndexExpression;
+    }
+    this.lineList = lineList;
 }
 
 function skipWhitespace(text, index) {
@@ -502,48 +524,93 @@ function collapseCodeBlocks() {
     assemblyLineList = nextAssemblyLineList;
 }
 
+function getArgAsIdentifier(argList, index) {
+    var tempArg = argList[index];
+    if (!(tempArg instanceof ArgTerm)) {
+        throw new AssemblyError("Expected identifier.");
+    }
+    return tempArg.text;
+}
+
+function extractDefinitionFromLine(line) {
+    var tempDirectiveName = line.directiveName;
+    var tempArgList = line.argList;
+    if (tempDirectiveName == "DEF") {
+        if (tempArgList.length != 2) {
+            throw new AssemblyError("Expected 2 arguments.");
+        }
+        var tempName = getArgAsIdentifier(tempArgList, 0);
+        var tempExpression = tempArgList[1];
+        constantDefinitionMap[tempName] = tempExpression;
+        return true;
+    }
+    if (tempDirectiveName == "MACRO") {
+        if (tempArgList.length < 1) {
+            throw new AssemblyError("Expected at least 1 argument.");
+        }
+        var tempName = getArgAsIdentifier(tempArgList, 0);
+        var tempArgNameList = [];
+        var tempIndex = 1;
+        while (tempIndex < tempArgList.length) {
+            var tempArgName = getArgAsIdentifier(tempArgList, tempIndex);
+            tempArgNameList.push(tempArgName);
+            tempIndex += 1;
+        }
+        new MacroDefinition(tempName, tempArgNameList, line.codeBlock);
+        return true;
+    }
+    if (tempDirectiveName == "ENTRY_FUNC") {
+        if (tempArgList.length != 0) {
+            throw new AssemblyError("Expected 0 arguments.");
+        }
+        new FunctionDefinition(null, null, line.codeBlock);
+        return true;
+    }
+    if (tempDirectiveName == "PRIVATE_FUNC") {
+        if (tempArgList.length != 1) {
+            throw new AssemblyError("Expected 1 argument.");
+        }
+        var tempName = getArgAsIdentifier(tempArgList, 0);
+        new FunctionDefinition(tempName, null, line.codeBlock);
+        return true;
+    }
+    if (tempDirectiveName == "PUBLIC_FUNC") {
+        if (tempArgList.length != 2) {
+            throw new AssemblyError("Expected 2 arguments.");
+        }
+        var tempName = getArgAsIdentifier(tempArgList, 0);
+        new FunctionDefinition(tempName, tempArgList[1], line.codeBlock);
+        return true;
+    }
+    return false;
+}
+
 function extractDefinitions() {
     constantDefinitionMap = {};
     macroDefinitionMap = {};
+    entryPointFunctionDefinition = null;
+    functionDefinitionMap = {};
     var nextAssemblyLineList = [];
     var index = 0;
     while (index < assemblyLineList.length) {
         var tempLine = assemblyLineList[index];
-        var tempDirectiveName = tempLine.directiveName;
-        var tempArgList = tempLine.argList;
-        if (tempDirectiveName == "DEF") {
-            if (tempLine.argList.length != 2) {
-                throw new AssemblyError("Expected 2 arguments.", tempLine.lineNumber);
+        try {
+            var tempResult = extractDefinitionFromLine(tempLine);
+        } catch(error) {
+            if (error instanceof AssemblyError) {
+                error.lineNumber = tempLine.lineNumber;
             }
-            var tempName = tempArgList[0];
-            var tempExpression = tempArgList[1];
-            constantDefinitionMap[tempName] = tempExpression;
-        } else if (tempDirectiveName == "MACRO") {
-            if (tempLine.argList.length < 1) {
-                throw new AssemblyError("Expected at least 1 argument.", tempLine.lineNumber);
-            }
-            var tempArg = tempArgList[0];
-            if (!(tempArg instanceof ArgTerm)) {
-                throw new AssemblyError("Expected identifier.", tempLine.lineNumber);
-            }
-            var tempName = tempArg.text;
-            var tempArgNameList = [];
-            var tempIndex = 1;
-            while (tempIndex < tempArgList.length) {
-                var tempArg = tempArgList[tempIndex];
-                if (!(tempArg instanceof ArgTerm)) {
-                    throw new AssemblyError("Expected identifier.", tempLine.lineNumber);
-                }
-                tempArgNameList.push(tempArg.text);
-                tempIndex += 1;
-            }
-            new MacroDefinition(tempName, tempArgNameList, tempLine.codeBlock);
-        } else {
+            throw error;
+        }
+        if (!tempResult) {
             nextAssemblyLineList.push(tempLine);
         }
         index += 1;
     }
     assemblyLineList = nextAssemblyLineList;
+    if (entryPointFunctionDefinition === null) {
+        throw new AssemblyError("Application must contain exactly one entry point.");
+    }
 }
 
 function assembleCodeFile(sourcePath, destinationPath) {
@@ -566,7 +633,8 @@ function assembleCodeFile(sourcePath, destinationPath) {
         }
     }
     
-    console.log(macroDefinitionMap);
+    console.log(entryPointFunctionDefinition);
+    console.log(functionDefinitionMap);
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");
     console.log("Finished assembling.");
