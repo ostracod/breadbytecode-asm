@@ -6,8 +6,7 @@ var unaryOperatorList = [];
 var binaryOperatorList = [];
 var codeBlockDirectiveNameSet = ["ENTRY_FUNC", "PRIVATE_FUNC", "PUBLIC_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
 
-var lineTextList;
-var assemblyLineList;
+var rootLineList;
 // Map from name to Expression.
 var constantDefinitionMap;
 // Map from name to MacroDefinition.
@@ -51,6 +50,39 @@ function ArgTerm(text) {
 
 ArgTerm.prototype.toString = function() {
     return this.text;
+}
+
+ArgTerm.prototype.getStringValue = function() {
+    if (this.text.length <= 0) {
+        throw new AssemblyError("Expected string.");
+    }
+    if (this.text.charAt(0) != "\""
+            || this.text.charAt(this.text.length - 1) != "\"") {
+        throw new AssemblyError("Expected string.");
+    }
+    var tempText = this.text.substring(1, this.text.length - 1);
+    var output = "";
+    var index = 0;
+    var tempIsEscaped = false;
+    while (index < tempText.length) {
+        var tempCharacter = tempText.charAt(index);
+        if (tempIsEscaped) {
+            if (tempCharacter == "n") {
+                output += "\n";
+            } else {
+                output += tempCharacter;
+            }
+            tempIsEscaped = false;
+        } else {
+            if (tempCharacter == "\\") {
+                tempIsEscaped = true;
+            } else {
+                output += tempCharacter;
+            }
+        }
+        index += 1;
+    }
+    return output;
 }
 
 function UnaryExpression(operator, operand) {
@@ -167,7 +199,7 @@ function FunctionDefinition(name, dependencyIndexExpression, lineList) {
 
 function skipWhitespace(text, index) {
     while (index < text.length) {
-        var tempCharacter = text.substring(index, index + 1);
+        var tempCharacter = text.charAt(index);
         if (tempCharacter != " " && tempCharacter != "\t") {
             break
         }
@@ -178,7 +210,7 @@ function skipWhitespace(text, index) {
 
 function skipDirectiveCharacters(text, index) {
     while (index < text.length) {
-        var tempCharacter = text.substring(index, index + 1);
+        var tempCharacter = text.charAt(index);
         if (tempCharacter == " " || tempCharacter == "\t" || tempCharacter == "#") {
             break;
         }
@@ -191,14 +223,14 @@ function skipArgStringTermCharacters(text, index) {
     if (index >= text.length) {
         return index;
     }
-    var tempFirstCharacter = text.substring(index, index + 1);
+    var tempFirstCharacter = text.charAt(index);
     if (tempFirstCharacter != "\"") {
         return index;
     }
     index += 1;
     var tempIsEscaped = false;
     while (index < text.length) {
-        var tempCharacter = text.substring(index, index + 1);
+        var tempCharacter = text.charAt(index);
         index += 1;
         if (tempIsEscaped) {
             tempIsEscaped = false;
@@ -219,7 +251,7 @@ function skipArgCharacters(text, index) {
     var tempIsInString = false;
     var tempIsEscaped = false;
     while (index < text.length) {
-        var tempCharacter = text.substring(index, index + 1);
+        var tempCharacter = text.charAt(index);
         if (tempCharacter == "\"") {
             index = skipArgStringTermCharacters(text, index);
             output = index;
@@ -254,12 +286,12 @@ function skipArgTermCharacters(text, index) {
     if (index >= text.length) {
         return index;
     }
-    var tempFirstCharacter = text.substring(index, index + 1);
+    var tempFirstCharacter = text.charAt(index);
     if (tempFirstCharacter == "\"") {
         return skipArgStringTermCharacters(text, index);
     } else {
         while (index < text.length) {
-            var tempCharacter = text.substring(index, index + 1);
+            var tempCharacter = text.charAt(index);
             if (!isArgTermCharacter(tempCharacter)) {
                 break;
             }
@@ -299,7 +331,7 @@ function parseArgExpression(text, index, precedence) {
     var tempResult = parseArgOperator(text, index, unaryOperatorList);
     var tempOperator = tempResult[0];
     if (tempOperator === null) {
-        var tempCharacter = text.substring(index, index + 1);
+        var tempCharacter = text.charAt(index);
         if (isArgTermCharacter(tempCharacter)) {
             // Parse a single term.
             var tempStartIndex = index;
@@ -317,7 +349,7 @@ function parseArgExpression(text, index, precedence) {
             if (index >= text.length) {
                 throw new AssemblyError("Expected closing parenthesis.");
             }
-            var tempCharacter = text.substring(index, index + 1);
+            var tempCharacter = text.charAt(index);
             if (tempCharacter != ")") {
                 throw new AssemblyError("Expected closing parenthesis.");
             }
@@ -340,7 +372,7 @@ function parseArgExpression(text, index, precedence) {
         if (index >= text.length) {
             break;
         }
-        var tempCharacter = text.substring(index, index + 1);
+        var tempCharacter = text.charAt(index);
         if (tempCharacter == "[") {
             if (precedence <= 2) {
                 break;
@@ -429,7 +461,7 @@ function parseLineText(text) {
             if (index >= text.length) {
                 break;
             }
-            var tempCharacter = text.substring(index, index + 1);
+            var tempCharacter = text.charAt(index);
             if (tempCharacter == "#") {
                 break;
             }
@@ -448,7 +480,7 @@ function parseLineText(text) {
             break;
         }
         // Seek the next argument if it exists.
-        var tempCharacter = text.substring(index, index + 1);
+        var tempCharacter = text.charAt(index);
         if (tempCharacter == "#") {
             break;
         }
@@ -460,13 +492,16 @@ function parseLineText(text) {
     return new AssemblyLine(tempDirectiveName, tempArgTextList);
 }
 
-function loadAssemblyFileContent(sourcePath) {
-    var tempContent = fs.readFileSync(sourcePath, "utf8");
-    lineTextList = tempContent.split("\n");
+function loadAssemblyFileContent(path) {
+    if (!fs.existsSync(path)) {
+        throw new AssemblyError("Missing source file \"" + path + "\".");
+    }
+    var tempContent = fs.readFileSync(path, "utf8");
+    return tempContent.split("\n");
 }
 
-function parseAssemblyLines() {
-    assemblyLineList = [];
+function parseAssemblyLines(lineTextList) {
+    var output = [];
     var index = 0;
     while (index < lineTextList.length) {
         var tempText = lineTextList[index];
@@ -485,21 +520,22 @@ function parseAssemblyLines() {
             continue;
         }
         tempLine.lineNumber = tempLineNumber;
-        assemblyLineList.push(tempLine);
+        output.push(tempLine);
     }
+    return output;
 }
 
-function collapseCodeBlocks() {
-    var nextAssemblyLineList = [];
+function collapseCodeBlocks(lineList) {
+    var output = [];
     // List of assembly lines which begin code blocks.
     var branchList = [];
     var index = 0;
-    while (index < assemblyLineList.length) {
-        var tempLine = assemblyLineList[index];
+    while (index < lineList.length) {
+        var tempLine = lineList[index];
         var tempDirectiveName = tempLine.directiveName;
         if (tempDirectiveName == "END") {
-            if (tempLine.argList.length > 0) {
-                throw new AssemblyError("Expected 0 arguments", tempLine.lineNumber);
+            if (tempLine.argList.length != 0) {
+                throw new AssemblyError("Expected 0 arguments.", tempLine.lineNumber);
             }
             if (branchList.length <= 0) {
                 throw new AssemblyError("Unexpected END statement.", tempLine.lineNumber);
@@ -510,7 +546,7 @@ function collapseCodeBlocks() {
                 var tempCurrentBranch = branchList[branchList.length - 1];
                 tempCurrentBranch.codeBlock.push(tempLine);
             } else {
-                nextAssemblyLineList.push(tempLine);
+                output.push(tempLine);
             }
             if (codeBlockDirectiveNameSet.indexOf(tempDirectiveName) >= 0) {
                 tempLine.codeBlock = [];
@@ -522,7 +558,7 @@ function collapseCodeBlocks() {
     if (branchList.length > 0) {
         throw new AssemblyError("Missing END statement.");
     }
-    assemblyLineList = nextAssemblyLineList;
+    return output;
 }
 
 function getArgAsIdentifier(argList, index) {
@@ -531,6 +567,15 @@ function getArgAsIdentifier(argList, index) {
         throw new AssemblyError("Expected identifier.");
     }
     return tempArg.text;
+}
+
+function getArgAsString(argList, index) {
+    var tempArg = argList[index];
+    // TODO: Accommodate string concatenation.
+    if (!(tempArg instanceof ArgTerm)) {
+        throw new AssemblyError("Expected string.");
+    }
+    return tempArg.getStringValue();
 }
 
 function extractDefinitionFromLine(line) {
@@ -598,16 +643,11 @@ function extractDefinitionFromLine(line) {
     return false;
 }
 
-function extractDefinitions() {
-    constantDefinitionMap = {};
-    macroDefinitionMap = {};
-    entryPointFunctionDefinition = null;
-    functionDefinitionMap = {};
-    appDataLineList = [];
-    var nextAssemblyLineList = [];
+function extractDefinitions(lineList) {
+    var output = [];
     var index = 0;
-    while (index < assemblyLineList.length) {
-        var tempLine = assemblyLineList[index];
+    while (index < lineList.length) {
+        var tempLine = lineList[index];
         try {
             var tempResult = extractDefinitionFromLine(tempLine);
         } catch(error) {
@@ -617,23 +657,81 @@ function extractDefinitions() {
             throw error;
         }
         if (!tempResult) {
-            nextAssemblyLineList.push(tempLine);
+            output.push(tempLine);
         }
         index += 1;
     }
-    assemblyLineList = nextAssemblyLineList;
-    if (entryPointFunctionDefinition === null) {
-        throw new AssemblyError("Application must contain exactly one entry point.");
+    return output;
+}
+
+function processIncludeDirective(line) {
+    if (line.argList.length != 1) {
+        throw new AssemblyError("Expected 1 argument.");
     }
+    var tempPath = getArgAsString(line.argList, 0);
+    return loadAndParseAssemblyFile(tempPath);
+}
+
+function processIncludeDirectives(lineList) {
+    var output = [];
+    var index = 0;
+    while (index < lineList.length) {
+        var tempLine = lineList[index];
+        var tempDirectiveName = tempLine.directiveName;
+        if (tempDirectiveName == "INCLUDE") {
+            try {
+                var tempLineList = processIncludeDirective(tempLine);
+            } catch(error) {
+                if (error instanceof AssemblyError) {
+                    error.lineNumber = tempLine.lineNumber;
+                }
+                throw error;
+            }
+            var tempIndex = 0;
+            while (tempIndex < tempLineList.length) {
+                var tempLine2 = tempLineList[tempIndex];
+                output.push(tempLine2);
+                tempIndex += 1;
+            }
+        } else {
+            output.push(tempLine);
+        }
+        index += 1;
+    }
+    return output;
+}
+
+function loadAndParseAssemblyFile(path) {
+    var tempLineTextList = loadAssemblyFileContent(path);
+    var tempLineList = parseAssemblyLines(tempLineTextList);
+    tempLineList = collapseCodeBlocks(tempLineList);
+    tempLineList = extractDefinitions(tempLineList);
+    tempLineList = processIncludeDirectives(tempLineList);
+    return tempLineList;
 }
 
 function assembleCodeFile(sourcePath, destinationPath) {
     
+    constantDefinitionMap = {};
+    macroDefinitionMap = {};
+    entryPointFunctionDefinition = null;
+    functionDefinitionMap = {};
+    appDataLineList = [];
+    
     try {
-        loadAssemblyFileContent(sourcePath);
-        parseAssemblyLines();
-        collapseCodeBlocks();
-        extractDefinitions();
+        rootLineList = loadAndParseAssemblyFile(sourcePath);
+        if (entryPointFunctionDefinition === null) {
+            throw new AssemblyError("Application must contain exactly one entry point.");
+        }
+        
+        // TEST CODE.
+        var index = 0;
+        while (index < rootLineList.length) {
+            var tempLine = rootLineList[index];
+            console.log(tempLine.toString());
+            index += 1;
+        }
+        
     } catch(error) {
         if (error instanceof AssemblyError) {
             if (error.lineNumber === null) {
@@ -646,8 +744,6 @@ function assembleCodeFile(sourcePath, destinationPath) {
             throw error;
         }
     }
-    
-    console.log(appDataLineList);
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");
     console.log("Finished assembling.");
