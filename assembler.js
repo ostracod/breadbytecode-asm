@@ -3,6 +3,8 @@ var fs = require("fs");
 
 var lineTextList;
 var assemblyLineList;
+// Map from name to Expression.
+var constantDefinitionMap;
 
 var assemblyFileExtension = ".bbasm";
 var unaryOperatorList = [];
@@ -34,6 +36,8 @@ new BinaryOperator("<<", 5);
 new BinaryOperator("&", 6);
 new BinaryOperator("^", 7);
 new BinaryOperator("|", 8);
+
+// An Expression is either ArgTerm, UnaryExpression, or BinaryExpression.
 
 function ArgTerm(text) {
     this.text = text;
@@ -489,12 +493,35 @@ function collapseCodeBlocks() {
     assemblyLineList = nextAssemblyLineList;
 }
 
+function extractDefinitions() {
+    constantDefinitionMap = {};
+    var nextAssemblyLineList = [];
+    var index = 0;
+    while (index < assemblyLineList.length) {
+        var tempLine = assemblyLineList[index];
+        var tempDirectiveName = tempLine.directiveName;
+        if (tempDirectiveName == "DEF") {
+            if (tempLine.argList.length != 2) {
+                throw new AssemblyError("Expected 2 arguments.", tempLine.lineNumber);
+            }
+            var tempName = tempLine.argList[0];
+            var tempExpression = tempLine.argList[1];
+            constantDefinitionMap[tempName] = tempExpression;
+        } else {
+            nextAssemblyLineList.push(tempLine);
+        }
+        index += 1;
+    }
+    assemblyLineList = nextAssemblyLineList;
+}
+
 function assembleCodeFile(sourcePath, destinationPath) {
     
     try {
         loadAssemblyFileContent(sourcePath);
         parseAssemblyLines();
         collapseCodeBlocks();
+        extractDefinitions();
     } catch(error) {
         if (error instanceof AssemblyError) {
             if (error.lineNumber === null) {
@@ -508,13 +535,7 @@ function assembleCodeFile(sourcePath, destinationPath) {
         }
     }
     
-    // Test code to print how everything was parsed.
-    var index = 0;
-    while (index < assemblyLineList.length) {
-        var tempLine = assemblyLineList[index];
-        console.log(tempLine.toString());
-        index += 1;
-    }
+    console.log(constantDefinitionMap);
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");
     console.log("Finished assembling.");
