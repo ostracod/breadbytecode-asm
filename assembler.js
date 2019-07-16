@@ -15,6 +15,7 @@ var macroDefinitionMap;
 var entryPointFunctionDefinition;
 // Map from name to FunctionDefinition.
 var functionDefinitionMap;
+var appDataLineList;
 
 function UnaryOperator(text) {
     this.text = text;
@@ -550,11 +551,11 @@ function extractDefinitionFromLine(line) {
         }
         var tempName = getArgAsIdentifier(tempArgList, 0);
         var tempArgNameList = [];
-        var tempIndex = 1;
-        while (tempIndex < tempArgList.length) {
-            var tempArgName = getArgAsIdentifier(tempArgList, tempIndex);
+        var index = 1;
+        while (index < tempArgList.length) {
+            var tempArgName = getArgAsIdentifier(tempArgList, index);
             tempArgNameList.push(tempArgName);
-            tempIndex += 1;
+            index += 1;
         }
         new MacroDefinition(tempName, tempArgNameList, line.codeBlock);
         return true;
@@ -582,6 +583,18 @@ function extractDefinitionFromLine(line) {
         new FunctionDefinition(tempName, tempArgList[1], line.codeBlock);
         return true;
     }
+    if (tempDirectiveName == "APP_DATA") {
+        if (tempArgList.length != 0) {
+            throw new AssemblyError("Expected 0 arguments.");
+        }
+        var index = 0;
+        while (index < line.codeBlock.length) {
+            var tempLine = line.codeBlock[index];
+            appDataLineList.push(tempLine);
+            index += 1;
+        }
+        return true;
+    }
     return false;
 }
 
@@ -590,6 +603,7 @@ function extractDefinitions() {
     macroDefinitionMap = {};
     entryPointFunctionDefinition = null;
     functionDefinitionMap = {};
+    appDataLineList = [];
     var nextAssemblyLineList = [];
     var index = 0;
     while (index < assemblyLineList.length) {
@@ -633,8 +647,7 @@ function assembleCodeFile(sourcePath, destinationPath) {
         }
     }
     
-    console.log(entryPointFunctionDefinition);
-    console.log(functionDefinitionMap);
+    console.log(appDataLineList);
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");
     console.log("Finished assembling.");
