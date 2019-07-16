@@ -5,6 +5,8 @@ var lineTextList;
 var assemblyLineList;
 // Map from name to Expression.
 var constantDefinitionMap;
+// Map from name to MacroDefinition.
+var macroDefinitionMap;
 
 var assemblyFileExtension = ".bbasm";
 var unaryOperatorList = [];
@@ -131,6 +133,13 @@ function AssemblyError(message, lineNumber) {
     } else {
         this.lineNumber = lineNumber;
     }
+}
+
+function MacroDefinition(name, argNameList, lineList) {
+    this.name = name;
+    this.argNameList = argNameList;
+    this.lineList = lineList;
+    macroDefinitionMap[this.name] = this;
 }
 
 function skipWhitespace(text, index) {
@@ -495,18 +504,40 @@ function collapseCodeBlocks() {
 
 function extractDefinitions() {
     constantDefinitionMap = {};
+    macroDefinitionMap = {};
     var nextAssemblyLineList = [];
     var index = 0;
     while (index < assemblyLineList.length) {
         var tempLine = assemblyLineList[index];
         var tempDirectiveName = tempLine.directiveName;
+        var tempArgList = tempLine.argList;
         if (tempDirectiveName == "DEF") {
             if (tempLine.argList.length != 2) {
                 throw new AssemblyError("Expected 2 arguments.", tempLine.lineNumber);
             }
-            var tempName = tempLine.argList[0];
-            var tempExpression = tempLine.argList[1];
+            var tempName = tempArgList[0];
+            var tempExpression = tempArgList[1];
             constantDefinitionMap[tempName] = tempExpression;
+        } else if (tempDirectiveName == "MACRO") {
+            if (tempLine.argList.length < 1) {
+                throw new AssemblyError("Expected at least 1 argument.", tempLine.lineNumber);
+            }
+            var tempArg = tempArgList[0];
+            if (!(tempArg instanceof ArgTerm)) {
+                throw new AssemblyError("Expected identifier.", tempLine.lineNumber);
+            }
+            var tempName = tempArg.text;
+            var tempArgNameList = [];
+            var tempIndex = 1;
+            while (tempIndex < tempArgList.length) {
+                var tempArg = tempArgList[tempIndex];
+                if (!(tempArg instanceof ArgTerm)) {
+                    throw new AssemblyError("Expected identifier.", tempLine.lineNumber);
+                }
+                tempArgNameList.push(tempArg.text);
+                tempIndex += 1;
+            }
+            new MacroDefinition(tempName, tempArgNameList, tempLine.codeBlock);
         } else {
             nextAssemblyLineList.push(tempLine);
         }
@@ -535,7 +566,7 @@ function assembleCodeFile(sourcePath, destinationPath) {
         }
     }
     
-    console.log(constantDefinitionMap);
+    console.log(macroDefinitionMap);
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");
     console.log("Finished assembling.");
