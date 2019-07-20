@@ -29,6 +29,7 @@ function BinaryOperator(text, precedence) {
 
 new UnaryOperator("-");
 new UnaryOperator("~");
+new UnaryOperator("@");
 
 new BinaryOperator(":", 1);
 new BinaryOperator("*", 3);
@@ -578,136 +579,231 @@ function getArgAsString(argList, index) {
     return tempArg.getStringValue();
 }
 
-function extractDefinitionFromLine(line) {
-    var tempDirectiveName = line.directiveName;
-    var tempArgList = line.argList;
-    if (tempDirectiveName == "DEF") {
-        if (tempArgList.length != 2) {
-            throw new AssemblyError("Expected 2 arguments.");
-        }
-        var tempName = getArgAsIdentifier(tempArgList, 0);
-        var tempExpression = tempArgList[1];
-        constantDefinitionMap[tempName] = tempExpression;
-        return true;
-    }
-    if (tempDirectiveName == "MACRO") {
-        if (tempArgList.length < 1) {
-            throw new AssemblyError("Expected at least 1 argument.");
-        }
-        var tempName = getArgAsIdentifier(tempArgList, 0);
-        var tempArgNameList = [];
-        var index = 1;
-        while (index < tempArgList.length) {
-            var tempArgName = getArgAsIdentifier(tempArgList, index);
-            tempArgNameList.push(tempArgName);
-            index += 1;
-        }
-        new MacroDefinition(tempName, tempArgNameList, line.codeBlock);
-        return true;
-    }
-    if (tempDirectiveName == "ENTRY_FUNC") {
-        if (tempArgList.length != 0) {
-            throw new AssemblyError("Expected 0 arguments.");
-        }
-        new FunctionDefinition(null, null, line.codeBlock);
-        return true;
-    }
-    if (tempDirectiveName == "PRIVATE_FUNC") {
-        if (tempArgList.length != 1) {
-            throw new AssemblyError("Expected 1 argument.");
-        }
-        var tempName = getArgAsIdentifier(tempArgList, 0);
-        new FunctionDefinition(tempName, null, line.codeBlock);
-        return true;
-    }
-    if (tempDirectiveName == "PUBLIC_FUNC") {
-        if (tempArgList.length != 2) {
-            throw new AssemblyError("Expected 2 arguments.");
-        }
-        var tempName = getArgAsIdentifier(tempArgList, 0);
-        new FunctionDefinition(tempName, tempArgList[1], line.codeBlock);
-        return true;
-    }
-    if (tempDirectiveName == "APP_DATA") {
-        if (tempArgList.length != 0) {
-            throw new AssemblyError("Expected 0 arguments.");
-        }
-        var index = 0;
-        while (index < line.codeBlock.length) {
-            var tempLine = line.codeBlock[index];
-            appDataLineList.push(tempLine);
-            index += 1;
-        }
-        return true;
-    }
-    return false;
-}
-
-function extractDefinitions(lineList) {
-    var output = [];
+// processLine accepts a single line, and returns
+// either a list of lines or null.
+// If the return value is null, no modification
+// takes place.
+// Output format of processLines:
+// {
+//   lineList: LineList[],
+//   processCount: number
+// }
+function processLines(lineList, processLine) {
+    var outputLineList = [];
+    var processCount = 0;
     var index = 0;
     while (index < lineList.length) {
         var tempLine = lineList[index];
         try {
-            var tempResult = extractDefinitionFromLine(tempLine);
+            var tempResult = processLine(tempLine);
         } catch(error) {
             if (error instanceof AssemblyError) {
                 error.lineNumber = tempLine.lineNumber;
             }
             throw error;
         }
-        if (!tempResult) {
-            output.push(tempLine);
+        if (tempResult === null) {
+            outputLineList.push(tempLine);
+        } else {
+            var tempIndex = 0;
+            while (tempIndex < tempResult.length) {
+                var tempLine2 = tempResult[tempIndex];
+                outputLineList.push(tempLine2);
+                tempIndex += 1;
+            }
+            processCount += 1;
         }
         index += 1;
     }
-    return output;
+    return {
+        lineList: outputLineList,
+        processCount: processCount
+    };
 }
 
-function processIncludeDirective(line) {
-    if (line.argList.length != 1) {
-        throw new AssemblyError("Expected 1 argument.");
-    }
-    var tempPath = getArgAsString(line.argList, 0);
-    return loadAndParseAssemblyFile(tempPath);
+function extractMacroDefinitions(lineList) {
+    var tempResult = processLines(lineList, function(line) {
+        var tempArgList = line.argList;
+        if (line.directiveName == "MACRO") {
+            if (tempArgList.length < 1) {
+                throw new AssemblyError("Expected at least 1 argument.");
+            }
+            var tempName = getArgAsIdentifier(tempArgList, 0);
+            var tempArgNameList = [];
+            var index = 1;
+            while (index < tempArgList.length) {
+                var tempArgName = getArgAsIdentifier(tempArgList, index);
+                tempArgNameList.push(tempArgName);
+                index += 1;
+            }
+            new MacroDefinition(tempName, tempArgNameList, line.codeBlock);
+            return [];
+        }
+        return null;
+    });
+    return tempResult.lineList;
+}
+
+function expandMacroInvocations(lineList) {
+    // TODO: Implement.
+    
+    return lineList;
+}
+
+function extractConstantDefinitions(lineList) {
+    var tempResult = processLines(lineList, function(line) {
+        var tempArgList = line.argList;
+        if (line.directiveName == "DEF") {
+            if (tempArgList.length != 2) {
+                throw new AssemblyError("Expected 2 arguments.");
+            }
+            var tempName = getArgAsIdentifier(tempArgList, 0);
+            var tempExpression = tempArgList[1];
+            constantDefinitionMap[tempName] = tempExpression;
+            return [];
+        }
+        return null;
+    });
+    return tempResult.lineList;
 }
 
 function processIncludeDirectives(lineList) {
-    var output = [];
-    var index = 0;
-    while (index < lineList.length) {
-        var tempLine = lineList[index];
-        var tempDirectiveName = tempLine.directiveName;
-        if (tempDirectiveName == "INCLUDE") {
-            try {
-                var tempLineList = processIncludeDirective(tempLine);
-            } catch(error) {
-                if (error instanceof AssemblyError) {
-                    error.lineNumber = tempLine.lineNumber;
-                }
-                throw error;
+    var tempResult = processLines(lineList, function(line) {
+        var tempArgList = line.argList;
+        if (line.directiveName == "INCLUDE") {
+            if (tempArgList.length != 1) {
+                throw new AssemblyError("Expected 1 argument.");
             }
-            var tempIndex = 0;
-            while (tempIndex < tempLineList.length) {
-                var tempLine2 = tempLineList[tempIndex];
-                output.push(tempLine2);
-                tempIndex += 1;
-            }
-        } else {
-            output.push(tempLine);
+            var tempPath = getArgAsString(tempArgList, 0);
+            return loadAndParseAssemblyFile(tempPath);
         }
-        index += 1;
-    }
-    return output;
+        return null;
+    });
+    return {
+        lineList: tempResult.lineList,
+        includeCount: tempResult.processCount
+    };
+}
+
+function extractFunctionDefinitions(lineList) {
+    var tempResult = processLines(lineList, function(line) {
+        var tempDirectiveName = line.directiveName;
+        var tempArgList = line.argList;
+        if (tempDirectiveName == "ENTRY_FUNC") {
+            if (tempArgList.length != 0) {
+                throw new AssemblyError("Expected 0 arguments.");
+            }
+            new FunctionDefinition(null, null, line.codeBlock);
+            return [];
+        }
+        if (tempDirectiveName == "PRIVATE_FUNC") {
+            if (tempArgList.length != 1) {
+                throw new AssemblyError("Expected 1 argument.");
+            }
+            var tempName = getArgAsIdentifier(tempArgList, 0);
+            new FunctionDefinition(tempName, null, line.codeBlock);
+            return [];
+        }
+        if (tempDirectiveName == "PUBLIC_FUNC") {
+            if (tempArgList.length != 2) {
+                throw new AssemblyError("Expected 2 arguments.");
+            }
+            var tempName = getArgAsIdentifier(tempArgList, 0);
+            new FunctionDefinition(tempName, tempArgList[1], line.codeBlock);
+            return [];
+        }
+        return null;
+    });
+    return tempResult.lineList;
+}
+
+function extractAppDataDefinitions(lineList) {
+    var tempResult = processLines(lineList, function(line) {
+        if (line.directiveName == "APP_DATA") {
+            if (line.argList.length != 0) {
+                throw new AssemblyError("Expected 0 arguments.");
+            }
+            var index = 0;
+            while (index < line.codeBlock.length) {
+                var tempLine = line.codeBlock[index];
+                appDataLineList.push(tempLine);
+                index += 1;
+            }
+            return [];
+        }
+        return null
+    });
+    return tempResult.lineList;
 }
 
 function loadAndParseAssemblyFile(path) {
     var tempLineTextList = loadAssemblyFileContent(path);
     var tempLineList = parseAssemblyLines(tempLineTextList);
     tempLineList = collapseCodeBlocks(tempLineList);
-    tempLineList = extractDefinitions(tempLineList);
-    tempLineList = processIncludeDirectives(tempLineList);
+    tempLineList = extractMacroDefinitions(tempLineList);
+    // We do this in a loop because included files may define
+    // macros, and macros may define INCLUDE directives.
+    while (true) {
+        tempLineList = expandMacroInvocations(tempLineList);
+        tempLineList = extractConstantDefinitions(tempLineList);
+        var tempResult = processIncludeDirectives(tempLineList);
+        tempLineList = tempResult.lineList;
+        if (tempResult.includeCount <= 0) {
+            break;
+        }
+    }
     return tempLineList;
+}
+
+function printLineList(lineList, indentationLevel) {
+    if (typeof indentationLevel === "undefined") {
+        indentationLevel = 0;
+    }
+    var index = 0;
+    while (index < lineList.length) {
+        var tempLine = lineList[index];
+        console.log(tempLine.toString(indentationLevel));
+        index += 1;
+    }
+}
+
+function printAssembledState() {
+    console.log("\n= = = ROOT LINE LIST = = =\n");
+    printLineList(rootLineList);
+    console.log("\n= = = CONSTANT DEFINITIONS = = =\n");
+    var name;
+    for (name in constantDefinitionMap) {
+        var tempExpression = constantDefinitionMap[name];
+        console.log(name + " = " + tempExpression.toString());
+    }
+    console.log("\n= = = MACRO DEFINITIONS = = =\n");
+    var name;
+    for (name in macroDefinitionMap) {
+        var tempDefinition = macroDefinitionMap[name];
+        console.log(name + " " + tempDefinition.argNameList.join(", ") + ":");
+        printLineList(tempDefinition.lineList, 1);
+        console.log("");
+    }
+    console.log("= = = FUNCTION DEFINITIONS = = =\n");
+    console.log("Entry point function:");
+    printLineList(entryPointFunctionDefinition.lineList, 1);
+    console.log("");
+    var name;
+    for (name in functionDefinitionMap) {
+        var tempDefinition = functionDefinitionMap[name];
+        var tempText;
+        if (tempDefinition.isPublic) {
+            tempText = "Public function";
+        } else {
+            tempText = "Private function";
+        }
+        console.log(tempText + " " + name + ":");
+        printLineList(tempDefinition.lineList, 1);
+        console.log("");
+    }
+    console.log("= = = APP DATA LINE LIST = = =\n");
+    printLineList(appDataLineList);
+    console.log("");
 }
 
 function assembleCodeFile(sourcePath, destinationPath) {
@@ -720,18 +816,11 @@ function assembleCodeFile(sourcePath, destinationPath) {
     
     try {
         rootLineList = loadAndParseAssemblyFile(sourcePath);
+        rootLineList = extractFunctionDefinitions(rootLineList);
+        rootLineList = extractAppDataDefinitions(rootLineList);
         if (entryPointFunctionDefinition === null) {
             throw new AssemblyError("Application must contain exactly one entry point.");
         }
-        
-        // TEST CODE.
-        var index = 0;
-        while (index < rootLineList.length) {
-            var tempLine = rootLineList[index];
-            console.log(tempLine.toString());
-            index += 1;
-        }
-        
     } catch(error) {
         if (error instanceof AssemblyError) {
             if (error.lineNumber === null) {
@@ -744,6 +833,9 @@ function assembleCodeFile(sourcePath, destinationPath) {
             throw error;
         }
     }
+    
+    // TEST CODE.
+    printAssembledState();
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");
     console.log("Finished assembling.");

@@ -127,6 +127,34 @@ Incorporates additional assembly code in the given file.
 `MACRO macroName, argNames ... END`  
 Declares a macro which may be used as an assembly directive.
 
+## Miscellaneous Syntax
+
 Comments are preceded by a pound symbol (`#`).
+
+```
+# This function does exciting stuff.
+PRIVATE_FUNC myFunc
+    ARG myArg, u8 # Input number for the function.
+    # TODO: Implement.
+END
+```
+
+Use the unary at sign operator (`@`) to signify that an identifier is only visible in a single macro invocation.
+
+```
+MACRO myMacro, myArg
+    # Variable "@myVar" is not visible within myFunc.
+    VAR @myVar, u8
+    wrt @myVar, 3
+    add myArg, @myVar, myArg
+END
+
+PRIVATE_FUNC myFunc
+    # Variable "myVar" is distinct from "@myVar".
+    VAR myVar, u8
+    wrt myVar, 5
+    myMacro myVar
+END
+```
 
 
