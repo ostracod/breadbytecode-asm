@@ -43,10 +43,15 @@ new BinaryOperator("&", 6);
 new BinaryOperator("^", 7);
 new BinaryOperator("|", 8);
 
-// An Expression is either ArgTerm, UnaryExpression, or BinaryExpression.
+// An Expression is either ArgTerm, UnaryExpression,
+// BinaryExpression, or SubscriptExpression.
 
 function ArgTerm(text) {
     this.text = text;
+}
+
+ArgTerm.prototype.copy = function() {
+    return new ArgTerm(this.text);
 }
 
 ArgTerm.prototype.toString = function() {
@@ -86,13 +91,30 @@ ArgTerm.prototype.getStringValue = function() {
     return output;
 }
 
+ArgTerm.prototype.substituteIdentifiers = function(nameExpressionMap) {
+    if (!(this.text in nameExpressionMap)) {
+        return this;
+    }
+    var tempExpression = nameExpressionMap[this.text];
+    return tempExpression.copy();
+}
+
 function UnaryExpression(operator, operand) {
     this.operator = operator;
     this.operand = operand;
 }
 
+UnaryExpression.prototype.copy = function() {
+    return new UnaryExpression(this.operator, this.operand.copy());
+}
+
 UnaryExpression.prototype.toString = function() {
     return this.operator.text + this.operand.toString();
+}
+
+UnaryExpression.prototype.substituteIdentifiers = function(nameExpressionMap) {
+    this.operand = this.operand.substituteIdentifiers(nameExpressionMap);
+    return this;
 }
 
 function BinaryExpression(operator, operand1, operand2) {
@@ -101,8 +123,22 @@ function BinaryExpression(operator, operand1, operand2) {
     this.operand2 = operand2;
 }
 
+BinaryExpression.prototype.copy = function() {
+    return new BinaryExpression(
+        this.operator,
+        this.operand1.copy(),
+        this.operand2.copy()
+    );
+}
+
 BinaryExpression.prototype.toString = function() {
     return "(" + this.operand1.toString() + " " + this.operator.text + " " + this.operand2.toString() + ")";
+}
+
+BinaryExpression.prototype.substituteIdentifiers = function(nameExpressionMap) {
+    this.operand1 = this.operand1.substituteIdentifiers(nameExpressionMap);
+    this.operand1 = this.operand2.substituteIdentifiers(nameExpressionMap);
+    return this;
 }
 
 function SubscriptExpression(sequence, index, dataType) {
@@ -111,23 +147,73 @@ function SubscriptExpression(sequence, index, dataType) {
     this.dataType = dataType;
 }
 
+SubscriptExpression.prototype.copy = function() {
+    return new SubscriptExpression(
+        this.sequence.copy(),
+        this.index.copy(),
+        this.dataType.copy()
+    );
+}
+
 SubscriptExpression.prototype.toString = function() {
     return "(" + this.sequence.toString() + "[" + this.index.toString() + "]:" + this.dataType.toString() + ")";
+}
+
+SubscriptExpression.prototype.substituteIdentifiers = function(nameExpressionMap) {
+    this.sequence = this.sequence.substituteIdentifiers(nameExpressionMap);
+    this.index = this.index.substituteIdentifiers(nameExpressionMap);
+    this.dataType = this.dataType.substituteIdentifiers(nameExpressionMap);
+    return this;
+}
+
+function copyExpressions(expressionList) {
+    var output = [];
+    var index = 0;
+    while (index < expressionList.length) {
+        var tempExpression = expressionList[index];
+        output.push(tempExpression.copy());
+        index += 1;
+    }
+    return output;
+}
+
+function substituteIdentifiersInExpressions(expressionList, nameExpressionMap) {
+    var index = 0;
+    while (index < expressionList.length) {
+        var tempExpression = expressionList[index];
+        tempExpression = tempExpression.substituteIdentifiers(nameExpressionMap);
+        expressionList[index] = tempExpression;
+        index += 1;
+    }
 }
 
 function AssemblyLine(directiveName, argTextList) {
     this.directiveName = directiveName;
     this.argTextList = argTextList;
     this.argList = [];
-    var index = 0;
-    while (index < this.argTextList.length) {
-        var tempArg = parseArgText(this.argTextList[index]);
-        this.argList.push(tempArg);
-        index += 1;
+    if (typeof argTextList !== "undefined") {
+        var index = 0;
+        while (index < this.argTextList.length) {
+            var tempArg = parseArgText(this.argTextList[index]);
+            this.argList.push(tempArg);
+            index += 1;
+        }
     }
     this.lineNumber = null;
     // List of AssemblyLine or null.
     this.codeBlock = null;
+}
+
+AssemblyLine.prototype.copy = function() {
+    var output = new AssemblyLine(this.directiveName);
+    output.argList = copyExpressions(this.argList);
+    output.lineNumber = this.lineNumber;
+    if (this.codeBlock === null) {
+        output.codeBlock = null;
+    } else {
+        output.codeBlock = copyLines(this.codeBlock);
+    }
+    return output;
 }
 
 AssemblyLine.prototype.toString = function(indentationLevel) {
@@ -163,6 +249,33 @@ AssemblyLine.prototype.toString = function(indentationLevel) {
     }
 }
 
+AssemblyLine.prototype.substituteIdentifiers = function(nameExpressionMap) {
+    substituteIdentifiersInExpressions(this.argList, nameExpressionMap);
+    if (this.codeBlock !== null) {
+        substituteIdentifiersInLines(this.codeBlock, nameExpressionMap);
+    }
+}
+
+function copyLines(lineList) {
+    var output = [];
+    var index = 0;
+    while (index < lineList.length) {
+        var tempLine = lineList[index];
+        output.push(tempLine.copy());
+        index += 1;
+    }
+    return output;
+}
+
+function substituteIdentifiersInLines(lineList, nameExpressionMap) {
+    var index = 0;
+    while (index < lineList.length) {
+        var tempLine = lineList[index];
+        tempLine.substituteIdentifiers(nameExpressionMap);
+        index += 1;
+    }
+}
+
 function AssemblyError(message, lineNumber) {
     this.message = message;
     if (typeof lineNumber === "undefined") {
@@ -177,6 +290,24 @@ function MacroDefinition(name, argNameList, lineList) {
     this.argNameList = argNameList;
     this.lineList = lineList;
     macroDefinitionMap[this.name] = this;
+}
+
+MacroDefinition.prototype.invoke = function(argList) {
+    if (argList.length != this.argNameList.length) {
+        throw new AssemblyError("Wrong number of macro arguments.");
+    }
+    // Map from argument name to expression.
+    var nameExpressionMap = {};
+    var index = 0;
+    while (index < this.argNameList.length) {
+        var tempName = this.argNameList[index];
+        var tempExpression = argList[index];
+        nameExpressionMap[tempName] = tempExpression;
+        index += 1;
+    }
+    var output = copyLines(this.lineList);
+    substituteIdentifiersInLines(output, nameExpressionMap);
+    return output;
 }
 
 function FunctionDefinition(name, dependencyIndexExpression, lineList) {
@@ -588,7 +719,10 @@ function getArgAsString(argList, index) {
 //   lineList: LineList[],
 //   processCount: number
 // }
-function processLines(lineList, processLine) {
+function processLines(lineList, processLine, shouldProcessCodeBlocks) {
+    if (typeof shouldProcessCodeBlocks === "undefined") {
+        shouldProcessCodeBlocks = false;
+    }
     var outputLineList = [];
     var processCount = 0;
     var index = 0;
@@ -614,6 +748,23 @@ function processLines(lineList, processLine) {
             processCount += 1;
         }
         index += 1;
+    }
+    if (shouldProcessCodeBlocks) {
+        var index = 0;
+        while (index < outputLineList.length) {
+            var tempLine = outputLineList[index];
+            index += 1;
+            if (tempLine.codeBlock === null) {
+                continue;
+            }
+            var tempResult = processLines(
+                tempLine.codeBlock,
+                processLine,
+                shouldProcessCodeBlocks
+            );
+            tempLine.codeBlock = tempResult.lineList;
+            processCount += tempResult.processCount;
+        }
     }
     return {
         lineList: outputLineList,
@@ -645,9 +796,18 @@ function extractMacroDefinitions(lineList) {
 }
 
 function expandMacroInvocations(lineList) {
-    // TODO: Implement.
-    
-    return lineList;
+    var tempResult = processLines(lineList, function(line) {
+        var tempDirectiveName = line.directiveName;
+        if (tempDirectiveName in macroDefinitionMap) {
+            var tempDefinition = macroDefinitionMap[tempDirectiveName];
+            return tempDefinition.invoke(line.argList);
+        }
+        return null;
+    }, true);
+    return {
+        lineList: tempResult.lineList,
+        expandCount: tempResult.processCount
+    };
 }
 
 function extractConstantDefinitions(lineList) {
@@ -741,14 +901,17 @@ function loadAndParseAssemblyFile(path) {
     var tempLineList = parseAssemblyLines(tempLineTextList);
     tempLineList = collapseCodeBlocks(tempLineList);
     tempLineList = extractMacroDefinitions(tempLineList);
-    // We do this in a loop because included files may define
+    // We do all of this in a loop because included files may define
     // macros, and macros may define INCLUDE directives.
     while (true) {
-        tempLineList = expandMacroInvocations(tempLineList);
+        var tempResult = expandMacroInvocations(tempLineList);
+        tempLineList = tempResult.lineList;
+        var tempExpandCount = tempResult.expandCount;
         tempLineList = extractConstantDefinitions(tempLineList);
         var tempResult = processIncludeDirectives(tempLineList);
         tempLineList = tempResult.lineList;
-        if (tempResult.includeCount <= 0) {
+        var tempIncludeCount = tempResult.includeCount;
+        if (tempExpandCount <= 0 && tempIncludeCount <= 0) {
             break;
         }
     }
