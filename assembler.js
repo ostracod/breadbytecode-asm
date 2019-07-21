@@ -327,6 +327,29 @@ function FunctionDefinition(name, dependencyIndexExpression, lineList) {
         this.dependencyIndexExpression = dependencyIndexExpression;
     }
     this.lineList = lineList;
+    this.jumpTableLineList = [];
+    this.extractJumpTables();
+}
+
+FunctionDefinition.prototype.extractJumpTables = function() {
+    var self = this;
+    var tempResult = processLines(self.lineList, function(line) {
+        var tempDirectiveName = line.directiveName;
+        if (line.directiveName == "JMP_TABLE") {
+            if (line.argList.length != 0) {
+                throw new AssemblyError("Expected 0 arguments.");
+            }
+            var index = 0;
+            while (index < line.codeBlock.length) {
+                var tempLine = line.codeBlock[index];
+                self.jumpTableLineList.push(tempLine);
+                index += 1;
+            }
+            return [];
+        }
+        return null;
+    });
+    self.lineList = tempResult.lineList;
 }
 
 function skipWhitespace(text, index) {
@@ -731,7 +754,7 @@ function processLines(lineList, processLine, shouldProcessCodeBlocks) {
         try {
             var tempResult = processLine(tempLine);
         } catch(error) {
-            if (error instanceof AssemblyError) {
+            if (error instanceof AssemblyError && error.lineNumber === null) {
                 error.lineNumber = tempLine.lineNumber;
             }
             throw error;
@@ -962,6 +985,10 @@ function printAssembledState() {
         }
         console.log(tempText + " " + name + ":");
         printLineList(tempDefinition.lineList, 1);
+        if (tempDefinition.jumpTableLineList.length > 0) {
+            console.log("Jump table:");
+            printLineList(tempDefinition.jumpTableLineList, 1);
+        }
         console.log("");
     }
     console.log("= = = APP DATA LINE LIST = = =\n");
