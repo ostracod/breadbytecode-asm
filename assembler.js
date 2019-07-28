@@ -15,10 +15,26 @@ var entryPointFunctionDefinition;
 // Map from name to FunctionDefinition.
 var functionDefinitionMap;
 var appDataLineList;
+var nextMacroInvocationId = 0;
 
 function UnaryOperator(text) {
     this.text = text;
     unaryOperatorList.push(this);
+}
+
+UnaryOperator.prototype.createExpression = function(operand) {
+    return new UnaryExpression(this, operand);
+}
+
+function UnaryAtOperator() {
+    UnaryOperator.call(this, "@");
+}
+
+UnaryAtOperator.prototype = Object.create(UnaryOperator.prototype);
+UnaryAtOperator.prototype.constructor = UnaryAtOperator;
+
+UnaryAtOperator.prototype.createExpression = function(operand) {
+    return new UnaryAtExpression(operand);
 }
 
 function BinaryOperator(text, precedence) {
@@ -27,9 +43,13 @@ function BinaryOperator(text, precedence) {
     binaryOperatorList.push(this);
 }
 
+BinaryOperator.prototype.createExpression = function(operand1, operand2) {
+    return new BinaryExpression(this, operand1, operand2);
+}
+
 new UnaryOperator("-");
 new UnaryOperator("~");
-new UnaryOperator("@");
+var unaryAtOperator = new UnaryAtOperator();
 
 new BinaryOperator(":", 1);
 new BinaryOperator("*", 3);
@@ -43,12 +63,27 @@ new BinaryOperator("&", 6);
 new BinaryOperator("^", 7);
 new BinaryOperator("|", 8);
 
-// An Expression is either ArgTerm, UnaryExpression,
-// BinaryExpression, or SubscriptExpression.
+function Expression() {
+    // This is an abstract class.
+}
+
+// Methods which concrete subclasses of Expression must implement:
+// copy, toString, processExpressions
+
+Expression.prototype.substituteIdentifiers = function(nameExpressionMap) {
+    return null;
+}
+
+Expression.prototype.populateMacroInvocationId = function(macroInvocationId) {
+    // Do nothing.
+}
 
 function ArgTerm(text) {
     this.text = text;
 }
+
+ArgTerm.prototype = Object.create(Expression.prototype);
+ArgTerm.prototype.constructor = ArgTerm;
 
 ArgTerm.prototype.copy = function() {
     return new ArgTerm(this.text);
@@ -91,9 +126,17 @@ ArgTerm.prototype.getStringValue = function() {
     return output;
 }
 
+ArgTerm.prototype.processExpressions = function(processExpression) {
+    var tempResult = processExpression(this);
+    if (tempResult !== null) {
+        return tempResult;
+    }
+    return this;
+}
+
 ArgTerm.prototype.substituteIdentifiers = function(nameExpressionMap) {
     if (!(this.text in nameExpressionMap)) {
-        return this;
+        return null;
     }
     var tempExpression = nameExpressionMap[this.text];
     return tempExpression.copy();
@@ -104,6 +147,9 @@ function UnaryExpression(operator, operand) {
     this.operand = operand;
 }
 
+UnaryExpression.prototype = Object.create(Expression.prototype);
+UnaryExpression.prototype.constructor = UnaryExpression;
+
 UnaryExpression.prototype.copy = function() {
     return new UnaryExpression(this.operator, this.operand.copy());
 }
@@ -112,9 +158,38 @@ UnaryExpression.prototype.toString = function() {
     return this.operator.text + this.operand.toString();
 }
 
-UnaryExpression.prototype.substituteIdentifiers = function(nameExpressionMap) {
-    this.operand = this.operand.substituteIdentifiers(nameExpressionMap);
+UnaryExpression.prototype.processExpressions = function(processExpression) {
+    var tempResult = processExpression(this);
+    if (tempResult !== null) {
+        return tempResult;
+    }
+    this.operand = this.operand.processExpressions(processExpression);
     return this;
+}
+
+function UnaryAtExpression(operand) {
+    UnaryExpression.call(this, unaryAtOperator, operand);
+    this.macroInvocationId = null;
+}
+
+UnaryAtExpression.prototype = Object.create(UnaryExpression.prototype);
+UnaryAtExpression.prototype.constructor = UnaryAtExpression;
+
+UnaryAtExpression.prototype.copy = function() {
+    var output = new UnaryAtExpression(this.operand.copy());
+    output.macroInvocationId = this.macroInvocationId;
+    return output;
+}
+
+UnaryAtExpression.prototype.toString = function() {
+    if (this.macroInvocationId === null) {
+        return UnaryExpression.prototype.toString.call(this);
+    }
+    return this.operator.text + "{" + this.macroInvocationId + "}" + this.operand.toString();
+}
+
+UnaryAtExpression.prototype.populateMacroInvocationId = function(macroInvocationId) {
+    this.macroInvocationId = macroInvocationId;
 }
 
 function BinaryExpression(operator, operand1, operand2) {
@@ -122,6 +197,9 @@ function BinaryExpression(operator, operand1, operand2) {
     this.operand1 = operand1;
     this.operand2 = operand2;
 }
+
+BinaryExpression.prototype = Object.create(Expression.prototype);
+BinaryExpression.prototype.constructor = BinaryExpression;
 
 BinaryExpression.prototype.copy = function() {
     return new BinaryExpression(
@@ -135,9 +213,13 @@ BinaryExpression.prototype.toString = function() {
     return "(" + this.operand1.toString() + " " + this.operator.text + " " + this.operand2.toString() + ")";
 }
 
-BinaryExpression.prototype.substituteIdentifiers = function(nameExpressionMap) {
-    this.operand1 = this.operand1.substituteIdentifiers(nameExpressionMap);
-    this.operand1 = this.operand2.substituteIdentifiers(nameExpressionMap);
+BinaryExpression.prototype.processExpressions = function(processExpression) {
+    var tempResult = processExpression(this);
+    if (tempResult !== null) {
+        return tempResult;
+    }
+    this.operand1 = this.operand1.processExpressions(processExpression);
+    this.operand2 = this.operand2.processExpressions(processExpression);
     return this;
 }
 
@@ -146,6 +228,9 @@ function SubscriptExpression(sequence, index, dataType) {
     this.index = index;
     this.dataType = dataType;
 }
+
+SubscriptExpression.prototype = Object.create(Expression.prototype);
+SubscriptExpression.prototype.constructor = SubscriptExpression;
 
 SubscriptExpression.prototype.copy = function() {
     return new SubscriptExpression(
@@ -159,10 +244,14 @@ SubscriptExpression.prototype.toString = function() {
     return "(" + this.sequence.toString() + "[" + this.index.toString() + "]:" + this.dataType.toString() + ")";
 }
 
-SubscriptExpression.prototype.substituteIdentifiers = function(nameExpressionMap) {
-    this.sequence = this.sequence.substituteIdentifiers(nameExpressionMap);
-    this.index = this.index.substituteIdentifiers(nameExpressionMap);
-    this.dataType = this.dataType.substituteIdentifiers(nameExpressionMap);
+SubscriptExpression.prototype.processExpressions = function(processExpression) {
+    var tempResult = processExpression(this);
+    if (tempResult !== null) {
+        return tempResult;
+    }
+    this.sequence = this.sequence.processExpressions(processExpression);
+    this.index = this.index.processExpressions(processExpression);
+    this.dataType = this.dataType.processExpressions(processExpression);
     return this;
 }
 
@@ -177,11 +266,11 @@ function copyExpressions(expressionList) {
     return output;
 }
 
-function substituteIdentifiersInExpressions(expressionList, nameExpressionMap) {
+function processExpressions(expressionList, processExpression) {
     var index = 0;
     while (index < expressionList.length) {
         var tempExpression = expressionList[index];
-        tempExpression = tempExpression.substituteIdentifiers(nameExpressionMap);
+        tempExpression = tempExpression.processExpressions(processExpression)
         expressionList[index] = tempExpression;
         index += 1;
     }
@@ -249,10 +338,10 @@ AssemblyLine.prototype.toString = function(indentationLevel) {
     }
 }
 
-AssemblyLine.prototype.substituteIdentifiers = function(nameExpressionMap) {
-    substituteIdentifiersInExpressions(this.argList, nameExpressionMap);
+AssemblyLine.prototype.processExpressions = function(processExpression) {
+    processExpressions(this.argList, processExpression);
     if (this.codeBlock !== null) {
-        substituteIdentifiersInLines(this.codeBlock, nameExpressionMap);
+        processExpressionsInLines(this.codeBlock, processExpression);
     }
 }
 
@@ -267,13 +356,31 @@ function copyLines(lineList) {
     return output;
 }
 
-function substituteIdentifiersInLines(lineList, nameExpressionMap) {
+// processExpression accepts an expression, and returns
+// an expression or null. If the output is an expression,
+// the output expression replaces the input expression.
+// If the output is null, then subexpressions are
+// processed recursively.
+function processExpressionsInLines(lineList, processExpression) {
     var index = 0;
     while (index < lineList.length) {
         var tempLine = lineList[index];
-        tempLine.substituteIdentifiers(nameExpressionMap);
+        tempLine.processExpressions(processExpression);
         index += 1;
     }
+}
+
+function substituteIdentifiersInLines(lineList, nameExpressionMap) {
+    processExpressionsInLines(lineList, function(expression) {
+        return expression.substituteIdentifiers(nameExpressionMap);
+    });
+}
+
+function populateMacroInvocationIdInLines(lineList, macroInvocationId) {
+    processExpressionsInLines(lineList, function(expression) {
+        expression.populateMacroInvocationId(macroInvocationId);
+        return null;
+    });
 }
 
 function AssemblyError(message, lineNumber) {
@@ -305,8 +412,11 @@ MacroDefinition.prototype.invoke = function(argList) {
         nameExpressionMap[tempName] = tempExpression;
         index += 1;
     }
+    var macroInvocationId = nextMacroInvocationId
+    nextMacroInvocationId += 1;
     var output = copyLines(this.lineList);
     substituteIdentifiersInLines(output, nameExpressionMap);
+    populateMacroInvocationIdInLines(output, macroInvocationId);
     return output;
 }
 
@@ -334,7 +444,6 @@ function FunctionDefinition(name, dependencyIndexExpression, lineList) {
 FunctionDefinition.prototype.extractJumpTables = function() {
     var self = this;
     var tempResult = processLines(self.lineList, function(line) {
-        var tempDirectiveName = line.directiveName;
         if (line.directiveName == "JMP_TABLE") {
             if (line.argList.length != 0) {
                 throw new AssemblyError("Expected 0 arguments.");
@@ -517,7 +626,7 @@ function parseArgExpression(text, index, precedence) {
         // Create a unary expression.
         var tempResult = parseArgExpression(text, index, 0);
         var tempExpression = tempResult[0];
-        outputExpression = new UnaryExpression(tempOperator, tempExpression);
+        outputExpression = tempOperator.createExpression(tempExpression);
         index = tempResult[1];
     }
     // Keep parsing binary and ternary expressions until
@@ -569,8 +678,7 @@ function parseArgExpression(text, index, precedence) {
         // Create a binary expression.
         var tempResult = parseArgExpression(text, index, tempOperator.precedence);
         var tempExpression = tempResult[0];
-        outputExpression = new BinaryExpression(
-            tempOperator,
+        outputExpression = tempOperator.createExpression(
             outputExpression,
             tempExpression
         );
