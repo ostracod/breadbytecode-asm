@@ -3,6 +3,14 @@
 
 This utility converts assembly code to BreadBytecode for BreadSystem.
 
+## Usage
+
+Perform the following command:
+
+```
+node ./assemble.js (path to .bbasm file)
+```
+
 ## Instruction Syntax
 
 Each instruction begins with an opcode followed by any number of comma-separated argument expressions.
