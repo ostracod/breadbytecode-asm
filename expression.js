@@ -139,7 +139,9 @@ UnaryAtExpression.prototype.toString = function() {
 }
 
 UnaryAtExpression.prototype.populateMacroInvocationId = function(macroInvocationId) {
-    this.macroInvocationId = macroInvocationId;
+    if (this.macroInvocationId === null) {
+        this.macroInvocationId = macroInvocationId;
+    }
 }
 
 function BinaryExpression(operator, operand1, operand2) {
