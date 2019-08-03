@@ -27,9 +27,9 @@ LineUtils.prototype.processExpressionsInLines = function(lineList, processExpres
     }
 }
 
-LineUtils.prototype.substituteIdentifiersInLines = function(lineList, nameExpressionMap) {
+LineUtils.prototype.substituteIdentifiersInLines = function(lineList, identifierExpressionMap) {
     lineUtils.processExpressionsInLines(lineList, function(expression) {
-        return expression.substituteIdentifiers(nameExpressionMap);
+        return expression.substituteIdentifiers(identifierExpressionMap);
     });
 }
 

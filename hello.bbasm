@@ -59,14 +59,14 @@ PRIVATE_FUNC checkPerm
     ARG caller, p
     
     # Determine whether caller has permission to termProducerProtab.
-    VAR condition
+    VAR condition, u8
     hasPerm condition, caller, arbiter, termProducerProtab
     jmpZ skip1, condition
     ret
     
     # Throw an error if caller has insufficient permission.
     LBL skip1
-    VAR tempError
+    VAR tempError, p
     newAlloc tempError, 1, 2
     newTextAlloc tempError[0]:p, errorMessageStart, errorMessageEnd
     wrt tempError[0]:u16, permError
@@ -97,7 +97,7 @@ PUBLIC_FUNC setDriver, termProducerIface
     wrt driver, inputDriver
     
     # Return if driver is null.
-    VAR condition
+    VAR condition, u8
     equ condition, driver, null
     jmpZ skip1, condition
     ret

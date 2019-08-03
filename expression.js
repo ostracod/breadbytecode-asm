@@ -1,4 +1,7 @@
 
+var AssemblyError = require("./assemblyError").AssemblyError;
+var Identifier = require("./identifier").Identifier;
+
 var unaryAtOperator;
 
 function Expression() {
@@ -8,16 +11,32 @@ function Expression() {
 // Methods which concrete subclasses of Expression must implement:
 // copy, toString, processExpressions
 
+Expression.prototype.getIdentifierOrNull = function() {
+    return null;
+}
+
 Expression.prototype.getIdentifier = function() {
-    throw new AssemblyError("Expected identifier.");
+    var output = this.getIdentifierOrNull();
+    if (output === null) {
+        throw new AssemblyError("Expected identifier.");
+    }
+    return output;
 }
 
 Expression.prototype.getStringValue = function() {
     throw new AssemblyError("Expected string.");
 }
 
-Expression.prototype.substituteIdentifiers = function(nameExpressionMap) {
-    return null;
+Expression.prototype.substituteIdentifiers = function(identifierExpressionMap) {
+    var tempIdentifier = this.getIdentifierOrNull();
+    if (tempIdentifier === null) {
+        return null;
+    }
+    var tempExpression = identifierExpressionMap.get(tempIdentifier);
+    if (tempExpression === null) {
+        return null;
+    }
+    return tempExpression.copy();
 }
 
 Expression.prototype.populateMacroInvocationId = function(macroInvocationId) {
@@ -47,8 +66,8 @@ ArgTerm.prototype.processExpressions = function(processExpression) {
     return this;
 }
 
-ArgTerm.prototype.getIdentifier = function() {
-    return this.text;
+ArgTerm.prototype.getIdentifierOrNull = function() {
+    return new Identifier(this.text, null);
 }
 
 ArgTerm.prototype.getStringValue = function() {
@@ -82,14 +101,6 @@ ArgTerm.prototype.getStringValue = function() {
         index += 1;
     }
     return output;
-}
-
-ArgTerm.prototype.substituteIdentifiers = function(nameExpressionMap) {
-    if (!(this.text in nameExpressionMap)) {
-        return null;
-    }
-    var tempExpression = nameExpressionMap[this.text];
-    return tempExpression.copy();
 }
 
 function UnaryExpression(operator, operand) {
@@ -136,6 +147,13 @@ UnaryAtExpression.prototype.toString = function() {
         return UnaryExpression.prototype.toString.call(this);
     }
     return this.operator.text + "{" + this.macroInvocationId + "}" + this.operand.toString();
+}
+
+UnaryAtExpression.prototype.getIdentifierOrNull = function() {
+    if (!(this.operand instanceof ArgTerm)) {
+        return null;
+    }
+    return new Identifier(this.operand.text, this.macroInvocationId);
 }
 
 UnaryAtExpression.prototype.populateMacroInvocationId = function(macroInvocationId) {

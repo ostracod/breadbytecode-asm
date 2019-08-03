@@ -3,9 +3,9 @@ var Assembler = require("./assembler").Assembler;
 var AssemblyError = require("./assemblyError").AssemblyError;
 var lineUtils = require("./lineUtils").lineUtils;
 
-// If name is null, then the function is the entry point.
-function FunctionDefinition(name, dependencyIndexExpression, lineList) {
-    this.name = name;
+// If identifier is null, then the function is the entry point.
+function FunctionDefinition(identifier, dependencyIndexExpression, lineList) {
+    this.identifier = identifier;
     if (dependencyIndexExpression === null) {
         this.isPublic = false;
     } else {
@@ -71,7 +71,7 @@ FunctionDefinition.prototype.extractVariableDefinitions = function() {
 
 FunctionDefinition.prototype.printAssembledState = function() {
     var tempText;
-    if (this.name === null) {
+    if (this.identifier === null) {
         console.log("Entry point function:");
     } else {
         if (this.isPublic) {
@@ -79,7 +79,7 @@ FunctionDefinition.prototype.printAssembledState = function() {
         } else {
             tempText = "Private function";
         }
-        console.log(tempText + " " + this.name + ":");
+        console.log(tempText + " " + this.identifier.toString() + ":");
     }
     lineUtils.printLineList(this.lineList, 1);
     if (this.jumpTableLineList.length > 0) {
@@ -112,26 +112,26 @@ Assembler.prototype.extractFunctionDefinitions = function(lineList) {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
-            var tempName = tempArgList[0].getIdentifier();
+            var tempIdentifier = tempArgList[0].getIdentifier();
             var tempDefinition = new FunctionDefinition(
-                tempName,
+                tempIdentifier,
                 null,
                 line.codeBlock
             );
-            self.functionDefinitionMap[tempName] = tempDefinition;
+            self.functionDefinitionMap.set(tempIdentifier, tempDefinition);
             return [];
         }
         if (tempDirectiveName == "PUBLIC_FUNC") {
             if (tempArgList.length != 2) {
                 throw new AssemblyError("Expected 2 arguments.");
             }
-            var tempName = tempArgList[0].getIdentifier();
+            var tempIdentifier = tempArgList[0].getIdentifier();
             var tempDefinition = new FunctionDefinition(
-                tempName,
+                tempIdentifier,
                 tempArgList[1],
                 line.codeBlock
             );
-            self.functionDefinitionMap[tempName] = tempDefinition;
+            self.functionDefinitionMap.set(tempIdentifier, tempDefinition);
             return [];
         }
         return null;

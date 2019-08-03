@@ -2,18 +2,19 @@
 var fs = require("fs");
 
 var AssemblyError = require("./assemblyError").AssemblyError;
+var IdentifierMap = require("./identifier").IdentifierMap;
 var parseUtils = require("./parseUtils").parseUtils;
 var lineUtils = require("./lineUtils").lineUtils;
 
 function Assembler() {
     this.rootLineList = [];
-    // Map from name to Expression.
-    this.constantDefinitionMap = {};
+    // Map from identifier to ConstantDefinition.
+    this.constantDefinitionMap = new IdentifierMap();
     // Map from name to MacroDefinition.
     this.macroDefinitionMap = {};
     this.entryPointFunctionDefinition = null;
-    // Map from name to FunctionDefinition.
-    this.functionDefinitionMap = {};
+    // Map from identifier to FunctionDefinition.
+    this.functionDefinitionMap = new IdentifierMap();
     this.appDataLineList = [];
     this.nextMacroInvocationId = 0;
 }
@@ -50,28 +51,23 @@ Assembler.prototype.printAssembledState = function() {
     console.log("\n= = = ROOT LINE LIST = = =\n");
     lineUtils.printLineList(this.rootLineList);
     console.log("\n= = = CONSTANT DEFINITIONS = = =\n");
-    var name;
-    for (name in this.constantDefinitionMap) {
-        var tempExpression = this.constantDefinitionMap[name];
-        console.log(name + " = " + tempExpression.toString());
-    }
+    this.constantDefinitionMap.iterate(function(definition) {
+        definition.printAssembledState();
+    });
     console.log("\n= = = MACRO DEFINITIONS = = =\n");
     var name;
     for (name in this.macroDefinitionMap) {
         var tempDefinition = this.macroDefinitionMap[name];
-        console.log(name + " " + tempDefinition.argNameList.join(", ") + ":");
-        lineUtils.printLineList(tempDefinition.lineList, 1);
+        tempDefinition.printAssembledState();
         console.log("");
     }
     console.log("= = = FUNCTION DEFINITIONS = = =\n");
     this.entryPointFunctionDefinition.printAssembledState();
     console.log("");
-    var name;
-    for (name in this.functionDefinitionMap) {
-        var tempDefinition = this.functionDefinitionMap[name];
-        tempDefinition.printAssembledState();
+    this.functionDefinitionMap.iterate(function(definition) {
+        definition.printAssembledState();
         console.log("");
-    }
+    });
     console.log("= = = APP DATA LINE LIST = = =\n");
     lineUtils.printLineList(this.appDataLineList);
     console.log("");

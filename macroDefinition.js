@@ -3,29 +3,45 @@ var Assembler = require("./assembler").Assembler;
 var AssemblyError = require("./assemblyError").AssemblyError;
 var lineUtils = require("./lineUtils").lineUtils;
 
-function MacroDefinition(name, argNameList, lineList) {
+var tempResource = require("./identifier");
+var Identifier = tempResource.Identifier;
+var IdentifierMap = tempResource.IdentifierMap;
+
+function MacroDefinition(name, argIdentifierList, lineList) {
     this.name = name;
-    this.argNameList = argNameList;
+    this.argIdentifierList = argIdentifierList;
     this.lineList = lineList;
 }
 
 MacroDefinition.prototype.invoke = function(argList, macroInvocationId) {
-    if (argList.length != this.argNameList.length) {
+    if (argList.length != this.argIdentifierList.length) {
         throw new AssemblyError("Wrong number of macro arguments.");
     }
-    // Map from argument name to expression.
-    var nameExpressionMap = {};
+    // Map from argument identifier to expression.
+    var identifierExpressionMap = new IdentifierMap();
     var index = 0;
-    while (index < this.argNameList.length) {
-        var tempName = this.argNameList[index];
+    while (index < this.argIdentifierList.length) {
+        var tempIdentifier = this.argIdentifierList[index];
         var tempExpression = argList[index];
-        nameExpressionMap[tempName] = tempExpression;
+        identifierExpressionMap.set(tempIdentifier, tempExpression);
         index += 1;
     }
     var output = lineUtils.copyLines(this.lineList);
-    lineUtils.substituteIdentifiersInLines(output, nameExpressionMap);
+    lineUtils.substituteIdentifiersInLines(output, identifierExpressionMap);
     lineUtils.populateMacroInvocationIdInLines(output, macroInvocationId);
     return output;
+}
+
+MacroDefinition.prototype.printAssembledState = function() {
+    var tempTextList = [];
+    var index = 0;
+    while (index < this.argIdentifierList.length) {
+        var tempIdentifier = this.argIdentifierList[index];
+        tempTextList.push(tempIdentifier.toString());
+        index += 1;
+    }
+    console.log(this.name + " " + tempTextList.join(", ") + ":");
+    lineUtils.printLineList(this.lineList, 1);
 }
 
 Assembler.prototype.extractMacroDefinitions = function(lineList) {
@@ -37,16 +53,16 @@ Assembler.prototype.extractMacroDefinitions = function(lineList) {
                 throw new AssemblyError("Expected at least 1 argument.");
             }
             var tempName = tempArgList[0].getIdentifier();
-            var tempArgNameList = [];
+            var tempIdentifierList = [];
             var index = 1;
             while (index < tempArgList.length) {
-                var tempArgName = tempArgList[index].getIdentifier();
-                tempArgNameList.push(tempArgName);
+                var tempIdentifier = tempArgList[index].getIdentifier();
+                tempIdentifierList.push(tempIdentifier);
                 index += 1;
             }
             var tempDefinition = new MacroDefinition(
                 tempName,
-                tempArgNameList,
+                tempIdentifierList,
                 line.codeBlock
             );
             self.macroDefinitionMap[tempName] = tempDefinition;
