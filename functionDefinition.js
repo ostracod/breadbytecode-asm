@@ -3,6 +3,7 @@ var Assembler = require("./assembler").Assembler;
 var AssemblyError = require("./assemblyError").AssemblyError;
 var lineUtils = require("./lineUtils").lineUtils;
 
+// If name is null, then the function is the entry point.
 function FunctionDefinition(name, dependencyIndexExpression, lineList) {
     this.name = name;
     if (dependencyIndexExpression === null) {
@@ -13,12 +14,21 @@ function FunctionDefinition(name, dependencyIndexExpression, lineList) {
     }
     this.lineList = lineList;
     this.jumpTableLineList = [];
+    this.argVariableList = [];
+    this.localVariableList = [];
     this.extractJumpTables();
+    this.extractVariableDefinitions();
+}
+
+FunctionDefinition.prototype.processLines = function(processLine) {
+    var self = this;
+    var tempResult = lineUtils.processLines(self.lineList, processLine);
+    self.lineList = tempResult.lineList;
 }
 
 FunctionDefinition.prototype.extractJumpTables = function() {
     var self = this;
-    var tempResult = lineUtils.processLines(self.lineList, function(line) {
+    self.processLines(function(line) {
         if (line.directiveName == "JMP_TABLE") {
             if (line.argList.length != 0) {
                 throw new AssemblyError("Expected 0 arguments.");
@@ -33,7 +43,49 @@ FunctionDefinition.prototype.extractJumpTables = function() {
         }
         return null;
     });
-    self.lineList = tempResult.lineList;
+}
+
+FunctionDefinition.prototype.extractVariableDefinitions = function() {
+    var self = this;
+    self.processLines(function(line) {
+        var tempDirectiveName = line.directiveName;
+        if (line.directiveName == "ARG") {
+            if (line.argList.length < 2) {
+                throw new AssemblyError("Expected at least 2 arguments.");
+            }
+            // TODO: Create the argument variable.
+            
+            return [];
+        }
+        if (line.directiveName == "VAR") {
+            if (line.argList.length != 2) {
+                throw new AssemblyError("Expected 2 arguments.");
+            }
+            // TODO: Create the local variable.
+            
+            return [];
+        }
+        return null;
+    });
+}
+
+FunctionDefinition.prototype.printAssembledState = function() {
+    var tempText;
+    if (this.name === null) {
+        console.log("Entry point function:");
+    } else {
+        if (this.isPublic) {
+            tempText = "Public function";
+        } else {
+            tempText = "Private function";
+        }
+        console.log(tempText + " " + this.name + ":");
+    }
+    lineUtils.printLineList(this.lineList, 1);
+    if (this.jumpTableLineList.length > 0) {
+        console.log("Jump table:");
+        lineUtils.printLineList(this.jumpTableLineList, 1);
+    }
 }
 
 Assembler.prototype.extractFunctionDefinitions = function(lineList) {

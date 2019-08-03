@@ -64,24 +64,12 @@ Assembler.prototype.printAssembledState = function() {
         console.log("");
     }
     console.log("= = = FUNCTION DEFINITIONS = = =\n");
-    console.log("Entry point function:");
-    lineUtils.printLineList(this.entryPointFunctionDefinition.lineList, 1);
+    this.entryPointFunctionDefinition.printAssembledState();
     console.log("");
     var name;
     for (name in this.functionDefinitionMap) {
         var tempDefinition = this.functionDefinitionMap[name];
-        var tempText;
-        if (tempDefinition.isPublic) {
-            tempText = "Public function";
-        } else {
-            tempText = "Private function";
-        }
-        console.log(tempText + " " + name + ":");
-        lineUtils.printLineList(tempDefinition.lineList, 1);
-        if (tempDefinition.jumpTableLineList.length > 0) {
-            console.log("Jump table:");
-            lineUtils.printLineList(tempDefinition.jumpTableLineList, 1);
-        }
+        tempDefinition.printAssembledState();
         console.log("");
     }
     console.log("= = = APP DATA LINE LIST = = =\n");
