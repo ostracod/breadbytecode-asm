@@ -31,8 +31,4 @@ Assembler.prototype.extractConstantDefinitions = function(lineList) {
     return tempResult.lineList;
 }
 
-module.exports = {
-    ConstantDefinition: ConstantDefinition
-};
-
 

@@ -14,8 +14,8 @@ function FunctionDefinition(identifier, dependencyIndexExpression, lineList) {
     }
     this.lineList = lineList;
     this.jumpTableLineList = [];
-    this.argVariableList = [];
-    this.localVariableList = [];
+    this.argVariableDefinitionList = [];
+    this.localVariableDefinitionList = [];
     this.extractJumpTables();
     this.extractVariableDefinitions();
 }
@@ -45,30 +45,6 @@ FunctionDefinition.prototype.extractJumpTables = function() {
     });
 }
 
-FunctionDefinition.prototype.extractVariableDefinitions = function() {
-    var self = this;
-    self.processLines(function(line) {
-        var tempDirectiveName = line.directiveName;
-        if (line.directiveName == "ARG") {
-            if (line.argList.length < 2) {
-                throw new AssemblyError("Expected at least 2 arguments.");
-            }
-            // TODO: Create the argument variable.
-            
-            return [];
-        }
-        if (line.directiveName == "VAR") {
-            if (line.argList.length != 2) {
-                throw new AssemblyError("Expected 2 arguments.");
-            }
-            // TODO: Create the local variable.
-            
-            return [];
-        }
-        return null;
-    });
-}
-
 FunctionDefinition.prototype.printAssembledState = function() {
     var tempText;
     if (this.identifier === null) {
@@ -86,7 +62,23 @@ FunctionDefinition.prototype.printAssembledState = function() {
         console.log("Jump table:");
         lineUtils.printLineList(this.jumpTableLineList, 1);
     }
+    if (this.localVariableDefinitionList.length > 0) {
+        console.log("Local variables:");
+        var tempIndentation = lineUtils.getIndentation(1);
+        var index = 0;
+        while (index < this.localVariableDefinitionList.length) {
+            var tempDefinition = this.localVariableDefinitionList[index];
+            console.log(tempIndentation + tempDefinition.toString());
+            index += 1;
+        }
+    }
 }
+
+module.exports = {
+    FunctionDefinition: FunctionDefinition
+};
+
+require("./variableDefinition");
 
 Assembler.prototype.extractFunctionDefinitions = function(lineList) {
     var self = this;

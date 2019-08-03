@@ -40,6 +40,16 @@ LineUtils.prototype.populateMacroInvocationIdInLines = function(lineList, macroI
     });
 }
 
+LineUtils.prototype.getIndentation = function(indentationLevel) {
+    var output = "";
+    var tempCount = 0;
+    while (tempCount < indentationLevel) {
+        output = output + "    ";
+        tempCount += 1;
+    }
+    return output;
+}
+
 LineUtils.prototype.printLineList = function(lineList, indentationLevel) {
     if (typeof indentationLevel === "undefined") {
         indentationLevel = 0;

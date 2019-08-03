@@ -1,6 +1,7 @@
 
 var AssemblyError = require("./assemblyError").AssemblyError;
 var Identifier = require("./identifier").Identifier;
+var dataTypeUtils = require("./dataType").dataTypeUtils;
 
 var unaryAtOperator;
 
@@ -25,6 +26,10 @@ Expression.prototype.getIdentifier = function() {
 
 Expression.prototype.getStringValue = function() {
     throw new AssemblyError("Expected string.");
+}
+
+Expression.prototype.getDataType = function() {
+    throw new AssemblyError("Expected data type.");
 }
 
 Expression.prototype.substituteIdentifiers = function(identifierExpressionMap) {
@@ -101,6 +106,10 @@ ArgTerm.prototype.getStringValue = function() {
         index += 1;
     }
     return output;
+}
+
+ArgTerm.prototype.getDataType = function() {
+    return dataTypeUtils.getDataTypeByName(this.text);
 }
 
 function UnaryExpression(operator, operand) {

@@ -36,12 +36,7 @@ AssemblyLine.prototype.toString = function(indentationLevel) {
     if (typeof indentationLevel === "undefined") {
         indentationLevel = 0;
     }
-    var tempIndentation = "";
-    var tempCount = 0;
-    while (tempCount < indentationLevel) {
-        tempIndentation = tempIndentation + "    ";
-        tempCount += 1;
-    }
+    var tempIndentation = lineUtils.getIndentation(indentationLevel);
     var tempTextList = [];
     var index = 0;
     while (index < this.argList.length) {
