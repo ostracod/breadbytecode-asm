@@ -1,6 +1,7 @@
 
 var AssemblyError = require("./assemblyError").AssemblyError;
 var Identifier = require("./identifier").Identifier;
+var ArgDirectionPerm = require("./argDirectionPerm").ArgDirectionPerm;
 var dataTypeUtils = require("./dataType").dataTypeUtils;
 
 var unaryAtOperator;
@@ -30,6 +31,10 @@ Expression.prototype.getStringValue = function() {
 
 Expression.prototype.getDataType = function() {
     throw new AssemblyError("Expected data type.");
+}
+
+Expression.prototype.getArgDirectionPerm = function() {
+    throw new AssemblyError("Expected arg direction perm.");
 }
 
 Expression.prototype.substituteIdentifiers = function(identifierExpressionMap) {
@@ -110,6 +115,10 @@ ArgTerm.prototype.getStringValue = function() {
 
 ArgTerm.prototype.getDataType = function() {
     return dataTypeUtils.getDataTypeByName(this.text);
+}
+
+ArgTerm.prototype.getArgDirectionPerm = function() {
+    return new ArgDirectionPerm(this.text);
 }
 
 function UnaryExpression(operator, operand) {

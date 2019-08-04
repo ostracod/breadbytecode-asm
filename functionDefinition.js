@@ -45,9 +45,18 @@ FunctionDefinition.prototype.printAssembledState = function() {
         console.log("Jump table:");
         lineUtils.printLineList(this.jumpTableLineList, 1);
     }
+    var tempIndentation = lineUtils.getIndentation(1);
+    if (this.argVariableDefinitionList.length > 0) {
+        console.log("Argument variables:");
+        var index = 0;
+        while (index < this.argVariableDefinitionList.length) {
+            var tempDefinition = this.argVariableDefinitionList[index];
+            console.log(tempIndentation + tempDefinition.toString());
+            index += 1;
+        }
+    }
     if (this.localVariableDefinitionList.length > 0) {
         console.log("Local variables:");
-        var tempIndentation = lineUtils.getIndentation(1);
         var index = 0;
         while (index < this.localVariableDefinitionList.length) {
             var tempDefinition = this.localVariableDefinitionList[index];
