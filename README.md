@@ -102,9 +102,6 @@ Declares a bundle dependency with the given version number.
 `IFACE_DEP name, path, depIndexes, depModifiers`  
 Declares an application dependency with the given interfaces.
 
-`ENTRY_FUNC ... END`  
-Declares the entry point function region.
-
 `PRIVATE_FUNC name ... END`  
 Declares a private function region.
 
@@ -112,7 +109,7 @@ Declares a private function region.
 Declares a public function region which belongs to the given interface.
 
 `VAR name, dataType`  
-Declares a local variable.
+Declares a local or global variable.
 
 `ARG name, dataType, argPermModifiers`  
 Declares an argument variable.
