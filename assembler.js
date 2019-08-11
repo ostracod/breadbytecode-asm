@@ -12,10 +12,10 @@ function Assembler() {
     this.constantDefinitionMap = new IdentifierMap();
     // Map from name to MacroDefinition.
     this.macroDefinitionMap = {};
-    this.entryPointFunctionDefinition = null;
     // Map from identifier to FunctionDefinition.
     this.functionDefinitionMap = new IdentifierMap();
     this.appDataLineList = [];
+    this.globalVariableDefinitionList = [];
     this.nextMacroInvocationId = 0;
 }
 
@@ -23,6 +23,11 @@ Assembler.prototype.getNextMacroInvocationId = function() {
     var output = this.nextMacroInvocationId;
     this.nextMacroInvocationId += 1;
     return output;
+}
+
+Assembler.prototype.processLines = function(processLine) {
+    var tempResult = lineUtils.processLines(this.rootLineList, processLine);
+    this.rootLineList = tempResult.lineList;
 }
 
 Assembler.prototype.loadAndParseAssemblyFile = function(path) {
@@ -62,8 +67,6 @@ Assembler.prototype.printAssembledState = function() {
         console.log("");
     }
     console.log("= = = FUNCTION DEFINITIONS = = =\n");
-    this.entryPointFunctionDefinition.printAssembledState();
-    console.log("");
     this.functionDefinitionMap.iterate(function(definition) {
         definition.printAssembledState();
         console.log("");
@@ -76,11 +79,9 @@ Assembler.prototype.printAssembledState = function() {
 Assembler.prototype.assembleCodeFile = function(sourcePath, destinationPath) {
     try {
         this.rootLineList = this.loadAndParseAssemblyFile(sourcePath);
-        this.rootLineList = this.extractFunctionDefinitions(this.rootLineList);
-        this.rootLineList = this.extractAppDataDefinitions(this.rootLineList);
-        if (this.entryPointFunctionDefinition === null) {
-            throw new AssemblyError("Application must contain exactly one entry point.");
-        }
+        this.extractFunctionDefinitions();
+        this.extractAppDataDefinitions();
+        this.extractGlobalVariableDefinitions();
     } catch(error) {
         if (error instanceof AssemblyError) {
             if (error.lineNumber === null) {
@@ -110,6 +111,7 @@ require("./constantDefinition");
 require("./appDataDefinition");
 require("./macroDefinition");
 require("./functionDefinition");
+require("./variableDefinition");
 require("./includeDirective");
 
 

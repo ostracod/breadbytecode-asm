@@ -3,7 +3,8 @@ var Assembler = require("./assembler").Assembler;
 var AssemblyError = require("./assemblyError").AssemblyError;
 var lineUtils = require("./lineUtils").lineUtils;
 
-function FunctionDefinition(lineList) {
+function FunctionDefinition(identifier, lineList) {
+    this.identifier = identifier;
     this.lineList = lineList;
     this.jumpTableLineList = [];
     this.argVariableDefinitionList = [];
@@ -66,30 +67,11 @@ FunctionDefinition.prototype.printAssembledState = function() {
     }
 }
 
-function EntryPointFunctionDefinition(lineList) {
-    FunctionDefinition.call(this, lineList);
-}
-
-EntryPointFunctionDefinition.prototype = Object.create(FunctionDefinition.prototype);
-EntryPointFunctionDefinition.prototype.constructor = EntryPointFunctionDefinition;
-
-EntryPointFunctionDefinition.prototype.getTitle = function() {
-    return "Entry point function";
-}
-
-function NamedFunctionDefinition(identifier, lineList) {
-    this.identifier = identifier;
-    FunctionDefinition.call(this, lineList);
-}
-
-NamedFunctionDefinition.prototype = Object.create(FunctionDefinition.prototype);
-NamedFunctionDefinition.prototype.constructor = NamedFunctionDefinition;
-
 function PrivateFunctionDefinition(identifier, lineList) {
-    NamedFunctionDefinition.call(this, identifier, lineList);
+    FunctionDefinition.call(this, identifier, lineList);
 }
 
-PrivateFunctionDefinition.prototype = Object.create(NamedFunctionDefinition.prototype);
+PrivateFunctionDefinition.prototype = Object.create(FunctionDefinition.prototype);
 PrivateFunctionDefinition.prototype.constructor = PrivateFunctionDefinition;
 
 PrivateFunctionDefinition.prototype.getTitle = function() {
@@ -98,10 +80,10 @@ PrivateFunctionDefinition.prototype.getTitle = function() {
 
 function PublicFunctionDefinition(identifier, dependencyIndexExpression, lineList) {
     this.dependencyIndexExpression = dependencyIndexExpression;
-    NamedFunctionDefinition.call(this, identifier, lineList);
+    FunctionDefinition.call(this, identifier, lineList);
 }
 
-PublicFunctionDefinition.prototype = Object.create(NamedFunctionDefinition.prototype);
+PublicFunctionDefinition.prototype = Object.create(FunctionDefinition.prototype);
 PublicFunctionDefinition.prototype.constructor = PublicFunctionDefinition;
 
 PublicFunctionDefinition.prototype.getTitle = function() {
@@ -116,20 +98,9 @@ require("./variableDefinition");
 
 Assembler.prototype.extractFunctionDefinitions = function(lineList) {
     var self = this;
-    var tempResult = lineUtils.processLines(lineList, function(line) {
+    self.processLines(function(line) {
         var tempDirectiveName = line.directiveName;
         var tempArgList = line.argList;
-        if (tempDirectiveName == "ENTRY_FUNC") {
-            if (tempArgList.length != 0) {
-                throw new AssemblyError("Expected 0 arguments.");
-            }
-            if (self.entryPointFunctionDefinition !== null) {
-                throw new AssemblyError("Application must contain exactly one entry point.");
-            }
-            var tempDefinition = new EntryPointFunctionDefinition(line.codeBlock);
-            self.entryPointFunctionDefinition = tempDefinition;
-            return [];
-        }
         if (tempDirectiveName == "PRIVATE_FUNC") {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
@@ -157,7 +128,6 @@ Assembler.prototype.extractFunctionDefinitions = function(lineList) {
         }
         return null;
     });
-    return tempResult.lineList;
 }
 
 

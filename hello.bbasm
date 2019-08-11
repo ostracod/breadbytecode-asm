@@ -3,6 +3,7 @@
 
 BYTECODE_VER 1.0.0
 
+VER_DEP initableIface, ":system/ifaces/initable", 1.0.0, implemented
 VER_DEP termDriverIface, ":system/ifaces/termDriver", 1.0.0
 VER_DEP termProducerIface, ":system/ifaces/termProducer", 1.0.0, implemented
 VER_DEP termArbiterIface, ":system/ifaces/termArbiter", 1.0.0
@@ -14,12 +15,31 @@ MACRO newTextAlloc, dest, startLbl, endLbl
     wrtBuff dest[0]:u8, startLbl, endLbl - startLbl
 END
 
-ENTRY_FUNC
-    # To be populated by setDriver.
-    VAR driver, p
+VAR driver, p
+VAR thisAgent, p
+VAR termProducerProtab, p
+
+PUBLIC_FUNC init, initableIface
+    
+    # Determine whether caller has permission to adminPerm.
+    VAR adminProtab, p
+    VAR caller, p
+    VAR condition, u8
+    adminProtab adminProtab
+    caller caller
+    hasPerm condition, caller, null, adminProtab
+    jmpZ skip1, condition
+    ret
+    
+    # Throw an error if caller has insufficient permission.
+    LBL skip1
+    VAR tempError, p
+    newAlloc tempError, 1, 2
+    newTextAlloc tempError[0]:p, errorMessage1Start, errorMessage1End
+    wrt tempError[0]:u16, permErr
+    throw tempError
     
     # Retrieve the current agent.
-    VAR thisAgent, p
     thisAgent thisAgent
     
     # Retrieve the terminal arbiter.
@@ -37,7 +57,6 @@ ENTRY_FUNC
     publicFuncHandle getProtabHandle, arbiter, termArbiterIfacePath, getProtabName
     
     # Get termProducerProtab on this agent.
-    VAR termProducerProtab, p
     newArgFrame 2, 0
     wrt nextArgFrame[1]:p, thisAgent
     callHandle getProtabHandle
@@ -68,8 +87,8 @@ PRIVATE_FUNC checkPerm
     LBL skip1
     VAR tempError, p
     newAlloc tempError, 1, 2
-    newTextAlloc tempError[0]:p, errorMessageStart, errorMessageEnd
-    wrt tempError[0]:u16, permError
+    newTextAlloc tempError[0]:p, errorMessage2Start, errorMessage2End
+    wrt tempError[0]:u16, permErr
     throw tempError
 END
 
@@ -161,9 +180,13 @@ APP_DATA
     DATA "writeText"
     LBL writeTextNameEnd
     
-    LBL errorMessageStart
+    LBL errorMessage1Start
+    DATA "Caller must hold permission to adminProtab on this agent."
+    LBL errorMessage1End
+    
+    LBL errorMessage2Start
     DATA "Caller must hold permission to termProducerProtab on this agent."
-    LBL errorMessageStart
+    LBL errorMessage2End
     
     LBL welcomeMessageStart
     DATA "Hello world!\n"

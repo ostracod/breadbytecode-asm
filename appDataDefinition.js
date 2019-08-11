@@ -5,7 +5,7 @@ var lineUtils = require("./lineUtils").lineUtils;
 
 Assembler.prototype.extractAppDataDefinitions = function(lineList) {
     var self = this;
-    var tempResult = lineUtils.processLines(lineList, function(line) {
+    self.processLines(function(line) {
         if (line.directiveName == "APP_DATA") {
             if (line.argList.length != 0) {
                 throw new AssemblyError("Expected 0 arguments.");
@@ -20,7 +20,6 @@ Assembler.prototype.extractAppDataDefinitions = function(lineList) {
         }
         return null
     });
-    return tempResult.lineList;
 }
 
 
