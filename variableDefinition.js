@@ -1,5 +1,4 @@
 
-var ArgPerms = require("./argPerms").ArgPerms;
 var FunctionDefinition = require("./functionDefinition").FunctionDefinition;
 var Assembler = require("./assembler").Assembler;
 
@@ -12,8 +11,8 @@ VariableDefinition.prototype.toString = function() {
     return "VAR " + this.identifier.toString() + ", " + this.dataType.getName();
 }
 
-function ArgVariableDefinition(identifier, dataType, perms) {
-    this.perms = perms;
+function ArgVariableDefinition(identifier, dataType, permList) {
+    this.permList = permList;
     VariableDefinition.call(this, identifier, dataType);
 }
 
@@ -25,10 +24,10 @@ ArgVariableDefinition.prototype.toString = function() {
         this.identifier.toString(),
         this.dataType.getName()
     ]
-    var tempPermsTextList = this.perms.toStrings();
     var index = 0;
-    while (index < tempPermsTextList.length) {
-        var tempText = tempPermsTextList[index];
+    while (index < this.permList.length) {
+        var tempPerm = this.permList[index]
+        var tempText = tempPerm.toString();
         tempTextList.push(tempText);
         index += 1;
     }
@@ -55,18 +54,18 @@ function extractArgVariableDefinition(line) {
     }
     var tempIdentifier = tempArgList[0].getIdentifier();
     var tempDataType = tempArgList[1].getDataType();
-    var tempPerms = new ArgPerms();
+    var tempPermList = [];
     var index = 2;
     while (index < tempArgList.length) {
         var tempArg = tempArgList[index];
-        var tempPerm = tempArg.getArgDirectionPerm();
-        tempPerms.addDirectionPerm(tempPerm);
+        var tempPerm = tempArg.getArgPerm();
+        tempPermList.push(tempPerm);
         index += 1;
     }
     return new ArgVariableDefinition(
         tempIdentifier,
         tempDataType,
-        tempPerms
+        tempPermList
     );
 }
 

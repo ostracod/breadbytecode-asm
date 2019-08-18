@@ -17,27 +17,8 @@ END
 
 VAR driver, p
 VAR thisAgent, p
-VAR termProducerProtab, p
 
 PUBLIC_FUNC init, initableIface
-    
-    # Determine whether caller has permission to adminPerm.
-    VAR adminProtab, p
-    VAR caller, p
-    VAR condition, u8
-    adminProtab adminProtab
-    caller caller
-    hasPerm condition, caller, null, adminProtab
-    jmpZ skip1, condition
-    ret
-    
-    # Throw an error if caller has insufficient permission.
-    LBL skip1
-    VAR tempError, p
-    newAlloc tempError, 1, 2
-    newTextAlloc tempError[0]:p, errorMessage1Start, errorMessage1End
-    wrt tempError[0]:u16, permErr
-    throw tempError
     
     # Retrieve the current agent.
     thisAgent thisAgent
@@ -57,6 +38,7 @@ PUBLIC_FUNC init, initableIface
     publicFuncHandle getProtabHandle, arbiter, termArbiterIfacePath, getProtabName
     
     # Get termProducerProtab on this agent.
+    VAR termProducerProtab, p
     newArgFrame 2, 0
     wrt nextArgFrame[1]:p, thisAgent
     callHandle getProtabHandle
@@ -74,31 +56,8 @@ PUBLIC_FUNC init, initableIface
     givePerm launcher, termProducerPerm, -1
 END
 
-PRIVATE_FUNC checkPerm
-    ARG caller, p
-    
-    # Determine whether caller has permission to termProducerProtab.
-    VAR condition, u8
-    hasPerm condition, caller, arbiter, termProducerProtab
-    jmpZ skip1, condition
-    ret
-    
-    # Throw an error if caller has insufficient permission.
-    LBL skip1
-    VAR tempError, p
-    newAlloc tempError, 1, 2
-    newTextAlloc tempError[0]:p, errorMessage2Start, errorMessage2End
-    wrt tempError[0]:u16, permErr
-    throw tempError
-END
-
 PUBLIC_FUNC driver, termProducerIface
     ARG dest, p
-    
-    # Check caller permission.
-    newArgFrame 1, 0
-    caller nextArgFrame[0]:p
-    callIndex checkPerm
     
     # Return the driver.
     wrt dest, driver
@@ -106,11 +65,6 @@ END
 
 PUBLIC_FUNC setDriver, termProducerIface
     ARG inputDriver, p
-    
-    # Check caller permission.
-    newArgFrame 1, 0
-    caller nextArgFrame[0]:p
-    callIndex checkPerm
     
     # Set the terminal driver.
     wrt driver, inputDriver
@@ -143,26 +97,16 @@ PUBLIC_FUNC setDriver, termProducerIface
     # Print "Hello world" on the terminal.
     newArgFrame 1, 0
     newTextAlloc nextArgFrame[0]:p, welcomeMessageStart, welcomeMessageEnd
-    callHandle setProducerHandle
+    callHandle writeTextHandle
 END
 
 PUBLIC_FUNC sizeChanged, termProducerIface
-    # Check caller permission.
-    newArgFrame 1, 0
-    caller nextArgFrame[0]:p
-    callIndex checkPerm
-    
     # Do nothing.
 END
 
 PUBLIC_FUNC keyTyped, termProducerIface
     ARG key, u32
     ARG modifiers, u8
-    
-    # Check caller permission.
-    newArgFrame 1, 0
-    caller nextArgFrame[0]:p
-    callIndex checkPerm
     
     # Do nothing.
 END
@@ -179,14 +123,6 @@ APP_DATA
     LBL writeTextNameStart
     DATA "writeText"
     LBL writeTextNameEnd
-    
-    LBL errorMessage1Start
-    DATA "Caller must hold permission to adminProtab on this agent."
-    LBL errorMessage1End
-    
-    LBL errorMessage2Start
-    DATA "Caller must hold permission to termProducerProtab on this agent."
-    LBL errorMessage2End
     
     LBL welcomeMessageStart
     DATA "Hello world!\n"

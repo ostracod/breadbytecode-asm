@@ -60,22 +60,23 @@ Dependency modifiers:
 
 * `optional`
 * `implemented`
+* `guarded`
 
-An argument permission modifier consists of a sequence of letters with the following format:
+An argument permission consists of a sequence of letters with the following format:
 
-`(r/w/s)(i/o)(r?)(p?)(t?)`
+`(r/w/s)(a/i/c)(r?)(p?)(t?)`
 
-* `r/w/s` indicates whether to modify read, write, or sentry type permission
-* `i/o` indicates whether to add permission to the input or output
+* `r/w/s` indicates whether to give read, write, or sentry type permission
+* `a/i/c` indicates whether to give permission to the arbiter, implementer, or caller
 * Trailing `r` indicates that the permission should be recursive
 * Trailing `p` indicates that the permission should have infinite propagation count
 * Trailing `t` indicates that the permission should be temporary
 
-Example argument permission modifiers:
+Example argument permissions:
 
-* `rit` = Add temporary read permission to input
-* `wo` = Add write permission to output
-* `sirp` = Recursively add sentry type permission to input with infinite propagation count
+* `rat` = Give temporary read permission to arbiter
+* `wc` = Give write permission to caller
+* `sirp` = Recursively give sentry type permission to implementer with infinite propagation count
 
 Certain directives initiate code blocks which are terminated by the `END` directive. For example:
 

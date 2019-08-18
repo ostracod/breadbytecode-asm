@@ -7,9 +7,10 @@ var PERM_ACCESS = {
     sentryType: 2
 };
 
-var PERM_DIRECTION = {
-    input: 0,
-    output: 1
+var PERM_RECIPIENT = {
+    arbiter: 0,
+    implementer: 1,
+    caller: 2
 };
 
 var PERM_ATTRIBUTE = {
@@ -24,9 +25,10 @@ var characterAccessMap = {
     s: PERM_ACCESS.sentryType
 }
 
-var characterDirectionMap = {
-    i: PERM_DIRECTION.input,
-    o: PERM_DIRECTION.output
+var characterRecipientMap = {
+    a: PERM_RECIPIENT.arbiter,
+    i: PERM_RECIPIENT.implementer,
+    c: PERM_RECIPIENT.caller
 }
 
 var characterAttributeMap = {
@@ -47,23 +49,23 @@ function getReverseMap(map) {
 
 // Maps from enumeration value to character.
 var accessCharacterMap = getReverseMap(characterAccessMap);
-var directionCharacterMap = getReverseMap(characterDirectionMap);
+var recipientCharacterMap = getReverseMap(characterRecipientMap);
 var attributeCharacterMap = getReverseMap(characterAttributeMap);
 
-function ArgDirectionPerm(name) {
+function ArgPerm(name) {
     if (name.length < 2) {
-        throw new AssemblyError("Invalid arg direction perm.");
+        throw new AssemblyError("Invalid arg perm.");
     }
     var tempCharacter = name.charAt(0);
     if (!(tempCharacter in characterAccessMap)) {
-        throw new AssemblyError("Invalid arg direction perm.");
+        throw new AssemblyError("Invalid arg perm.");
     }
     this.access = characterAccessMap[tempCharacter];
     var tempCharacter = name.charAt(1);
-    if (!(tempCharacter in characterDirectionMap)) {
-        throw new AssemblyError("Invalid arg direction perm.");
+    if (!(tempCharacter in characterRecipientMap)) {
+        throw new AssemblyError("Invalid arg perm.");
     }
-    this.direction = characterDirectionMap[tempCharacter];
+    this.recipient = characterRecipientMap[tempCharacter];
     // Map from attribute enumeration value to boolean.
     this.attributeMap = {};
     var attributeName;
@@ -78,14 +80,14 @@ function ArgDirectionPerm(name) {
             var tempAttribute = characterAttributeMap[tempCharacter];
             this.attributeMap[tempAttribute] = true;
         } else {
-            throw new AssemblyError("Invalid arg direction perm.");
+            throw new AssemblyError("Invalid arg perm.");
         }
         index += 1;
     }
 }
 
-ArgDirectionPerm.prototype.toString = function() {
-    var output = accessCharacterMap[this.access] + directionCharacterMap[this.direction];
+ArgPerm.prototype.toString = function() {
+    var output = accessCharacterMap[this.access] + recipientCharacterMap[this.recipient];
     var attribute;
     for (attribute in this.attributeMap) {
         if (this.attributeMap[attribute]) {
@@ -95,20 +97,8 @@ ArgDirectionPerm.prototype.toString = function() {
     return output;
 }
 
-ArgDirectionPerm.prototype.merge = function(directionPerm) {
-    var attribute;
-    for (attribute in directionPerm.attributeMap) {
-        if (directionPerm.attributeMap[attribute]) {
-            this.attributeMap[attribute] = true;
-        }
-    }
-}
-
 module.exports = {
-    ArgDirectionPerm: ArgDirectionPerm,
-    PERM_ACCESS: PERM_ACCESS,
-    PERM_DIRECTION: PERM_DIRECTION,
-    PERM_ATTRIBUTE: PERM_ATTRIBUTE
+    ArgPerm: ArgPerm
 };
 
 
