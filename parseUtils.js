@@ -22,7 +22,7 @@ var tempResource = require("./operator");
 var unaryOperatorList = tempResource.unaryOperatorList;
 var binaryOperatorList = tempResource.binaryOperatorList;
 
-var codeBlockDirectiveNameSet = ["ENTRY_FUNC", "PRIVATE_FUNC", "PUBLIC_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
+var codeBlockDirectiveNameSet = ["ENTRY_FUNC", "PRIVATE_FUNC", "PUBLIC_FUNC", "GUARD_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
 
 ParseUtils.prototype.skipWhitespace = function(text, index) {
     while (index < text.length) {

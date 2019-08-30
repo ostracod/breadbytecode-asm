@@ -12,8 +12,7 @@ function Assembler() {
     this.constantDefinitionMap = new IdentifierMap();
     // Map from name to MacroDefinition.
     this.macroDefinitionMap = {};
-    // Map from identifier to FunctionDefinition.
-    this.functionDefinitionMap = new IdentifierMap();
+    this.functionDefinitionList = [];
     this.appDataLineList = [];
     this.globalVariableDefinitionList = [];
     this.nextMacroInvocationId = 0;
@@ -67,10 +66,13 @@ Assembler.prototype.printAssembledState = function() {
         console.log("");
     }
     console.log("= = = FUNCTION DEFINITIONS = = =\n");
-    this.functionDefinitionMap.iterate(function(definition) {
-        definition.printAssembledState();
+    var index = 0;
+    while (index < this.functionDefinitionList.length) {
+        var tempDefinition = this.functionDefinitionList[index]
+        tempDefinition.printAssembledState();
         console.log("");
-    });
+        index += 1;
+    };
     console.log("= = = APP DATA LINE LIST = = =\n");
     lineUtils.printLineList(this.appDataLineList);
     console.log("");

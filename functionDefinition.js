@@ -78,16 +78,50 @@ PrivateFunctionDefinition.prototype.getTitle = function() {
     return "Private function " + this.identifier.toString();
 }
 
-function PublicFunctionDefinition(identifier, dependencyIndexExpression, lineList) {
+function InterfaceFunctionDefinition(identifier, dependencyIndexExpression, lineList) {
     this.dependencyIndexExpression = dependencyIndexExpression;
     FunctionDefinition.call(this, identifier, lineList);
 }
 
-PublicFunctionDefinition.prototype = Object.create(FunctionDefinition.prototype);
+InterfaceFunctionDefinition.prototype = Object.create(FunctionDefinition.prototype);
+InterfaceFunctionDefinition.prototype.constructor = InterfaceFunctionDefinition;
+
+// Concrete subclasses of InterfaceFunctionDefinition must implement getTitlePrefix.
+
+InterfaceFunctionDefinition.prototype.getTitle = function() {
+    return this.getTitlePrefix() + " function " + this.identifier.toString() + " (" + this.dependencyIndexExpression.toString() + ")";
+}
+
+function PublicFunctionDefinition(identifier, dependencyIndexExpression, lineList) {
+    InterfaceFunctionDefinition.call(
+        this,
+        identifier,
+        dependencyIndexExpression,
+        lineList
+    );
+}
+
+PublicFunctionDefinition.prototype = Object.create(InterfaceFunctionDefinition.prototype);
 PublicFunctionDefinition.prototype.constructor = PublicFunctionDefinition;
 
-PublicFunctionDefinition.prototype.getTitle = function() {
-    return "Public function " + this.identifier.toString();
+PublicFunctionDefinition.prototype.getTitlePrefix = function() {
+    return "Public";
+}
+
+function GuardFunctionDefinition(identifier, dependencyIndexExpression, lineList) {
+    InterfaceFunctionDefinition.call(
+        this,
+        identifier,
+        dependencyIndexExpression,
+        lineList
+    );
+}
+
+GuardFunctionDefinition.prototype = Object.create(InterfaceFunctionDefinition.prototype);
+GuardFunctionDefinition.prototype.constructor = PublicFunctionDefinition;
+
+GuardFunctionDefinition.prototype.getTitlePrefix = function() {
+    return "Guard";
 }
 
 module.exports = {
@@ -110,7 +144,7 @@ Assembler.prototype.extractFunctionDefinitions = function(lineList) {
                 tempIdentifier,
                 line.codeBlock
             );
-            self.functionDefinitionMap.set(tempIdentifier, tempDefinition);
+            self.functionDefinitionList.push(tempDefinition);
             return [];
         }
         if (tempDirectiveName == "PUBLIC_FUNC") {
@@ -123,7 +157,20 @@ Assembler.prototype.extractFunctionDefinitions = function(lineList) {
                 tempArgList[1],
                 line.codeBlock
             );
-            self.functionDefinitionMap.set(tempIdentifier, tempDefinition);
+            self.functionDefinitionList.push(tempDefinition);
+            return [];
+        }
+        if (tempDirectiveName == "GUARD_FUNC") {
+            if (tempArgList.length != 2) {
+                throw new AssemblyError("Expected 2 arguments.");
+            }
+            var tempIdentifier = tempArgList[0].getIdentifier();
+            var tempDefinition = new GuardFunctionDefinition(
+                tempIdentifier,
+                tempArgList[1],
+                line.codeBlock
+            );
+            self.functionDefinitionList.push(tempDefinition);
             return [];
         }
         return null;

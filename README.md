@@ -104,10 +104,13 @@ Declares a bundle dependency with the given version number.
 Declares an application dependency with the given interfaces.
 
 `PRIVATE_FUNC name ... END`  
-Declares a private function region.
+Declares a private function.
 
 `PUBLIC_FUNC name, depIndex ... END`  
-Declares a public function region which belongs to the given interface.
+Declares a public function which belongs to the given interface.
+
+`GUARD_FUNC name, depIndex ... END`
+Declares a guard function which belongs to the given interface.
 
 `VAR name, dataType`  
 Declares a local or global variable.
