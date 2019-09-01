@@ -53,20 +53,12 @@ Expression.prototype.populateMacroInvocationId = function(macroInvocationId) {
     // Do nothing.
 }
 
-function ArgTerm(text) {
-    this.text = text;
+function ArgTerm() {
+    // This is an abstract class.
 }
 
 ArgTerm.prototype = Object.create(Expression.prototype);
 ArgTerm.prototype.constructor = ArgTerm;
-
-ArgTerm.prototype.copy = function() {
-    return new ArgTerm(this.text);
-}
-
-ArgTerm.prototype.toString = function() {
-    return this.text;
-}
 
 ArgTerm.prototype.processExpressions = function(processExpression) {
     var tempResult = processExpression(this);
@@ -76,49 +68,65 @@ ArgTerm.prototype.processExpressions = function(processExpression) {
     return this;
 }
 
-ArgTerm.prototype.getIdentifierOrNull = function() {
+function ArgWord(text) {
+    this.text = text;
+}
+
+ArgWord.prototype = Object.create(ArgTerm.prototype);
+ArgWord.prototype.constructor = ArgWord;
+
+ArgWord.prototype.copy = function() {
+    return new ArgWord(this.text);
+}
+
+ArgWord.prototype.toString = function() {
+    return this.text;
+}
+
+ArgWord.prototype.getIdentifierOrNull = function() {
     return new Identifier(this.text, null);
 }
 
-ArgTerm.prototype.getStringValue = function() {
-    if (this.text.length <= 0) {
-        throw new AssemblyError("Expected string.");
-    }
-    if (this.text.charAt(0) != "\""
-            || this.text.charAt(this.text.length - 1) != "\"") {
-        throw new AssemblyError("Expected string.");
-    }
-    var tempText = this.text.substring(1, this.text.length - 1);
-    var output = "";
-    var index = 0;
-    var tempIsEscaped = false;
-    while (index < tempText.length) {
-        var tempCharacter = tempText.charAt(index);
-        if (tempIsEscaped) {
-            if (tempCharacter == "n") {
-                output += "\n";
-            } else {
-                output += tempCharacter;
-            }
-            tempIsEscaped = false;
-        } else {
-            if (tempCharacter == "\\") {
-                tempIsEscaped = true;
-            } else {
-                output += tempCharacter;
-            }
-        }
-        index += 1;
-    }
-    return output;
-}
-
-ArgTerm.prototype.getDataType = function() {
+ArgWord.prototype.getDataType = function() {
     return dataTypeUtils.getDataTypeByName(this.text);
 }
 
-ArgTerm.prototype.getArgPerm = function() {
+ArgWord.prototype.getArgPerm = function() {
     return new ArgPerm(this.text);
+}
+
+function ArgNumber(value) {
+    this.value = value;
+}
+
+ArgNumber.prototype = Object.create(ArgTerm.prototype);
+ArgNumber.prototype.constructor = ArgNumber;
+
+ArgNumber.prototype.copy = function() {
+    return new ArgNumber(this.value);
+}
+
+ArgNumber.prototype.toString = function() {
+    return this.value + "";
+}
+
+function ArgString(value) {
+    this.value = value;
+}
+
+ArgString.prototype = Object.create(ArgTerm.prototype);
+ArgString.prototype.constructor = ArgString;
+
+ArgString.prototype.copy = function() {
+    return new ArgString(this.value);
+}
+
+ArgString.prototype.toString = function() {
+    return "\"" + this.value + "\"";
+}
+
+ArgString.prototype.getStringValue = function() {
+    return this.value;
 }
 
 function UnaryExpression(operator, operand) {
@@ -249,7 +257,9 @@ SubscriptExpression.prototype.processExpressions = function(processExpression) {
 }
 
 module.exports = {
-    ArgTerm: ArgTerm,
+    ArgWord: ArgWord,
+    ArgNumber: ArgNumber,
+    ArgString: ArgString,
     UnaryExpression: UnaryExpression,
     UnaryAtExpression: UnaryAtExpression,
     BinaryExpression: BinaryExpression,

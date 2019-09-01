@@ -42,6 +42,7 @@ new UnaryOperator("~");
 var unaryAtOperator = new UnaryAtOperator();
 
 new BinaryOperator(":", 1);
+new BinaryOperator(".", 1);
 new BinaryOperator("*", 3);
 new BinaryOperator("/", 3);
 new BinaryOperator("%", 3);

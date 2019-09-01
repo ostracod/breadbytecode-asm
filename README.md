@@ -28,6 +28,7 @@ Expression operators:
 * `(` and `)` manipulate order of operations
 * `value:dataType` specifies the data type of a value
 * `value[index]:dataType` accesses an element of a frame, region, or heap allocation
+* `interface.name` references a public function in an interface
 
 Data types:
 

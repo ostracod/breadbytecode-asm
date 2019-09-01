@@ -3,26 +3,17 @@ var parseUtils = require("./parseUtils").parseUtils;
 var lineUtils = require("./lineUtils").lineUtils;
 var expressionUtils = require("./expressionUtils").expressionUtils;
 
-function AssemblyLine(directiveName, argTextList) {
+function AssemblyLine(directiveName, argList) {
     this.directiveName = directiveName;
-    this.argTextList = argTextList;
-    this.argList = [];
-    if (typeof argTextList !== "undefined") {
-        var index = 0;
-        while (index < this.argTextList.length) {
-            var tempArg = parseUtils.parseArgText(this.argTextList[index]);
-            this.argList.push(tempArg);
-            index += 1;
-        }
-    }
+    this.argList = argList;
     this.lineNumber = null;
     // List of AssemblyLine or null.
     this.codeBlock = null;
 }
 
 AssemblyLine.prototype.copy = function() {
-    var output = new AssemblyLine(this.directiveName);
-    output.argList = expressionUtils.copyExpressions(this.argList);
+    var tempArgList = expressionUtils.copyExpressions(this.argList);
+    var output = new AssemblyLine(this.directiveName, tempArgList);
     output.lineNumber = this.lineNumber;
     if (this.codeBlock === null) {
         output.codeBlock = null;
