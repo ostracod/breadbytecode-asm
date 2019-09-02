@@ -62,9 +62,9 @@ LineUtils.prototype.printLineList = function(lineList, indentationLevel) {
     }
 }
 
-// processLine accepts a single line and line index.
-// processLine returns either a list of lines or null.
-// If the return value is null, no modification takes place.
+// processLine accepts a single line and returns
+// either a list of lines or null. If the return
+// value is null, no modification takes place.
 // Output format of processLines:
 // {
 //   lineList: LineList[],
@@ -80,7 +80,7 @@ LineUtils.prototype.processLines = function(lineList, processLine, shouldProcess
     while (index < lineList.length) {
         var tempLine = lineList[index];
         try {
-            var tempResult = processLine(tempLine, outputLineList.length);
+            var tempResult = processLine(tempLine);
         } catch(error) {
             if (error instanceof AssemblyError && error.lineNumber === null) {
                 error.lineNumber = tempLine.lineNumber;

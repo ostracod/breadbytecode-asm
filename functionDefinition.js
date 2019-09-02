@@ -11,9 +11,11 @@ function FunctionDefinition(identifier, lineList) {
     this.argVariableDefinitionList = [];
     this.localVariableDefinitionList = [];
     this.instructionLabelDefinitionList = [];
+    this.jumpTableLabelDefinitionList = [];
     this.extractJumpTables();
     this.extractVariableDefinitions();
-    this.extractLabelDefinitions();
+    this.extractInstructionLabelDefinitions();
+    this.extractJumpTableLabelDefinitions();
 }
 
 // Concrete subclasses of FunctionDefinition must implement getTitle.
@@ -21,6 +23,11 @@ function FunctionDefinition(identifier, lineList) {
 FunctionDefinition.prototype.processLines = function(processLine) {
     var tempResult = lineUtils.processLines(this.lineList, processLine);
     this.lineList = tempResult.lineList;
+}
+
+FunctionDefinition.prototype.processJumpTableLines = function(processLine) {
+    var tempResult = lineUtils.processLines(this.jumpTableLineList, processLine);
+    this.jumpTableLineList = tempResult.lineList;
 }
 
 FunctionDefinition.prototype.extractJumpTables = function() {
@@ -52,6 +59,7 @@ FunctionDefinition.prototype.printAssembledState = function() {
     niceUtils.printDefinitionList("Argument variables", this.argVariableDefinitionList);
     niceUtils.printDefinitionList("Local variables", this.localVariableDefinitionList);
     niceUtils.printDefinitionList("Instruction labels", this.instructionLabelDefinitionList);
+    niceUtils.printDefinitionList("Jump table labels", this.jumpTableLabelDefinitionList);
 }
 
 function PrivateFunctionDefinition(identifier, lineList) {
