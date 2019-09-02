@@ -2,6 +2,7 @@
 var Assembler = require("./assembler").Assembler;
 var AssemblyError = require("./assemblyError").AssemblyError;
 var lineUtils = require("./lineUtils").lineUtils;
+var niceUtils = require("./niceUtils").niceUtils;
 
 function FunctionDefinition(identifier, lineList) {
     this.identifier = identifier;
@@ -9,8 +10,10 @@ function FunctionDefinition(identifier, lineList) {
     this.jumpTableLineList = [];
     this.argVariableDefinitionList = [];
     this.localVariableDefinitionList = [];
+    this.instructionLabelDefinitionList = [];
     this.extractJumpTables();
     this.extractVariableDefinitions();
+    this.extractLabelDefinitions();
 }
 
 // Concrete subclasses of FunctionDefinition must implement getTitle.
@@ -46,25 +49,9 @@ FunctionDefinition.prototype.printAssembledState = function() {
         console.log("Jump table:");
         lineUtils.printLineList(this.jumpTableLineList, 1);
     }
-    var tempIndentation = lineUtils.getIndentation(1);
-    if (this.argVariableDefinitionList.length > 0) {
-        console.log("Argument variables:");
-        var index = 0;
-        while (index < this.argVariableDefinitionList.length) {
-            var tempDefinition = this.argVariableDefinitionList[index];
-            console.log(tempIndentation + tempDefinition.toString());
-            index += 1;
-        }
-    }
-    if (this.localVariableDefinitionList.length > 0) {
-        console.log("Local variables:");
-        var index = 0;
-        while (index < this.localVariableDefinitionList.length) {
-            var tempDefinition = this.localVariableDefinitionList[index];
-            console.log(tempIndentation + tempDefinition.toString());
-            index += 1;
-        }
-    }
+    niceUtils.printDefinitionList("Argument variables", this.argVariableDefinitionList);
+    niceUtils.printDefinitionList("Local variables", this.localVariableDefinitionList);
+    niceUtils.printDefinitionList("Instruction labels", this.instructionLabelDefinitionList);
 }
 
 function PrivateFunctionDefinition(identifier, lineList) {
@@ -129,6 +116,7 @@ module.exports = {
 };
 
 require("./variableDefinition");
+require("./labelDefinition");
 
 Assembler.prototype.extractFunctionDefinitions = function(lineList) {
     var self = this;
