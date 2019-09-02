@@ -11,7 +11,25 @@ function Expression() {
 }
 
 // Methods which concrete subclasses of Expression must implement:
-// copy, toString, processExpressions
+// copy, toString, processExpressionsHelper
+
+Expression.prototype.processExpressions = function(processExpression, shouldRecurAfterProcess) {
+    if (typeof shouldRecurAfterProcess === "undefined") {
+        shouldRecurAfterProcess = false;
+    }
+    var output = this;
+    while (true) {
+        var tempResult = output.processExpressionsHelper(processExpression, shouldRecurAfterProcess);
+        if (tempResult === null) {
+            return output;
+        }
+        output = tempResult;
+        if (!shouldRecurAfterProcess) {
+            break;
+        }
+    }
+    return output;
+}
 
 Expression.prototype.getIdentifierOrNull = function() {
     return null;
@@ -60,12 +78,12 @@ function ArgTerm() {
 ArgTerm.prototype = Object.create(Expression.prototype);
 ArgTerm.prototype.constructor = ArgTerm;
 
-ArgTerm.prototype.processExpressions = function(processExpression) {
+ArgTerm.prototype.processExpressionsHelper = function(processExpression, shouldRecurAfterProcess) {
     var tempResult = processExpression(this);
     if (tempResult !== null) {
         return tempResult;
     }
-    return this;
+    return null;
 }
 
 function ArgWord(text) {
@@ -145,13 +163,13 @@ UnaryExpression.prototype.toString = function() {
     return this.operator.text + this.operand.toString();
 }
 
-UnaryExpression.prototype.processExpressions = function(processExpression) {
+UnaryExpression.prototype.processExpressionsHelper = function(processExpression, shouldRecurAfterProcess) {
     var tempResult = processExpression(this);
     if (tempResult !== null) {
         return tempResult;
     }
-    this.operand = this.operand.processExpressions(processExpression);
-    return this;
+    this.operand = this.operand.processExpressions(processExpression, shouldRecurAfterProcess);
+    return null;
 }
 
 function UnaryAtExpression(operand) {
@@ -209,14 +227,14 @@ BinaryExpression.prototype.toString = function() {
     return "(" + this.operand1.toString() + " " + this.operator.text + " " + this.operand2.toString() + ")";
 }
 
-BinaryExpression.prototype.processExpressions = function(processExpression) {
+BinaryExpression.prototype.processExpressionsHelper = function(processExpression, shouldRecurAfterProcess) {
     var tempResult = processExpression(this);
     if (tempResult !== null) {
         return tempResult;
     }
-    this.operand1 = this.operand1.processExpressions(processExpression);
-    this.operand2 = this.operand2.processExpressions(processExpression);
-    return this;
+    this.operand1 = this.operand1.processExpressions(processExpression, shouldRecurAfterProcess);
+    this.operand2 = this.operand2.processExpressions(processExpression, shouldRecurAfterProcess);
+    return null;
 }
 
 BinaryExpression.prototype.getStringValue = function() {
@@ -245,15 +263,15 @@ SubscriptExpression.prototype.toString = function() {
     return "(" + this.sequence.toString() + "[" + this.index.toString() + "]:" + this.dataType.toString() + ")";
 }
 
-SubscriptExpression.prototype.processExpressions = function(processExpression) {
+SubscriptExpression.prototype.processExpressionsHelper = function(processExpression, shouldRecurAfterProcess) {
     var tempResult = processExpression(this);
     if (tempResult !== null) {
         return tempResult;
     }
-    this.sequence = this.sequence.processExpressions(processExpression);
-    this.index = this.index.processExpressions(processExpression);
-    this.dataType = this.dataType.processExpressions(processExpression);
-    return this;
+    this.sequence = this.sequence.processExpressions(processExpression, shouldRecurAfterProcess);
+    this.index = this.index.processExpressions(processExpression, shouldRecurAfterProcess);
+    this.dataType = this.dataType.processExpressions(processExpression, shouldRecurAfterProcess);
+    return null;
 }
 
 module.exports = {

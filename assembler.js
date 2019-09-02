@@ -29,6 +29,10 @@ Assembler.prototype.processLines = function(processLine) {
     this.rootLineList = tempResult.lineList;
 }
 
+Assembler.prototype.processExpressionsInLines = function(processExpression, shouldRecurAfterProcess) {
+    lineUtils.processExpressionsInLines(this.rootLineList, processExpression, shouldRecurAfterProcess);
+}
+
 Assembler.prototype.loadAndParseAssemblyFile = function(path) {
     var tempLineTextList = parseUtils.loadAssemblyFileContent(path);
     var tempLineList = parseUtils.parseAssemblyLines(tempLineTextList);
@@ -81,6 +85,7 @@ Assembler.prototype.printAssembledState = function() {
 Assembler.prototype.assembleCodeFile = function(sourcePath, destinationPath) {
     try {
         this.rootLineList = this.loadAndParseAssemblyFile(sourcePath);
+        this.expandConstantInvocations();
         this.extractFunctionDefinitions();
         this.extractAppDataDefinitions();
         this.extractGlobalVariableDefinitions();

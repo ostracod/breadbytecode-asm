@@ -31,4 +31,19 @@ Assembler.prototype.extractConstantDefinitions = function(lineList) {
     return tempResult.lineList;
 }
 
+Assembler.prototype.expandConstantInvocations = function() {
+    var self = this;
+    self.processExpressionsInLines(function(expression) {
+        var tempIdentifier = expression.getIdentifierOrNull();
+        if (tempIdentifier === null) {
+            return null;
+        }
+        var tempDefinition = self.constantDefinitionMap.get(tempIdentifier);
+        if (tempDefinition === null) {
+            return null;
+        }
+        return tempDefinition.expression.copy();
+    }, true);
+}
+
 

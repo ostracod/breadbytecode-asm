@@ -51,10 +51,10 @@ AssemblyLine.prototype.toString = function(indentationLevel) {
     }
 }
 
-AssemblyLine.prototype.processExpressions = function(processExpression) {
-    expressionUtils.processExpressions(this.argList, processExpression);
+AssemblyLine.prototype.processExpressions = function(processExpression, shouldRecurAfterProcess) {
+    expressionUtils.processExpressions(this.argList, processExpression, shouldRecurAfterProcess);
     if (this.codeBlock !== null) {
-        lineUtils.processExpressionsInLines(this.codeBlock, processExpression);
+        lineUtils.processExpressionsInLines(this.codeBlock, processExpression, shouldRecurAfterProcess);
     }
 }
 

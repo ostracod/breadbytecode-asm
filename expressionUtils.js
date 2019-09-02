@@ -20,12 +20,20 @@ ExpressionUtils.prototype.copyExpressions = function(expressionList) {
 // an expression or null. If the output is an expression,
 // the output expression replaces the input expression.
 // If the output is null, then subexpressions are
-// processed recursively.
-ExpressionUtils.prototype.processExpressions = function(expressionList, processExpression) {
+// processed recursively. If output is not null and
+// shouldRecurAfterProcess is true, then subexpressions
+// are also processed recursively.
+ExpressionUtils.prototype.processExpressions = function(expressionList, processExpression, shouldRecurAfterProcess) {
+    if (typeof shouldRecurAfterProcess === "undefined") {
+        shouldRecurAfterProcess = false;
+    }
     var index = 0;
     while (index < expressionList.length) {
         var tempExpression = expressionList[index];
-        tempExpression = tempExpression.processExpressions(processExpression)
+        tempExpression = tempExpression.processExpressions(
+            processExpression,
+            shouldRecurAfterProcess
+        );
         expressionList[index] = tempExpression;
         index += 1;
     }

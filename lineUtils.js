@@ -18,11 +18,11 @@ LineUtils.prototype.copyLines = function(lineList) {
     return output;
 }
 
-LineUtils.prototype.processExpressionsInLines = function(lineList, processExpression) {
+LineUtils.prototype.processExpressionsInLines = function(lineList, processExpression, shouldRecurAfterProcess) {
     var index = 0;
     while (index < lineList.length) {
         var tempLine = lineList[index];
-        tempLine.processExpressions(processExpression);
+        tempLine.processExpressions(processExpression, shouldRecurAfterProcess);
         index += 1;
     }
 }
