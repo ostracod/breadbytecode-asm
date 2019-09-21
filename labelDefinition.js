@@ -8,8 +8,8 @@ function LabelDefinition(identifier, index) {
     this.index = index;
 }
 
-LabelDefinition.prototype.toString = function() {
-    return this.identifier.toString() + " = " + this.index;
+LabelDefinition.prototype.getDisplayString = function() {
+    return this.identifier.getDisplayString() + " = " + this.index;
 }
 
 FunctionDefinition.prototype.extractInstructionLabelDefinitions = function() {
@@ -21,7 +21,7 @@ FunctionDefinition.prototype.extractInstructionLabelDefinitions = function() {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
-            var tempIdentifier = tempArgList[0].getIdentifier();
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
             var tempDefinition = new LabelDefinition(tempIdentifier, index);
             self.instructionLabelDefinitionList.push(tempDefinition);
             return [];
@@ -41,7 +41,7 @@ FunctionDefinition.prototype.extractJumpTableLabelDefinitions = function() {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
-            var tempIdentifier = tempArgList[0].getIdentifier();
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
             var tempDefinition = new LabelDefinition(tempIdentifier, index);
             self.jumpTableLabelDefinitionList.push(tempDefinition);
             return [];

@@ -86,7 +86,7 @@ function ArgPerm(name) {
     }
 }
 
-ArgPerm.prototype.toString = function() {
+ArgPerm.prototype.getDisplayString = function() {
     var output = accessCharacterMap[this.access] + recipientCharacterMap[this.recipient];
     var attribute;
     for (attribute in this.attributeMap) {

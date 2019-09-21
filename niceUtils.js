@@ -16,7 +16,7 @@ NiceUtils.prototype.printDefinitionList = function(title, definitionList) {
     var index = 0;
     while (index < definitionList.length) {
         var tempDefinition = definitionList[index];
-        console.log(tempIndentation + tempDefinition.toString());
+        console.log(tempIndentation + tempDefinition.getDisplayString());
         index += 1;
     }
 }

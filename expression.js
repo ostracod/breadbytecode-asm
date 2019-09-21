@@ -11,7 +11,7 @@ function Expression() {
 }
 
 // Methods which concrete subclasses of Expression must implement:
-// copy, toString, processExpressionsHelper
+// copy, getDisplayString, processExpressionsHelper
 
 Expression.prototype.processExpressions = function(processExpression, shouldRecurAfterProcess) {
     if (typeof shouldRecurAfterProcess === "undefined") {
@@ -31,32 +31,32 @@ Expression.prototype.processExpressions = function(processExpression, shouldRecu
     return output;
 }
 
-Expression.prototype.getIdentifierOrNull = function() {
+Expression.prototype.evaluateToIdentifierOrNull = function() {
     return null;
 }
 
-Expression.prototype.getIdentifier = function() {
-    var output = this.getIdentifierOrNull();
+Expression.prototype.evaluateToIdentifier = function() {
+    var output = this.evaluateToIdentifierOrNull();
     if (output === null) {
         throw new AssemblyError("Expected identifier.");
     }
     return output;
 }
 
-Expression.prototype.getStringValue = function() {
+Expression.prototype.evaluateToString = function() {
     throw new AssemblyError("Expected string.");
 }
 
-Expression.prototype.getDataType = function() {
+Expression.prototype.evaluateToDataType = function() {
     throw new AssemblyError("Expected data type.");
 }
 
-Expression.prototype.getArgPerm = function() {
+Expression.prototype.evaluateToArgPerm = function() {
     throw new AssemblyError("Expected arg perm.");
 }
 
 Expression.prototype.substituteIdentifiers = function(identifierExpressionMap) {
-    var tempIdentifier = this.getIdentifierOrNull();
+    var tempIdentifier = this.evaluateToIdentifierOrNull();
     if (tempIdentifier === null) {
         return null;
     }
@@ -97,19 +97,19 @@ ArgWord.prototype.copy = function() {
     return new ArgWord(this.text);
 }
 
-ArgWord.prototype.toString = function() {
+ArgWord.prototype.getDisplayString = function() {
     return this.text;
 }
 
-ArgWord.prototype.getIdentifierOrNull = function() {
+ArgWord.prototype.evaluateToIdentifierOrNull = function() {
     return new Identifier(this.text, null);
 }
 
-ArgWord.prototype.getDataType = function() {
+ArgWord.prototype.evaluateToDataType = function() {
     return dataTypeUtils.getDataTypeByName(this.text);
 }
 
-ArgWord.prototype.getArgPerm = function() {
+ArgWord.prototype.evaluateToArgPerm = function() {
     return new ArgPerm(this.text);
 }
 
@@ -124,7 +124,7 @@ ArgNumber.prototype.copy = function() {
     return new ArgNumber(this.value);
 }
 
-ArgNumber.prototype.toString = function() {
+ArgNumber.prototype.getDisplayString = function() {
     return this.value + "";
 }
 
@@ -139,11 +139,11 @@ ArgString.prototype.copy = function() {
     return new ArgString(this.value);
 }
 
-ArgString.prototype.toString = function() {
+ArgString.prototype.getDisplayString = function() {
     return "\"" + this.value + "\"";
 }
 
-ArgString.prototype.getStringValue = function() {
+ArgString.prototype.evaluateToString = function() {
     return this.value;
 }
 
@@ -159,8 +159,8 @@ UnaryExpression.prototype.copy = function() {
     return new UnaryExpression(this.operator, this.operand.copy());
 }
 
-UnaryExpression.prototype.toString = function() {
-    return this.operator.text + this.operand.toString();
+UnaryExpression.prototype.getDisplayString = function() {
+    return this.operator.text + this.operand.getDisplayString();
 }
 
 UnaryExpression.prototype.processExpressionsHelper = function(processExpression, shouldRecurAfterProcess) {
@@ -186,14 +186,14 @@ UnaryAtExpression.prototype.copy = function() {
     return output;
 }
 
-UnaryAtExpression.prototype.toString = function() {
+UnaryAtExpression.prototype.getDisplayString = function() {
     if (this.macroInvocationId === null) {
-        return UnaryExpression.prototype.toString.call(this);
+        return UnaryExpression.prototype.getDisplayString.call(this);
     }
-    return this.operator.text + "{" + this.macroInvocationId + "}" + this.operand.toString();
+    return this.operator.text + "{" + this.macroInvocationId + "}" + this.operand.getDisplayString();
 }
 
-UnaryAtExpression.prototype.getIdentifierOrNull = function() {
+UnaryAtExpression.prototype.evaluateToIdentifierOrNull = function() {
     if (!(this.operand instanceof ArgTerm)) {
         return null;
     }
@@ -223,8 +223,8 @@ BinaryExpression.prototype.copy = function() {
     );
 }
 
-BinaryExpression.prototype.toString = function() {
-    return "(" + this.operand1.toString() + " " + this.operator.text + " " + this.operand2.toString() + ")";
+BinaryExpression.prototype.getDisplayString = function() {
+    return "(" + this.operand1.getDisplayString() + " " + this.operator.text + " " + this.operand2.getDisplayString() + ")";
 }
 
 BinaryExpression.prototype.processExpressionsHelper = function(processExpression, shouldRecurAfterProcess) {
@@ -237,7 +237,7 @@ BinaryExpression.prototype.processExpressionsHelper = function(processExpression
     return null;
 }
 
-BinaryExpression.prototype.getStringValue = function() {
+BinaryExpression.prototype.evaluateToString = function() {
     // TODO: Accommodate string concatenation.
     throw new AssemblyError("Not yet implemented.");
 }
@@ -259,8 +259,8 @@ SubscriptExpression.prototype.copy = function() {
     );
 }
 
-SubscriptExpression.prototype.toString = function() {
-    return "(" + this.sequence.toString() + "[" + this.index.toString() + "]:" + this.dataType.toString() + ")";
+SubscriptExpression.prototype.getDisplayString = function() {
+    return "(" + this.sequence.getDisplayString() + "[" + this.index.getDisplayString() + "]:" + this.dataType.getDisplayString() + ")";
 }
 
 SubscriptExpression.prototype.processExpressionsHelper = function(processExpression, shouldRecurAfterProcess) {

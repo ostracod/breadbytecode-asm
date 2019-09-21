@@ -37,7 +37,7 @@ MacroDefinition.prototype.printAssembledState = function() {
     var index = 0;
     while (index < this.argIdentifierList.length) {
         var tempIdentifier = this.argIdentifierList[index];
-        tempTextList.push(tempIdentifier.toString());
+        tempTextList.push(tempIdentifier.getDisplayString());
         index += 1;
     }
     console.log(this.name + " " + tempTextList.join(", ") + ":");
@@ -52,11 +52,12 @@ Assembler.prototype.extractMacroDefinitions = function(lineList) {
             if (tempArgList.length < 1) {
                 throw new AssemblyError("Expected at least 1 argument.");
             }
-            var tempName = tempArgList[0].getIdentifier();
+            var tempNameIdentifier = tempArgList[0].evaluateToIdentifier();
+            var tempName = tempNameIdentifier.name;
             var tempIdentifierList = [];
             var index = 1;
             while (index < tempArgList.length) {
-                var tempIdentifier = tempArgList[index].getIdentifier();
+                var tempIdentifier = tempArgList[index].evaluateToIdentifier();
                 tempIdentifierList.push(tempIdentifier);
                 index += 1;
             }

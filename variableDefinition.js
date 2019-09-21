@@ -7,8 +7,8 @@ function VariableDefinition(identifier, dataType) {
     this.dataType = dataType;
 }
 
-VariableDefinition.prototype.toString = function() {
-    return "VAR " + this.identifier.toString() + ", " + this.dataType.getName();
+VariableDefinition.prototype.getDisplayString = function() {
+    return "VAR " + this.identifier.getDisplayString() + ", " + this.dataType.getName();
 }
 
 function ArgVariableDefinition(identifier, dataType, permList) {
@@ -19,15 +19,15 @@ function ArgVariableDefinition(identifier, dataType, permList) {
 ArgVariableDefinition.prototype = Object.create(VariableDefinition.prototype);
 ArgVariableDefinition.prototype.constructor = ArgVariableDefinition;
 
-ArgVariableDefinition.prototype.toString = function() {
+ArgVariableDefinition.prototype.getDisplayString = function() {
     var tempTextList = [
-        this.identifier.toString(),
+        this.identifier.getDisplayString(),
         this.dataType.getName()
     ]
     var index = 0;
     while (index < this.permList.length) {
-        var tempPerm = this.permList[index]
-        var tempText = tempPerm.toString();
+        var tempPerm = this.permList[index];
+        var tempText = tempPerm.getDisplayString();
         tempTextList.push(tempText);
         index += 1;
     }
@@ -39,8 +39,8 @@ function extractLocalVariableDefinition(line) {
         return null;
     }
     var tempArgList = line.argList;
-    var tempIdentifier = tempArgList[0].getIdentifier();
-    var tempDataType = tempArgList[1].getDataType();
+    var tempIdentifier = tempArgList[0].evaluateToIdentifier();
+    var tempDataType = tempArgList[1].evaluateToDataType();
     return new VariableDefinition(tempIdentifier, tempDataType);
 }
 
@@ -52,13 +52,13 @@ function extractArgVariableDefinition(line) {
     if (tempArgList.length < 2) {
         throw new AssemblyError("Expected at least 2 arguments.");
     }
-    var tempIdentifier = tempArgList[0].getIdentifier();
-    var tempDataType = tempArgList[1].getDataType();
+    var tempIdentifier = tempArgList[0].evaluateToIdentifier();
+    var tempDataType = tempArgList[1].evaluateToDataType();
     var tempPermList = [];
     var index = 2;
     while (index < tempArgList.length) {
         var tempArg = tempArgList[index];
-        var tempPerm = tempArg.getArgPerm();
+        var tempPerm = tempArg.evaluateToArgPerm();
         tempPermList.push(tempPerm);
         index += 1;
     }

@@ -9,7 +9,7 @@ function ConstantDefinition(identifier, expression) {
 }
 
 ConstantDefinition.prototype.printAssembledState = function() {
-    console.log(this.identifier.toString() + " = " + this.expression.toString());
+    console.log(this.identifier.getDisplayString() + " = " + this.expression.getDisplayString());
 }
 
 Assembler.prototype.extractConstantDefinitions = function(lineList) {
@@ -20,7 +20,7 @@ Assembler.prototype.extractConstantDefinitions = function(lineList) {
             if (tempArgList.length != 2) {
                 throw new AssemblyError("Expected 2 arguments.");
             }
-            var tempIdentifier = tempArgList[0].getIdentifier();
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
             var tempExpression = tempArgList[1];
             var tempDefinition = new ConstantDefinition(tempIdentifier, tempExpression);
             self.constantDefinitionMap.set(tempIdentifier, tempDefinition);
@@ -34,7 +34,7 @@ Assembler.prototype.extractConstantDefinitions = function(lineList) {
 Assembler.prototype.expandConstantInvocations = function() {
     var self = this;
     self.processExpressionsInLines(function(expression) {
-        var tempIdentifier = expression.getIdentifierOrNull();
+        var tempIdentifier = expression.evaluateToIdentifierOrNull();
         if (tempIdentifier === null) {
             return null;
         }

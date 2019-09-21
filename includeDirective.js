@@ -11,7 +11,7 @@ Assembler.prototype.processIncludeDirectives = function(lineList) {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
-            var tempPath = tempArgList[0].getStringValue();
+            var tempPath = tempArgList[0].evaluateToString();
             return self.loadAndParseAssemblyFile(tempPath);
         }
         return null;

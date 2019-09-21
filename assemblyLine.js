@@ -23,7 +23,7 @@ AssemblyLine.prototype.copy = function() {
     return output;
 }
 
-AssemblyLine.prototype.toString = function(indentationLevel) {
+AssemblyLine.prototype.getDisplayString = function(indentationLevel) {
     if (typeof indentationLevel === "undefined") {
         indentationLevel = 0;
     }
@@ -32,7 +32,7 @@ AssemblyLine.prototype.toString = function(indentationLevel) {
     var index = 0;
     while (index < this.argList.length) {
         var tempArg = this.argList[index];
-        tempTextList.push(tempArg.toString());
+        tempTextList.push(tempArg.getDisplayString());
         index += 1;
     }
     var tempLineText = tempIndentation + this.directiveName + " " + tempTextList.join(", ");
@@ -43,7 +43,7 @@ AssemblyLine.prototype.toString = function(indentationLevel) {
         var index = 0;
         while (index < this.codeBlock.length) {
             var tempLine = this.codeBlock[index];
-            tempLineTextList.push(tempLine.toString(indentationLevel + 1));
+            tempLineTextList.push(tempLine.getDisplayString(indentationLevel + 1));
             index += 1;
         }
         tempLineTextList.push("END");

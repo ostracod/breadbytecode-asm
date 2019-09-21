@@ -57,7 +57,7 @@ LineUtils.prototype.printLineList = function(lineList, indentationLevel) {
     var index = 0;
     while (index < lineList.length) {
         var tempLine = lineList[index];
-        console.log(tempLine.toString(indentationLevel));
+        console.log(tempLine.getDisplayString(indentationLevel));
         index += 1;
     }
 }

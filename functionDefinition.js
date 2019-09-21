@@ -70,7 +70,7 @@ PrivateFunctionDefinition.prototype = Object.create(FunctionDefinition.prototype
 PrivateFunctionDefinition.prototype.constructor = PrivateFunctionDefinition;
 
 PrivateFunctionDefinition.prototype.getTitle = function() {
-    return "Private function " + this.identifier.toString();
+    return "Private function " + this.identifier.getDisplayString();
 }
 
 function InterfaceFunctionDefinition(identifier, dependencyIndexExpression, lineList) {
@@ -84,7 +84,7 @@ InterfaceFunctionDefinition.prototype.constructor = InterfaceFunctionDefinition;
 // Concrete subclasses of InterfaceFunctionDefinition must implement getTitlePrefix.
 
 InterfaceFunctionDefinition.prototype.getTitle = function() {
-    return this.getTitlePrefix() + " function " + this.identifier.toString() + " (" + this.dependencyIndexExpression.toString() + ")";
+    return this.getTitlePrefix() + " function " + this.identifier.getDisplayString() + " (" + this.dependencyIndexExpression.getDisplayString() + ")";
 }
 
 function PublicFunctionDefinition(identifier, dependencyIndexExpression, lineList) {
@@ -135,7 +135,7 @@ Assembler.prototype.extractFunctionDefinitions = function(lineList) {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
-            var tempIdentifier = tempArgList[0].getIdentifier();
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
             var tempDefinition = new PrivateFunctionDefinition(
                 tempIdentifier,
                 line.codeBlock
@@ -147,7 +147,7 @@ Assembler.prototype.extractFunctionDefinitions = function(lineList) {
             if (tempArgList.length != 2) {
                 throw new AssemblyError("Expected 2 arguments.");
             }
-            var tempIdentifier = tempArgList[0].getIdentifier();
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
             var tempDefinition = new PublicFunctionDefinition(
                 tempIdentifier,
                 tempArgList[1],
@@ -160,7 +160,7 @@ Assembler.prototype.extractFunctionDefinitions = function(lineList) {
             if (tempArgList.length != 2) {
                 throw new AssemblyError("Expected 2 arguments.");
             }
-            var tempIdentifier = tempArgList[0].getIdentifier();
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
             var tempDefinition = new GuardFunctionDefinition(
                 tempIdentifier,
                 tempArgList[1],

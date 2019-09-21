@@ -5,7 +5,7 @@ function Identifier(name, macroInvocationId) {
     this.macroInvocationId = macroInvocationId;
 }
 
-Identifier.prototype.toString = function() {
+Identifier.prototype.getDisplayString = function() {
     if (this.macroInvocationId === null) {
         return this.name;
     }
