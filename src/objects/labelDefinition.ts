@@ -1,18 +1,23 @@
 
-var FunctionDefinition = require("./functionDefinition").FunctionDefinition;
-var AssemblyError = require("./assemblyError").AssemblyError;
-var lineUtils = require("./lineUtils").lineUtils;
+import {LabelDefinition as LabelDefinitionInterface, Identifier} from "models/objects";
+import {FunctionDefinition} from "objects/functionDefinition";
+import {AssemblyError} from "objects/assemblyError";
+import {lineUtils} from "utils/lineUtils";
 
-function LabelDefinition(identifier, index) {
-    this.identifier = identifier;
-    this.index = index;
+export interface LabelDefinition extends LabelDefinitionInterface {}
+
+export class LabelDefinition {
+    constructor(identifier: Identifier, index: number) {
+        this.identifier = identifier;
+        this.index = index;
+    }
 }
 
-LabelDefinition.prototype.getDisplayString = function() {
+LabelDefinition.prototype.getDisplayString = function(): string {
     return this.identifier.getDisplayString() + " = " + this.index;
 }
 
-FunctionDefinition.prototype.extractInstructionLabelDefinitions = function() {
+FunctionDefinition.prototype.extractInstructionLabelDefinitions = function(): void {
     var self = this;
     var index = 0;
     self.processLines(function(line) {
@@ -31,7 +36,7 @@ FunctionDefinition.prototype.extractInstructionLabelDefinitions = function() {
     });
 }
 
-FunctionDefinition.prototype.extractJumpTableLabelDefinitions = function() {
+FunctionDefinition.prototype.extractJumpTableLabelDefinitions = function(): void {
     var self = this;
     var index = 0;
     self.processJumpTableLines(function(line) {

@@ -1,29 +1,35 @@
 
-var parseUtils = require("./parseUtils").parseUtils;
-var lineUtils = require("./lineUtils").lineUtils;
-var expressionUtils = require("./expressionUtils").expressionUtils;
+import {ExpressionProcessor} from "models/items";
+import {Expression, AssemblyLine as AssemblyLineInterface} from "models/objects";
+import {parseUtils} from "utils/parseUtils";
+import {lineUtils} from "utils/lineUtils";
+import {expressionUtils} from "utils/expressionUtils";
 
-function AssemblyLine(directiveName, argList) {
-    this.directiveName = directiveName;
-    this.argList = argList;
-    this.lineNumber = null;
-    // List of AssemblyLine or null.
-    this.codeBlock = null;
+export interface AssemblyLine extends AssemblyLineInterface {}
+
+export class AssemblyLine {
+    constructor(directiveName: string, argList: Expression[]) {
+        this.directiveName = directiveName;
+        this.argList = argList;
+        this.lineNumber = null;
+        // List of AssemblyLine or null.
+        this.codeBlock = null;
+    }
 }
 
-AssemblyLine.prototype.copy = function() {
+AssemblyLine.prototype.copy = function(): AssemblyLine {
     var tempArgList = expressionUtils.copyExpressions(this.argList);
     var output = new AssemblyLine(this.directiveName, tempArgList);
     output.lineNumber = this.lineNumber;
     if (this.codeBlock === null) {
         output.codeBlock = null;
     } else {
-        output.codeBlock = copyLines(this.codeBlock);
+        output.codeBlock = lineUtils.copyLines(this.codeBlock);
     }
     return output;
 }
 
-AssemblyLine.prototype.getDisplayString = function(indentationLevel) {
+AssemblyLine.prototype.getDisplayString = function(indentationLevel: number): string {
     if (typeof indentationLevel === "undefined") {
         indentationLevel = 0;
     }
@@ -51,15 +57,14 @@ AssemblyLine.prototype.getDisplayString = function(indentationLevel) {
     }
 }
 
-AssemblyLine.prototype.processExpressions = function(processExpression, shouldRecurAfterProcess) {
+AssemblyLine.prototype.processExpressions = function(
+    processExpression: ExpressionProcessor,
+    shouldRecurAfterProcess?: boolean
+): void {
     expressionUtils.processExpressions(this.argList, processExpression, shouldRecurAfterProcess);
     if (this.codeBlock !== null) {
         lineUtils.processExpressionsInLines(this.codeBlock, processExpression, shouldRecurAfterProcess);
     }
 }
-
-module.exports = {
-    AssemblyLine: AssemblyLine,
-};
 
 

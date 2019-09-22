@@ -1,24 +1,25 @@
 
-var Assembler = require("./assembler").Assembler;
-var AssemblyError = require("./assemblyError").AssemblyError;
-var lineUtils = require("./lineUtils").lineUtils;
+import {MacroDefinition as MacroDefinitionInterface, Identifier, Expression, AssemblyLine} from "models/objects";
+import {Assembler} from "objects/assembler";
+import {AssemblyError} from "objects/assemblyError";
+import {lineUtils} from "utils/lineUtils";
+import {IdentifierMap} from "objects/identifier";
 
-var tempResource = require("./identifier");
-var Identifier = tempResource.Identifier;
-var IdentifierMap = tempResource.IdentifierMap;
+export interface MacroDefinition extends MacroDefinitionInterface {}
 
-function MacroDefinition(name, argIdentifierList, lineList) {
-    this.name = name;
-    this.argIdentifierList = argIdentifierList;
-    this.lineList = lineList;
+export class MacroDefinition {
+    constructor(name: string, argIdentifierList: Identifier[], lineList: AssemblyLine[]) {
+        this.name = name;
+        this.argIdentifierList = argIdentifierList;
+        this.lineList = lineList;
+    }
 }
 
-MacroDefinition.prototype.invoke = function(argList, macroInvocationId) {
+MacroDefinition.prototype.invoke = function(argList: Expression[], macroInvocationId: number): AssemblyLine[] {
     if (argList.length != this.argIdentifierList.length) {
         throw new AssemblyError("Wrong number of macro arguments.");
     }
-    // Map from argument identifier to expression.
-    var identifierExpressionMap = new IdentifierMap();
+    var identifierExpressionMap = new IdentifierMap() as IdentifierMap<Expression>;
     var index = 0;
     while (index < this.argIdentifierList.length) {
         var tempIdentifier = this.argIdentifierList[index];
@@ -32,19 +33,21 @@ MacroDefinition.prototype.invoke = function(argList, macroInvocationId) {
     return output;
 }
 
-MacroDefinition.prototype.printAssembledState = function() {
+MacroDefinition.prototype.getDisplayString = function(): string {
     var tempTextList = [];
+    var tempIdentifierTextList = [];
     var index = 0;
     while (index < this.argIdentifierList.length) {
         var tempIdentifier = this.argIdentifierList[index];
-        tempTextList.push(tempIdentifier.getDisplayString());
+        tempIdentifierTextList.push(tempIdentifier.getDisplayString());
         index += 1;
     }
-    console.log(this.name + " " + tempTextList.join(", ") + ":");
-    lineUtils.printLineList(this.lineList, 1);
+    tempTextList.push(this.name + " " + tempIdentifierTextList.join(", ") + ":");
+    tempTextList.push(lineUtils.getLineListDisplayString(this.lineList, 1));
+    return tempTextList.join("\n");
 }
 
-Assembler.prototype.extractMacroDefinitions = function(lineList) {
+Assembler.prototype.extractMacroDefinitions = function(lineList: AssemblyLine[]): AssemblyLine[] {
     var self = this;
     var tempResult = lineUtils.processLines(lineList, function(line) {
         var tempArgList = line.argList;
@@ -74,7 +77,7 @@ Assembler.prototype.extractMacroDefinitions = function(lineList) {
     return tempResult.lineList;
 }
 
-Assembler.prototype.expandMacroInvocations = function(lineList) {
+Assembler.prototype.expandMacroInvocations = function(lineList: AssemblyLine[]): {lineList: AssemblyLine[], expandCount: number} {
     var self = this;
     var tempResult = lineUtils.processLines(lineList, function(line) {
         var tempDirectiveName = line.directiveName;

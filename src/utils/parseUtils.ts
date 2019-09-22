@@ -1,32 +1,26 @@
 
-function ParseUtils() {
+import {ParseUtils as ParseUtilsInterface} from "models/utils";
+import {Operator, UnaryOperator, BinaryOperator} from "models/delegates";
+import {Expression} from "models/objects";
+
+export interface ParseUtils extends ParseUtilsInterface {}
+
+export class ParseUtils {
     
 }
 
-var parseUtils = new ParseUtils();
-
-module.exports = {
-    parseUtils: parseUtils
-};
+export var parseUtils = new ParseUtils();
 
 var fs = require("fs");
 
-var AssemblyError = require("./assemblyError").AssemblyError;
-var AssemblyLine = require("./assemblyLine").AssemblyLine;
-
-var tempResource = require("./expression");
-var SubscriptExpression = tempResource.SubscriptExpression;
-var ArgWord = tempResource.ArgWord;
-var ArgNumber = tempResource.ArgNumber;
-var ArgString = tempResource.ArgString;
-
-var tempResource = require("./operator");
-var unaryOperatorList = tempResource.unaryOperatorList;
-var binaryOperatorList = tempResource.binaryOperatorList;
+import {AssemblyError} from "objects/assemblyError";
+import {AssemblyLine} from "objects/assemblyLine";
+import {SubscriptExpression, ArgWord, ArgNumber, ArgString} from "objects/expression";
+import {unaryOperatorList, binaryOperatorList} from "delegates/operator";
 
 var codeBlockDirectiveNameSet = ["PRIVATE_FUNC", "PUBLIC_FUNC", "GUARD_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
 
-ParseUtils.prototype.skipWhitespace = function(text, index) {
+ParseUtils.prototype.skipWhitespace = function(text: string, index: number): number {
     while (index < text.length) {
         var tempCharacter = text.charAt(index);
         if (tempCharacter != " " && tempCharacter != "\t") {
@@ -37,7 +31,7 @@ ParseUtils.prototype.skipWhitespace = function(text, index) {
     return index;
 }
 
-ParseUtils.prototype.skipDirectiveCharacters = function(text, index) {
+ParseUtils.prototype.skipDirectiveCharacters = function(text: string, index: number): number {
     while (index < text.length) {
         var tempCharacter = text.charAt(index);
         if (tempCharacter == " " || tempCharacter == "\t" || tempCharacter == "#") {
@@ -48,7 +42,7 @@ ParseUtils.prototype.skipDirectiveCharacters = function(text, index) {
     return index;
 }
 
-ParseUtils.prototype.isFirstArgWordCharacter = function(character) {
+ParseUtils.prototype.isFirstArgWordCharacter = function(character: string): boolean {
     if (character == "_") {
         return true;
     }
@@ -58,7 +52,7 @@ ParseUtils.prototype.isFirstArgWordCharacter = function(character) {
         || (tempCharCode >= 97 && tempCharCode <= 122));
 }
 
-ParseUtils.prototype.isArgWordCharacter = function(character) {
+ParseUtils.prototype.isArgWordCharacter = function(character: string): boolean {
     if (character == "_") {
         return true;
     }
@@ -69,14 +63,17 @@ ParseUtils.prototype.isArgWordCharacter = function(character) {
         || (tempCharCode >= 48 && tempCharCode <= 57));
 }
 
-ParseUtils.prototype.isFirstArgNumberCharacter = function(character) {
+ParseUtils.prototype.isFirstArgNumberCharacter = function(character: string): boolean {
     var tempCharCode = character.charCodeAt(0);
     // Digits.
     return (tempCharCode >= 48 && tempCharCode <= 57);
 }
 
-// Returns {operator: Operator, index: number}.
-ParseUtils.prototype.parseArgOperator = function(text, index, operatorList) {
+ParseUtils.prototype.parseArgOperator = function(
+    text: string,
+    index: number,
+    operatorList: Operator[]
+): {operator: Operator, index: number} {
     var tempIndex = 0;
     while (tempIndex < operatorList.length) {
         var tempOperator = operatorList[tempIndex];
@@ -94,8 +91,7 @@ ParseUtils.prototype.parseArgOperator = function(text, index, operatorList) {
     return {operator: null, index: index};
 }
 
-// Returns {argWord: ArgWord, index: number}.
-ParseUtils.prototype.parseArgWord = function(text, index) {
+ParseUtils.prototype.parseArgWord = function(text: string, index: number): {argWord: ArgWord, index: number} {
     var tempStartIndex = index;
     while (index < text.length) {
         var tempCharacter = text.charAt(index);
@@ -112,8 +108,7 @@ ParseUtils.prototype.parseArgWord = function(text, index) {
     };
 }
 
-// Returns {argNumber: ArgNumber, index: number}.
-ParseUtils.prototype.parseArgNumber = function(text, index) {
+ParseUtils.prototype.parseArgNumber = function(text: string, index: number): {argNumber: ArgNumber, index: number} {
     // TODO: Support hexadecimal numbers, floats, and version numbers.
     var tempStartIndex = index;
     while (index < text.length) {
@@ -133,8 +128,7 @@ ParseUtils.prototype.parseArgNumber = function(text, index) {
     };
 }
 
-// Returns {argString: ArgString, index: number}.
-ParseUtils.prototype.parseArgString = function(text, index) {
+ParseUtils.prototype.parseArgString = function(text: string, index: number): {argString: ArgString, index: number} {
     var tempCharacter = text.charAt(index);
     if (tempCharacter != "\"") {
         throw new AssemblyError("Expected quotation mark.");
@@ -171,39 +165,42 @@ ParseUtils.prototype.parseArgString = function(text, index) {
     };
 }
 
-// Returns {expression: Expression, index: number}.
-ParseUtils.prototype.parseArgExpression = function(text, index, precedence) {
+ParseUtils.prototype.parseArgExpression = function(
+    text: string,
+    index: number,
+    precedence: number
+): {expression: Expression, index: number} {
     index = parseUtils.skipWhitespace(text, index);
     if (index >= text.length) {
         throw new AssemblyError("Expected expression.");
     }
     var outputExpression;
     // Look for unary operator.
-    var tempResult = parseUtils.parseArgOperator(text, index, unaryOperatorList);
-    var tempOperator = tempResult.operator;
-    if (tempOperator === null) {
+    var tempOperatorResult = parseUtils.parseArgOperator(text, index, unaryOperatorList);
+    var tempUnaryOperator = tempOperatorResult.operator as UnaryOperator;
+    if (tempUnaryOperator === null) {
         var tempCharacter = text.charAt(index);
         if (parseUtils.isFirstArgWordCharacter(tempCharacter)) {
             // Parse keyword or identifier.
-            var tempResult = parseUtils.parseArgWord(text, index);
-            index = tempResult.index;
-            outputExpression = tempResult.argWord;
+            var tempResult1 = parseUtils.parseArgWord(text, index);
+            index = tempResult1.index;
+            outputExpression = tempResult1.argWord;
         } else if (parseUtils.isFirstArgNumberCharacter(tempCharacter)) {
             // Parse number literal.
-            var tempResult = parseUtils.parseArgNumber(text, index);
-            index = tempResult.index;
-            outputExpression = tempResult.argNumber;
+            var tempResult2 = parseUtils.parseArgNumber(text, index);
+            index = tempResult2.index;
+            outputExpression = tempResult2.argNumber;
         } else if (tempCharacter == "\"") {
             // Parse string literal.
-            var tempResult = parseUtils.parseArgString(text, index);
-            index = tempResult.index;
-            outputExpression = tempResult.argString;
+            var tempResult3 = parseUtils.parseArgString(text, index);
+            index = tempResult3.index;
+            outputExpression = tempResult3.argString;
         } else if (tempCharacter == "(") {
             // Parse expression in parentheses.
             index += 1;
-            var tempResult = parseUtils.parseArgExpression(text, index, 99);
-            outputExpression = tempResult.expression;
-            index = tempResult.index;
+            var tempResult4 = parseUtils.parseArgExpression(text, index, 99);
+            outputExpression = tempResult4.expression;
+            index = tempResult4.index;
             index = parseUtils.skipWhitespace(text, index);
             if (index >= text.length) {
                 throw new AssemblyError("Expected closing parenthesis.");
@@ -217,12 +214,12 @@ ParseUtils.prototype.parseArgExpression = function(text, index, precedence) {
             throw new AssemblyError("Unexpected symbol.");
         }
     } else {
-        index = tempResult.index;
+        index = tempOperatorResult.index;
         // Create a unary expression.
-        var tempResult = parseUtils.parseArgExpression(text, index, 0);
-        var tempExpression = tempResult.expression;
-        outputExpression = tempOperator.createExpression(tempExpression);
-        index = tempResult.index;
+        var tempExpressionResult = parseUtils.parseArgExpression(text, index, 0);
+        var tempExpression = tempExpressionResult.expression;
+        outputExpression = tempUnaryOperator.createExpression(tempExpression);
+        index = tempExpressionResult.index;
     }
     // Keep parsing binary and ternary expressions until
     // we meet input precedence or reach the end.
@@ -238,9 +235,9 @@ ParseUtils.prototype.parseArgExpression = function(text, index, precedence) {
             }
             // Create a subscript expression.
             index += 1;
-            var tempResult = parseUtils.parseArgExpression(text, index, 99);
-            var tempIndexExpression = tempResult.expression;
-            index = tempResult.index;
+            var tempExpressionResult = parseUtils.parseArgExpression(text, index, 99);
+            var tempIndexExpression = tempExpressionResult.expression;
+            index = tempExpressionResult.index;
             index = parseUtils.skipWhitespace(text, index);
             if (index >= text.length - 1) {
                 throw new AssemblyError("Expected subscript data type.");
@@ -250,9 +247,9 @@ ParseUtils.prototype.parseArgExpression = function(text, index, precedence) {
                 throw new AssemblyError("Expected subscript data type.");
             }
             index += 2;
-            var tempResult = parseUtils.parseArgExpression(text, index, 1);
-            var tempDataTypeExpression = tempResult.expression;
-            index = tempResult.index;
+            var tempExpressionResult = parseUtils.parseArgExpression(text, index, 1);
+            var tempDataTypeExpression = tempExpressionResult.expression;
+            index = tempExpressionResult.index;
             outputExpression = new SubscriptExpression(
                 outputExpression,
                 tempIndexExpression,
@@ -261,28 +258,28 @@ ParseUtils.prototype.parseArgExpression = function(text, index, precedence) {
             continue;
         }
         // Look for binary operator.
-        var tempResult = parseUtils.parseArgOperator(text, index, binaryOperatorList);
-        var tempOperator = tempResult.operator;
-        if (tempOperator === null) {
+        var tempOperatorResult = parseUtils.parseArgOperator(text, index, binaryOperatorList);
+        var tempBinaryOperator = tempOperatorResult.operator as BinaryOperator;
+        if (tempBinaryOperator === null) {
             break;
         }
-        if (tempOperator.precedence >= precedence) {
+        if (tempBinaryOperator.precedence >= precedence) {
             break;
         }
-        index = tempResult.index;
+        index = tempOperatorResult.index;
         // Create a binary expression.
-        var tempResult = parseUtils.parseArgExpression(text, index, tempOperator.precedence);
-        var tempExpression = tempResult.expression;
-        outputExpression = tempOperator.createExpression(
+        var tempExpressionResult = parseUtils.parseArgExpression(text, index, tempBinaryOperator.precedence);
+        var tempExpression = tempExpressionResult.expression;
+        outputExpression = tempBinaryOperator.createExpression(
             outputExpression,
             tempExpression
         );
-        index = tempResult.index;
+        index = tempExpressionResult.index;
     }
     return {expression: outputExpression, index: index};
 }
 
-ParseUtils.prototype.parseLineText = function(text) {
+ParseUtils.prototype.parseLineText = function(text: string): AssemblyLine {
     
     var index = 0;
     
@@ -311,7 +308,7 @@ ParseUtils.prototype.parseLineText = function(text) {
             }
         }
         // Extract the argument.
-        var tempResult = parseUtils.parseArgExpression(text, index);
+        var tempResult = parseUtils.parseArgExpression(text, index, 99);
         index = tempResult.index;
         tempArgList.push(tempResult.expression);
         index = parseUtils.skipWhitespace(text, index);
@@ -331,7 +328,7 @@ ParseUtils.prototype.parseLineText = function(text) {
     return new AssemblyLine(tempDirectiveName, tempArgList);
 }
 
-ParseUtils.prototype.loadAssemblyFileContent = function(path) {
+ParseUtils.prototype.loadAssemblyFileContent = function(path: string): string[] {
     if (!fs.existsSync(path)) {
         throw new AssemblyError("Missing source file \"" + path + "\".");
     }
@@ -339,7 +336,7 @@ ParseUtils.prototype.loadAssemblyFileContent = function(path) {
     return tempContent.split("\n");
 }
 
-ParseUtils.prototype.parseAssemblyLines = function(lineTextList) {
+ParseUtils.prototype.parseAssemblyLines = function(lineTextList: string[]): AssemblyLine[] {
     var output = [];
     var index = 0;
     while (index < lineTextList.length) {
@@ -364,7 +361,7 @@ ParseUtils.prototype.parseAssemblyLines = function(lineTextList) {
     return output;
 }
 
-ParseUtils.prototype.collapseCodeBlocks = function(lineList) {
+ParseUtils.prototype.collapseCodeBlocks = function(lineList: AssemblyLine[]): AssemblyLine[] {
     var output = [];
     // List of assembly lines which begin code blocks.
     var branchList = [];

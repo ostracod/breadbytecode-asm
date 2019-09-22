@@ -1,18 +1,23 @@
 
-var Assembler = require("./assembler").Assembler;
-var AssemblyError = require("./assemblyError").AssemblyError;
-var lineUtils = require("./lineUtils").lineUtils;
+import {ConstantDefinition as ConstantDefinitionInterface, Identifier, Expression, AssemblyLine} from "models/objects";
+import {Assembler} from "objects/assembler";
+import {AssemblyError} from "objects/assemblyError";
+import {lineUtils} from "utils/lineUtils";
 
-function ConstantDefinition(identifier, expression) {
-    this.identifier = identifier;
-    this.expression = expression;
+export interface ConstantDefinition extends ConstantDefinitionInterface {}
+
+export class ConstantDefinition {
+    constructor(identifier: Identifier, expression: Expression) {
+        this.identifier = identifier;
+        this.expression = expression;
+    }
 }
 
-ConstantDefinition.prototype.printAssembledState = function() {
-    console.log(this.identifier.getDisplayString() + " = " + this.expression.getDisplayString());
+ConstantDefinition.prototype.getDisplayString = function(): string {
+    return this.identifier.getDisplayString() + " = " + this.expression.getDisplayString();
 }
 
-Assembler.prototype.extractConstantDefinitions = function(lineList) {
+Assembler.prototype.extractConstantDefinitions = function(lineList: AssemblyLine[]): AssemblyLine[] {
     var self = this;
     var tempResult = lineUtils.processLines(lineList, function(line) {
         var tempArgList = line.argList;
@@ -31,7 +36,7 @@ Assembler.prototype.extractConstantDefinitions = function(lineList) {
     return tempResult.lineList;
 }
 
-Assembler.prototype.expandConstantInvocations = function() {
+Assembler.prototype.expandConstantInvocations = function(): void {
     var self = this;
     self.processExpressionsInLines(function(expression) {
         var tempIdentifier = expression.evaluateToIdentifierOrNull();

@@ -1,5 +1,12 @@
 
-var Assembler = require("./assembler").Assembler;
+// This code is intended to perform the functionality of rootpath.
+// Put all other code after these few lines.
+import * as path from "path";
+process.env.NODE_PATH = path.dirname(__filename);
+require("module")._initPaths();
+export var projectPath = path.dirname(__dirname);
+
+import {Assembler} from "objects/assembler";
 
 var assemblyFileExtension = ".bbasm";
 

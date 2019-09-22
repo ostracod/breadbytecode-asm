@@ -1,25 +1,33 @@
 
-var FunctionDefinition = require("./functionDefinition").FunctionDefinition;
-var Assembler = require("./assembler").Assembler;
+import {DataType} from "models/delegates";
+import {VariableDefinition as VariableDefinitionInterface, ArgVariableDefinition as ArgVariableDefinitionInterface, Identifier, ArgPerm, AssemblyLine} from "models/objects";
+import {FunctionDefinition} from "objects/functionDefinition";
+import {Assembler} from "objects/assembler";
+import {AssemblyError} from "objects/assemblyError";
 
-function VariableDefinition(identifier, dataType) {
-    this.identifier = identifier;
-    this.dataType = dataType;
+export interface VariableDefinition extends VariableDefinitionInterface {}
+
+export class VariableDefinition {
+    constructor(identifier: Identifier, dataType: DataType) {
+        this.identifier = identifier;
+        this.dataType = dataType;
+    }
 }
 
-VariableDefinition.prototype.getDisplayString = function() {
+VariableDefinition.prototype.getDisplayString = function(): string {
     return "VAR " + this.identifier.getDisplayString() + ", " + this.dataType.getName();
 }
 
-function ArgVariableDefinition(identifier, dataType, permList) {
-    this.permList = permList;
-    VariableDefinition.call(this, identifier, dataType);
+export interface ArgVariableDefinition extends ArgVariableDefinitionInterface {}
+
+export class ArgVariableDefinition extends VariableDefinition {
+    constructor(identifier: Identifier, dataType: DataType, permList: ArgPerm[]) {
+        super(identifier, dataType);
+        this.permList = permList;
+    }
 }
 
-ArgVariableDefinition.prototype = Object.create(VariableDefinition.prototype);
-ArgVariableDefinition.prototype.constructor = ArgVariableDefinition;
-
-ArgVariableDefinition.prototype.getDisplayString = function() {
+ArgVariableDefinition.prototype.getDisplayString = function(): string {
     var tempTextList = [
         this.identifier.getDisplayString(),
         this.dataType.getName()
@@ -34,7 +42,7 @@ ArgVariableDefinition.prototype.getDisplayString = function() {
     return "ARG " + tempTextList.join(", ");
 }
 
-function extractLocalVariableDefinition(line) {
+function extractLocalVariableDefinition(line: AssemblyLine): VariableDefinition {
     if (line.directiveName != "VAR") {
         return null;
     }
@@ -44,7 +52,7 @@ function extractLocalVariableDefinition(line) {
     return new VariableDefinition(tempIdentifier, tempDataType);
 }
 
-function extractArgVariableDefinition(line) {
+function extractArgVariableDefinition(line: AssemblyLine): ArgVariableDefinition {
     if (line.directiveName != "ARG") {
         return null;
     }
@@ -54,7 +62,7 @@ function extractArgVariableDefinition(line) {
     }
     var tempIdentifier = tempArgList[0].evaluateToIdentifier();
     var tempDataType = tempArgList[1].evaluateToDataType();
-    var tempPermList = [];
+    var tempPermList: ArgPerm[] = [];
     var index = 2;
     while (index < tempArgList.length) {
         var tempArg = tempArgList[index];
@@ -69,24 +77,24 @@ function extractArgVariableDefinition(line) {
     );
 }
 
-FunctionDefinition.prototype.extractVariableDefinitions = function() {
+FunctionDefinition.prototype.extractVariableDefinitions = function(): void {
     var self = this;
     self.processLines(function(line) {
-        var tempDefinition = extractLocalVariableDefinition(line);
-        if (tempDefinition !== null) {
-            self.localVariableDefinitionList.push(tempDefinition);
+        var tempLocalDefinition = extractLocalVariableDefinition(line);
+        if (tempLocalDefinition !== null) {
+            self.localVariableDefinitionList.push(tempLocalDefinition);
             return [];
         }
-        var tempDefinition = extractArgVariableDefinition(line);
-        if (tempDefinition !== null) {
-            self.argVariableDefinitionList.push(tempDefinition);
+        var tempArgDefinition = extractArgVariableDefinition(line);
+        if (tempArgDefinition !== null) {
+            self.argVariableDefinitionList.push(tempArgDefinition);
             return [];
         }
         return null;
     });
 }
 
-Assembler.prototype.extractGlobalVariableDefinitions = function() {
+Assembler.prototype.extractGlobalVariableDefinitions = function(): void {
     var self = this;
     self.processLines(function(line) {
         var tempDefinition = extractLocalVariableDefinition(line);

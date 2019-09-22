@@ -1,39 +1,48 @@
 
-var fs = require("fs");
+import * as fs from "fs";
 
-var AssemblyError = require("./assemblyError").AssemblyError;
-var IdentifierMap = require("./identifier").IdentifierMap;
-var parseUtils = require("./parseUtils").parseUtils;
-var lineUtils = require("./lineUtils").lineUtils;
+import {LineProcessor, ExpressionProcessor} from "models/items";
+import {Assembler as AssemblerInterface, AssemblyLine} from "models/objects";
+import {AssemblyError} from "objects/assemblyError";
+import {IdentifierMap} from "objects/identifier";
+import {parseUtils} from "utils/parseUtils";
+import {lineUtils} from "utils/lineUtils";
 
-function Assembler() {
-    this.rootLineList = [];
-    // Map from identifier to ConstantDefinition.
-    this.constantDefinitionMap = new IdentifierMap();
-    // Map from name to MacroDefinition.
-    this.macroDefinitionMap = {};
-    this.functionDefinitionList = [];
-    this.appDataLineList = [];
-    this.globalVariableDefinitionList = [];
-    this.nextMacroInvocationId = 0;
+export interface Assembler extends AssemblerInterface {}
+
+export class Assembler {
+    constructor() {
+        this.rootLineList = [];
+        // Map from identifier to ConstantDefinition.
+        this.constantDefinitionMap = new IdentifierMap();
+        // Map from name to MacroDefinition.
+        this.macroDefinitionMap = {};
+        this.functionDefinitionList = [];
+        this.appDataLineList = [];
+        this.globalVariableDefinitionList = [];
+        this.nextMacroInvocationId = 0;
+    }
 }
 
-Assembler.prototype.getNextMacroInvocationId = function() {
+Assembler.prototype.getNextMacroInvocationId = function(): number {
     var output = this.nextMacroInvocationId;
     this.nextMacroInvocationId += 1;
     return output;
 }
 
-Assembler.prototype.processLines = function(processLine) {
+Assembler.prototype.processLines = function(processLine: LineProcessor): void {
     var tempResult = lineUtils.processLines(this.rootLineList, processLine);
     this.rootLineList = tempResult.lineList;
 }
 
-Assembler.prototype.processExpressionsInLines = function(processExpression, shouldRecurAfterProcess) {
+Assembler.prototype.processExpressionsInLines = function(
+    processExpression: ExpressionProcessor,
+    shouldRecurAfterProcess?: boolean
+): void {
     lineUtils.processExpressionsInLines(this.rootLineList, processExpression, shouldRecurAfterProcess);
 }
 
-Assembler.prototype.loadAndParseAssemblyFile = function(path) {
+Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyLine[] {
     var tempLineTextList = parseUtils.loadAssemblyFileContent(path);
     var tempLineList = parseUtils.parseAssemblyLines(tempLineTextList);
     tempLineList = parseUtils.collapseCodeBlocks(tempLineList);
@@ -55,34 +64,36 @@ Assembler.prototype.loadAndParseAssemblyFile = function(path) {
     return tempLineList;
 }
 
-Assembler.prototype.printAssembledState = function() {
-    console.log("\n= = = ROOT LINE LIST = = =\n");
-    lineUtils.printLineList(this.rootLineList);
-    console.log("\n= = = CONSTANT DEFINITIONS = = =\n");
+Assembler.prototype.getDisplayString = function(): string {
+    var tempTextList = [];
+    tempTextList.push("\n= = = ROOT LINE LIST = = =\n");
+    tempTextList.push(lineUtils.getLineListDisplayString(this.rootLineList));
+    tempTextList.push("\n= = = CONSTANT DEFINITIONS = = =\n");
     this.constantDefinitionMap.iterate(function(definition) {
-        definition.printAssembledState();
+        tempTextList.push(definition.getDisplayString());
     });
-    console.log("\n= = = MACRO DEFINITIONS = = =\n");
+    tempTextList.push("\n= = = MACRO DEFINITIONS = = =\n");
     var name;
     for (name in this.macroDefinitionMap) {
         var tempDefinition = this.macroDefinitionMap[name];
-        tempDefinition.printAssembledState();
-        console.log("");
+        tempTextList.push(tempDefinition.getDisplayString());
+        tempTextList.push("");
     }
-    console.log("= = = FUNCTION DEFINITIONS = = =\n");
+    tempTextList.push("= = = FUNCTION DEFINITIONS = = =\n");
     var index = 0;
     while (index < this.functionDefinitionList.length) {
         var tempDefinition = this.functionDefinitionList[index]
-        tempDefinition.printAssembledState();
-        console.log("");
+        tempTextList.push(tempDefinition.getDisplayString());
+        tempTextList.push("");
         index += 1;
     };
-    console.log("= = = APP DATA LINE LIST = = =\n");
-    lineUtils.printLineList(this.appDataLineList);
-    console.log("");
+    tempTextList.push("= = = APP DATA LINE LIST = = =\n");
+    tempTextList.push(lineUtils.getLineListDisplayString(this.appDataLineList));
+    tempTextList.push("");
+    return tempTextList.join("\n");
 }
 
-Assembler.prototype.assembleCodeFile = function(sourcePath, destinationPath) {
+Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationPath: string): void {
     try {
         this.rootLineList = this.loadAndParseAssemblyFile(sourcePath);
         this.expandConstantInvocations();
@@ -103,22 +114,18 @@ Assembler.prototype.assembleCodeFile = function(sourcePath, destinationPath) {
     }
     
     // TEST CODE.
-    this.printAssembledState();
+    console.log(this.getDisplayString());
     
     fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");
     console.log("Finished assembling.");
     console.log("Destination path: " + destinationPath);
 }
 
-module.exports = {
-    Assembler: Assembler
-};
-
-require("./constantDefinition");
-require("./appDataDefinition");
-require("./macroDefinition");
-require("./functionDefinition");
-require("./variableDefinition");
-require("./includeDirective");
+import "objects/constantDefinition";
+import "objects/appDataDefinition";
+import "objects/macroDefinition";
+import "objects/functionDefinition";
+import "objects/variableDefinition";
+import "objects/includeDirective";
 
 

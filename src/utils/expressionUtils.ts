@@ -1,11 +1,17 @@
 
-function ExpressionUtils() {
+import {ExpressionProcessor} from "models/items";
+import {ExpressionUtils as ExpressionUtilsInterface} from "models/utils";
+import {Expression} from "models/objects";
+
+export interface ExpressionUtils extends ExpressionUtilsInterface {}
+
+export class ExpressionUtils {
     
 }
 
-var expressionUtils = new ExpressionUtils();
+export var expressionUtils = new ExpressionUtils();
 
-ExpressionUtils.prototype.copyExpressions = function(expressionList) {
+ExpressionUtils.prototype.copyExpressions = function(expressionList: Expression[]): Expression[] {
     var output = [];
     var index = 0;
     while (index < expressionList.length) {
@@ -23,7 +29,11 @@ ExpressionUtils.prototype.copyExpressions = function(expressionList) {
 // processed recursively. If output is not null and
 // shouldRecurAfterProcess is true, then subexpressions
 // are also processed recursively.
-ExpressionUtils.prototype.processExpressions = function(expressionList, processExpression, shouldRecurAfterProcess) {
+ExpressionUtils.prototype.processExpressions = function(
+    expressionList: Expression[],
+    processExpression: ExpressionProcessor,
+    shouldRecurAfterProcess?: boolean
+): void {
     if (typeof shouldRecurAfterProcess === "undefined") {
         shouldRecurAfterProcess = false;
     }
@@ -38,9 +48,5 @@ ExpressionUtils.prototype.processExpressions = function(expressionList, processE
         index += 1;
     }
 }
-
-module.exports = {
-    expressionUtils: expressionUtils
-};
 
 
