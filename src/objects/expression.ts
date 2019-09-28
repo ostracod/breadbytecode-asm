@@ -16,12 +16,19 @@ import {
 import {AssemblyError} from "objects/assemblyError";
 import {Identifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
+import {signedInteger64Type, StringType} from "delegates/dataType";
 import {dataTypeUtils} from "utils/dataTypeUtils";
 
 export interface Expression extends ExpressionInterface {}
 
 export abstract class Expression {
-    
+    constructor() {
+        // We cache this value so that we can verify
+        // the output of evaluateToConstant.
+        // Use Expression.getConstantDataType to cache
+        // and retrieve this value.
+        this.constantDataType = null;
+    }
 }
 
 Expression.prototype.processExpressions = function(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
@@ -82,6 +89,17 @@ Expression.prototype.populateMacroInvocationId = function(macroInvocationId: num
     // Do nothing.
 }
 
+Expression.prototype.getConstantDataTypeHelper = function(): DataType {
+    throw new AssemblyError("Expected constant value.");
+}
+
+Expression.prototype.getConstantDataType = function(): DataType {
+    if (this.constantDataType === null) {
+        this.constantDataType = this.getConstantDataTypeHelper();
+    }
+    return this.constantDataType;
+}
+
 export interface ArgTerm extends ArgTermInterface {}
 
 export abstract class ArgTerm extends Expression {
@@ -125,6 +143,10 @@ ArgWord.prototype.evaluateToArgPerm = function(): ArgPerm {
     return new ArgPerm(this.text);
 }
 
+ArgWord.prototype.getConstantDataTypeHelper = function(): DataType {
+    return signedInteger64Type;
+}
+
 export interface ArgNumber extends ArgNumberInterface {}
 
 export class ArgNumber extends ArgTerm {
@@ -140,6 +162,11 @@ ArgNumber.prototype.copy = function(): Expression {
 
 ArgNumber.prototype.getDisplayString = function(): string {
     return this.value + "";
+}
+
+ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
+    // TODO: Accommodate float values.
+    return signedInteger64Type;
 }
 
 export interface ArgString extends ArgStringInterface {}
@@ -161,6 +188,10 @@ ArgString.prototype.getDisplayString = function(): string {
 
 ArgString.prototype.evaluateToString = function(): string {
     return this.value;
+}
+
+ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
+    return new StringType(this.value.length);
 }
 
 export interface UnaryExpression extends UnaryExpressionInterface {}
@@ -188,6 +219,10 @@ UnaryExpression.prototype.processExpressionsHelper = function(processExpression:
     }
     this.operand = this.operand.processExpressions(processExpression, shouldRecurAfterProcess);
     return null;
+}
+
+UnaryExpression.prototype.getConstantDataTypeHelper = function(): DataType {
+    return this.operator.getConstantDataType(this.operand);
 }
 
 export interface UnaryAtExpression extends UnaryAtExpressionInterface {}
@@ -263,27 +298,35 @@ BinaryExpression.prototype.evaluateToString = function(): string {
     throw new AssemblyError("Not yet implemented.");
 }
 
+BinaryExpression.prototype.getConstantDataTypeHelper = function(): DataType {
+    return this.operator.getConstantDataType(this.operand1, this.operand2);
+}
+
 export interface SubscriptExpression extends SubscriptExpressionInterface {}
 
 export class SubscriptExpression extends Expression {
-    constructor(sequence: Expression, index: Expression, dataType: Expression) {
+    constructor(
+        sequenceExpression: Expression,
+        indexExpression: Expression,
+        dataTypeExpression: Expression
+    ) {
         super();
-        this.sequence = sequence;
-        this.index = index;
-        this.dataType = dataType;
+        this.sequenceExpression = sequenceExpression;
+        this.indexExpression = indexExpression;
+        this.dataTypeExpression = dataTypeExpression;
     }
 }
 
 SubscriptExpression.prototype.copy = function(): Expression {
     return new SubscriptExpression(
-        this.sequence.copy(),
-        this.index.copy(),
-        this.dataType.copy()
+        this.sequenceExpression.copy(),
+        this.indexExpression.copy(),
+        this.dataTypeExpression.copy()
     );
 }
 
 SubscriptExpression.prototype.getDisplayString = function(): string {
-    return "(" + this.sequence.getDisplayString() + "[" + this.index.getDisplayString() + "]:" + this.dataType.getDisplayString() + ")";
+    return "(" + this.sequenceExpression.getDisplayString() + "[" + this.indexExpression.getDisplayString() + "]:" + this.dataTypeExpression.getDisplayString() + ")";
 }
 
 SubscriptExpression.prototype.processExpressionsHelper = function(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
@@ -291,10 +334,23 @@ SubscriptExpression.prototype.processExpressionsHelper = function(processExpress
     if (tempResult !== null) {
         return tempResult;
     }
-    this.sequence = this.sequence.processExpressions(processExpression, shouldRecurAfterProcess);
-    this.index = this.index.processExpressions(processExpression, shouldRecurAfterProcess);
-    this.dataType = this.dataType.processExpressions(processExpression, shouldRecurAfterProcess);
+    this.sequenceExpression = this.sequenceExpression.processExpressions(
+        processExpression,
+        shouldRecurAfterProcess
+    );
+    this.indexExpression = this.indexExpression.processExpressions(
+        processExpression,
+        shouldRecurAfterProcess
+    );
+    this.dataTypeExpression = this.dataTypeExpression.processExpressions(
+        processExpression,
+        shouldRecurAfterProcess
+    );
     return null;
+}
+
+SubscriptExpression.prototype.getConstantDataTypeHelper = function(): DataType {
+    return this.dataTypeExpression.evaluateToDataType()
 }
 
 import {unaryAtOperator} from "delegates/operator";

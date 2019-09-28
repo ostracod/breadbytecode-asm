@@ -68,6 +68,8 @@ export interface ConstantDefinition extends Definition {
 }
 
 export interface Expression {
+    constantDataType: DataType;
+    
     processExpressions(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression;
     evaluateToIdentifierOrNull(): Identifier;
     evaluateToIdentifier(): Identifier;
@@ -76,6 +78,8 @@ export interface Expression {
     evaluateToArgPerm(): ArgPerm;
     substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression;
     populateMacroInvocationId(macroInvocationId: number): void;
+    getConstantDataTypeHelper(): DataType;
+    getConstantDataType(): DataType;
     
     // Concrete subclasses must implement these methods:
     copy(): Expression;
@@ -115,9 +119,9 @@ export interface BinaryExpression extends Expression {
 }
 
 export interface SubscriptExpression extends Expression {
-    sequence: Expression;
-    index: Expression;
-    dataType: Expression;
+    sequenceExpression: Expression;
+    indexExpression: Expression;
+    dataTypeExpression: Expression;
 }
 
 export interface FunctionDefinition extends Definition {

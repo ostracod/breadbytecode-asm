@@ -1,10 +1,12 @@
 
-import {ExpressionProcessor, LineProcessor} from "models/items";
-import {Operator, DataType} from "models/delegates";
+import {ExpressionProcessor, LineProcessor, NumberTypeClass} from "models/items";
+import {Operator, DataType, NumberType} from "models/delegates";
 import {Expression, AssemblyLine, IdentifierMap, Definition, ArgWord, ArgNumber, ArgString} from "models/objects";
 
 export interface DataTypeUtils {
     getDataTypeByName(name: string): DataType;
+    getNumberType(numberTypeClass: NumberTypeClass, byteAmount: number);
+    mergeNumberTypes(numberType1: NumberType, numberType2: NumberType): NumberType;
 }
 
 export interface ExpressionUtils {

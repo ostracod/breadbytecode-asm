@@ -1,22 +1,28 @@
 
-import {DataType as DataTypeInterface, NumberType as NumberTypeInterface} from "models/delegates";
+import {
+    DataType as DataTypeInterface,
+    BetaType as BetaTypeInterface,
+    NumberType as NumberTypeInterface
+} from "models/delegates";
 import {AssemblyError} from "objects/assemblyError";
 
-var dataTypeList: DataType[] = [];
+export var dataTypeList: DataType[] = [];
 
 export var dataTypeMap: {[name: string]: DataType} = {};
 
 export interface DataType extends DataTypeInterface {}
 
 export abstract class DataType {
-    constructor() {
-        dataTypeList.push(this);
+    constructor(isBuiltIn: boolean) {
+        if (isBuiltIn) {
+            dataTypeList.push(this);
+        }
     }
 }
 
 export class PointerType extends DataType {
     constructor() {
-        super();
+        super(true);
     }
 }
 
@@ -24,12 +30,20 @@ PointerType.prototype.getName = function(): string {
     return "p";
 }
 
+export interface BetaType extends BetaTypeInterface {}
+
+export abstract class BetaType extends DataType {
+    constructor(isBuiltIn: boolean, byteAmount: number) {
+        super(isBuiltIn);
+        this.byteAmount = byteAmount;
+    }
+}
+
 export interface NumberType extends NumberTypeInterface {}
 
-export abstract class NumberType extends DataType {
+export abstract class NumberType extends BetaType {
     constructor(byteAmount: number) {
-        super();
-        this.byteAmount = byteAmount;
+        super(true, byteAmount);
     }
 }
 
@@ -43,6 +57,10 @@ export class IntegerType extends NumberType {
     }
 }
 
+IntegerType.prototype.getByteAmountMergePriority = function(): number {
+    return 1;
+}
+
 export class UnsignedIntegerType extends IntegerType {
     constructor(byteAmount: number) {
         super(byteAmount);
@@ -51,6 +69,10 @@ export class UnsignedIntegerType extends IntegerType {
 
 UnsignedIntegerType.prototype.getNamePrefix = function(): string {
     return "u";
+}
+
+UnsignedIntegerType.prototype.getClassMergePriority = function(): number {
+    return 1;
 }
 
 export class SignedIntegerType extends IntegerType {
@@ -63,6 +85,10 @@ SignedIntegerType.prototype.getNamePrefix = function(): string {
     return "s";
 }
 
+SignedIntegerType.prototype.getClassMergePriority = function(): number {
+    return 2;
+}
+
 export class FloatType extends NumberType {
     constructor(byteAmount: number) {
         super(byteAmount);
@@ -71,6 +97,24 @@ export class FloatType extends NumberType {
 
 FloatType.prototype.getNamePrefix = function(): string {
     return "f";
+}
+
+FloatType.prototype.getClassMergePriority = function(): number {
+    return 3;
+}
+
+FloatType.prototype.getByteAmountMergePriority = function(): number {
+    return 2;
+}
+
+export class StringType extends BetaType {
+    constructor(byteAmount: number) {
+        super(false, byteAmount);
+    }
+}
+
+StringType.prototype.getName = function(): string {
+    return "b" + this.byteAmount;
 }
 
 export var pointerType = new PointerType();
