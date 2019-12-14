@@ -71,9 +71,10 @@ Dependency modifiers:
 
 An argument permission consists of a sequence of letters with the following format:
 
-`(r/w/s)(a/i/c)(r?)(p?)(t?)`
+`(d/i)(r/w)(a/i/c)(r?)(p?)(t?)`
 
-* `r/w/s` indicates whether to give read, write, or sentry type permission
+* `d/i` indicates whether to allow direct or indirect access
+* `r/w` indicates whether to give read or write permission
 * `a/i/c` indicates whether to give permission to the arbiter, implementer, or caller
 * Trailing `r` indicates that the permission should be recursive
 * Trailing `p` indicates that the permission should have infinite propagation count
@@ -81,9 +82,9 @@ An argument permission consists of a sequence of letters with the following form
 
 Example argument permissions:
 
-* `rat` = Give temporary read permission to arbiter
-* `wc` = Give write permission to caller
-* `sirp` = Recursively give sentry type permission to implementer with infinite propagation count
+* `drat` = Give temporary direct read permission to arbiter
+* `dwc` = Give direct write permission to caller
+* `irirp` = Recursively give indirect read permission to implementer with infinite propagation count
 
 Certain directives initiate code blocks which are terminated by the `END` directive. For example:
 
@@ -116,7 +117,7 @@ Declares a private function.
 `PUBLIC_FUNC name, depIndex ... END`  
 Declares a public function which belongs to the given interface.
 
-`GUARD_FUNC name, depIndex ... END`
+`GUARD_FUNC name, depIndex ... END`  
 Declares a guard function which belongs to the given interface.
 
 `VAR name, dataType`  

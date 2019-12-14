@@ -40,4 +40,13 @@ NiceUtils.prototype.joinTextList = function(textList: string[]): string {
     return tempTextList.join("\n");
 }
 
+NiceUtils.prototype.getReverseMap = function(map: {[key: string]: any}): {[key: string]: any} {
+    var output = {};
+    var key;
+    for (key in map) {
+        var tempValue = map[key];
+        output[tempValue] = key;
+    }
+    return output;
+}
 

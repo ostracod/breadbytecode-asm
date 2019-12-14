@@ -77,6 +77,12 @@ Assembler.prototype.extractMacroDefinitions = function(lineList: AssemblyLine[])
     return tempResult.lineList;
 }
 
+Assembler.prototype.getNextMacroInvocationId = function(): number {
+    var output = this.nextMacroInvocationId;
+    this.nextMacroInvocationId += 1;
+    return output;
+}
+
 Assembler.prototype.expandMacroInvocations = function(lineList: AssemblyLine[]): {lineList: AssemblyLine[], expandCount: number} {
     var self = this;
     var tempResult = lineUtils.processLines(lineList, function(line) {

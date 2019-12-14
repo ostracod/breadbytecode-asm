@@ -24,12 +24,6 @@ export class Assembler {
     }
 }
 
-Assembler.prototype.getNextMacroInvocationId = function(): number {
-    var output = this.nextMacroInvocationId;
-    this.nextMacroInvocationId += 1;
-    return output;
-}
-
 Assembler.prototype.processLines = function(processLine: LineProcessor): void {
     var tempResult = lineUtils.processLines(this.rootLineList, processLine);
     this.rootLineList = tempResult.lineList;
