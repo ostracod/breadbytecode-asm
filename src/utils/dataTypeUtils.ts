@@ -20,13 +20,15 @@ DataTypeUtils.prototype.getDataTypeByName = function(name: string): DataType {
     return dataTypeMap[name];
 }
 
-DataTypeUtils.prototype.getNumberType = function(numberTypeClass: NumberTypeClass, byteAmount: number) {
+DataTypeUtils.prototype.getNumberType = function(numberTypeClass: NumberTypeClass, byteAmount: number): NumberType {
     var index = 0;
     while (index < dataTypeList.length) {
         var tempDataType = dataTypeList[index];
-        if (tempDataType instanceof numberTypeClass
-                && (tempDataType as NumberType).byteAmount == byteAmount) {
-            return tempDataType;
+        if (tempDataType instanceof numberTypeClass) {
+            var tempNumberType = tempDataType as NumberType;
+            if (tempNumberType.byteAmount == byteAmount) {
+                return tempDataType;
+            }
         }
         index += 1;
     }

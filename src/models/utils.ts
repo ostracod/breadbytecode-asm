@@ -5,7 +5,7 @@ import {Expression, AssemblyLine, IdentifierMap, Definition, ArgWord, ArgNumber,
 
 export interface DataTypeUtils {
     getDataTypeByName(name: string): DataType;
-    getNumberType(numberTypeClass: NumberTypeClass, byteAmount: number);
+    getNumberType(numberTypeClass: NumberTypeClass, byteAmount: number): NumberType;
     mergeNumberTypes(numberType1: NumberType, numberType2: NumberType): NumberType;
 }
 
@@ -24,7 +24,7 @@ export interface LineUtils {
         lineList: AssemblyLine[],
         processExpression: ExpressionProcessor,
         shouldRecurAfterProcess?: boolean
-    );
+    ): void;
     substituteIdentifiersInLines(lineList: AssemblyLine[], identifierExpressionMap: IdentifierMap<Expression>): void;
     populateMacroInvocationIdInLines(lineList: AssemblyLine[], macroInvocationId: number): void;
     getIndentation(indentationLevel: number): string;

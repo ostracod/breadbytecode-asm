@@ -27,7 +27,7 @@ LineUtils.prototype.processExpressionsInLines = function(
     lineList: AssemblyLine[],
     processExpression: ExpressionProcessor,
     shouldRecurAfterProcess?: boolean
-) {
+): void {
     var index = 0;
     while (index < lineList.length) {
         var tempLine = lineList[index];

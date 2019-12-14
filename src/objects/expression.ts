@@ -49,28 +49,12 @@ Expression.prototype.processExpressions = function(processExpression: Expression
     return output;
 }
 
-Expression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
-    return null;
-}
-
 Expression.prototype.evaluateToIdentifier = function(): Identifier {
     var output = this.evaluateToIdentifierOrNull();
     if (output === null) {
         throw new AssemblyError("Expected identifier.");
     }
     return output;
-}
-
-Expression.prototype.evaluateToString = function(): string {
-    throw new AssemblyError("Expected string.");
-}
-
-Expression.prototype.evaluateToDataType = function(): DataType {
-    throw new AssemblyError("Expected data type.");
-}
-
-Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
-    throw new AssemblyError("Expected arg perm.");
 }
 
 Expression.prototype.substituteIdentifiers = function(identifierExpressionMap: IdentifierMap<Expression>): Expression {
@@ -85,19 +69,35 @@ Expression.prototype.substituteIdentifiers = function(identifierExpressionMap: I
     return tempExpression.copy();
 }
 
+Expression.prototype.getConstantDataType = function(): DataType {
+    if (this.constantDataType === null) {
+        this.constantDataType = this.getConstantDataTypeHelper();
+    }
+    return this.constantDataType;
+}
+
+Expression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
+    return null;
+}
+
+Expression.prototype.evaluateToString = function(): string {
+    throw new AssemblyError("Expected string.");
+}
+
+Expression.prototype.evaluateToDataType = function(): DataType {
+    throw new AssemblyError("Expected data type.");
+}
+
+Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
+    throw new AssemblyError("Expected arg perm.");
+}
+
 Expression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
     // Do nothing.
 }
 
 Expression.prototype.getConstantDataTypeHelper = function(): DataType {
     throw new AssemblyError("Expected constant value.");
-}
-
-Expression.prototype.getConstantDataType = function(): DataType {
-    if (this.constantDataType === null) {
-        this.constantDataType = this.getConstantDataTypeHelper();
-    }
-    return this.constantDataType;
 }
 
 export interface ArgTerm extends ArgTermInterface {}

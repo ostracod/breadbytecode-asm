@@ -4,7 +4,7 @@ import {Assembler} from "objects/assembler";
 import {AssemblyError} from "objects/assemblyError";
 import {lineUtils} from "utils/lineUtils";
 
-Assembler.prototype.extractAppDataDefinitions = function(lineList: AssemblyLine[]): void {
+Assembler.prototype.extractAppDataDefinitions = function(): void {
     var self = this;
     self.processLines(function(line) {
         if (line.directiveName == "APP_DATA") {

@@ -117,7 +117,7 @@ GuardFunctionDefinition.prototype.getTitlePrefix = function(): string {
 import "objects/variableDefinition";
 import "objects/labelDefinition";
 
-Assembler.prototype.extractFunctionDefinitions = function(lineList: AssemblyLine[]): void {
+Assembler.prototype.extractFunctionDefinitions = function(): void {
     var self = this;
     self.processLines(function(line) {
         var tempDirectiveName = line.directiveName;

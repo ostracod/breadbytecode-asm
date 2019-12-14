@@ -2,6 +2,7 @@
 import {Expression} from "models/objects";
 
 export interface DataType {
+    // Concrete subclasses must implement these methods:
     getName(): string;
 }
 

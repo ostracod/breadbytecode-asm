@@ -24,7 +24,6 @@ export interface Assembler {
     globalVariableDefinitionList: VariableDefinition[];
     nextMacroInvocationId: number;
     
-    getNextMacroInvocationId(): number;
     processLines(processLine: LineProcessor): void;
     processExpressionsInLines(
         processExpression: ExpressionProcessor,
@@ -32,15 +31,16 @@ export interface Assembler {
     ): void;
     loadAndParseAssemblyFile(path: string): AssemblyLine[];
     getDisplayString(): string;
-    extractAppDataDefinitions(lineList: AssemblyLine[]): void;
-    extractConstantDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
-    processIncludeDirectives(lineList: AssemblyLine[]): {lineList: AssemblyLine[], includeCount: number};
-    extractFunctionDefinitions(lineList: AssemblyLine[]): void;
-    expandConstantInvocations(): void;
-    extractMacroDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
-    expandMacroInvocations(lineList: AssemblyLine[]): {lineList: AssemblyLine[], expandCount: number};
-    extractGlobalVariableDefinitions(): void;
     assembleCodeFile(sourcePath: string, destinationPath: string): void;
+    extractMacroDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
+    getNextMacroInvocationId(): number;
+    expandMacroInvocations(lineList: AssemblyLine[]): {lineList: AssemblyLine[], expandCount: number};
+    processIncludeDirectives(lineList: AssemblyLine[]): {lineList: AssemblyLine[], includeCount: number};
+    extractConstantDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
+    expandConstantInvocations(): void;
+    extractFunctionDefinitions(): void;
+    extractAppDataDefinitions(): void;
+    extractGlobalVariableDefinitions(): void;
 }
 
 export interface AssemblyError {
@@ -71,15 +71,17 @@ export interface Expression {
     constantDataType: DataType;
     
     processExpressions(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression;
-    evaluateToIdentifierOrNull(): Identifier;
     evaluateToIdentifier(): Identifier;
+    substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression;
+    getConstantDataType(): DataType;
+    
+    // Concrete subclasses may override these methods:
+    evaluateToIdentifierOrNull(): Identifier;
     evaluateToString(): string;
     evaluateToDataType(): DataType;
     evaluateToArgPerm(): ArgPerm;
-    substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression;
     populateMacroInvocationId(macroInvocationId: number): void;
     getConstantDataTypeHelper(): DataType;
-    getConstantDataType(): DataType;
     
     // Concrete subclasses must implement these methods:
     copy(): Expression;
