@@ -11,16 +11,24 @@ export function NiceUtils() {
 
 export var niceUtils = new NiceUtils();
 
-NiceUtils.prototype.getDefinitionListDisplayString = function(title: string, definitionList: Definition[]): string {
+NiceUtils.prototype.getDefinitionListDisplayString = function(
+    title: string,
+    definitionList: Definition[],
+    indentationLevel?: number
+): string {
+    if (typeof indentationLevel === "undefined") {
+        indentationLevel = 0
+    }
     if (definitionList.length <= 0) {
         return "";
     }
-    var tempIndentation = lineUtils.getIndentation(1);
-    var tempTextList = [title + ":"];
+    var tempIndentation1 = lineUtils.getIndentation(indentationLevel);
+    var tempIndentation2 = lineUtils.getIndentation(indentationLevel + 1);
+    var tempTextList = [tempIndentation1 + title + ":"];
     var index = 0;
     while (index < definitionList.length) {
         var tempDefinition = definitionList[index];
-        tempTextList.push(tempIndentation + tempDefinition.getDisplayString());
+        tempTextList.push(tempIndentation2 + tempDefinition.getDisplayString());
         index += 1;
     }
     return tempTextList.join("\n");

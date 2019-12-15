@@ -5,8 +5,10 @@ import {
     InterfaceFunctionDefinition as InterfaceFunctionDefinitionInterface,
     Identifier, AssemblyLine, Expression
 } from "models/objects";
+
 import {Assembler} from "objects/assembler";
 import {AssemblyError} from "objects/assemblyError";
+
 import {lineUtils} from "utils/lineUtils";
 import {niceUtils} from "utils/niceUtils";
 
@@ -15,30 +17,26 @@ export interface FunctionDefinition extends FunctionDefinitionInterface {}
 export abstract class FunctionDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[]) {
         this.identifier = identifier;
-        this.lineList = lineList;
-        this.jumpTableLineList = [];
+        this.lineList = new LabeledLineList(lineList);
+        this.jumpTableLineList = null;
         this.argVariableDefinitionList = [];
         this.localVariableDefinitionList = [];
-        this.instructionLabelDefinitionList = [];
-        this.jumpTableLabelDefinitionList = [];
         this.extractJumpTables();
         this.extractVariableDefinitions();
-        this.extractInstructionLabelDefinitions();
-        this.extractJumpTableLabelDefinitions();
+        this.extractLabelDefinitions();
     }
 }
 
 FunctionDefinition.prototype.processLines = function(processLine: LineProcessor): void {
-    var tempResult = lineUtils.processLines(this.lineList, processLine);
-    this.lineList = tempResult.lineList;
+    this.lineList.processLines(processLine);
 }
 
 FunctionDefinition.prototype.processJumpTableLines = function(processLine: LineProcessor): void {
-    var tempResult = lineUtils.processLines(this.jumpTableLineList, processLine);
-    this.jumpTableLineList = tempResult.lineList;
+    this.jumpTableLineList.processLines(processLine);
 }
 
 FunctionDefinition.prototype.extractJumpTables = function(): void {
+    var tempLineList = [];
     var self = this;
     self.processLines(function(line) {
         if (line.directiveName == "JMP_TABLE") {
@@ -48,26 +46,30 @@ FunctionDefinition.prototype.extractJumpTables = function(): void {
             var index = 0;
             while (index < line.codeBlock.length) {
                 var tempLine = line.codeBlock[index];
-                self.jumpTableLineList.push(tempLine);
+                tempLineList.push(tempLine);
                 index += 1;
             }
             return [];
         }
         return null;
     });
+    self.jumpTableLineList = new LabeledLineList(tempLineList);
 }
 
 FunctionDefinition.prototype.getDisplayString = function(): string {
     var tempTextList = [this.getTitle() + ":"];
-    tempTextList.push(lineUtils.getLineListDisplayString(this.lineList, 1));
-    if (this.jumpTableLineList.length > 0) {
-        tempTextList.push("Jump table:");
-        tempTextList.push(lineUtils.getLineListDisplayString(this.jumpTableLineList, 1));
-    }
-    tempTextList.push(niceUtils.getDefinitionListDisplayString("Argument variables", this.argVariableDefinitionList));
-    tempTextList.push(niceUtils.getDefinitionListDisplayString("Local variables", this.localVariableDefinitionList));
-    tempTextList.push(niceUtils.getDefinitionListDisplayString("Instruction labels", this.instructionLabelDefinitionList));
-    tempTextList.push(niceUtils.getDefinitionListDisplayString("Jump table labels", this.jumpTableLabelDefinitionList));
+    tempTextList.push(this.lineList.getDisplayString("Instruction body", 1));
+    tempTextList.push(this.jumpTableLineList.getDisplayString("Jump table", 1));
+    tempTextList.push(niceUtils.getDefinitionListDisplayString(
+        "Argument variables",
+        this.argVariableDefinitionList,
+        1
+    ));
+    tempTextList.push(niceUtils.getDefinitionListDisplayString(
+        "Local variables",
+        this.localVariableDefinitionList,
+        1
+    ));
     return niceUtils.joinTextList(tempTextList);
 }
 
@@ -163,5 +165,7 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
         return null;
     });
 }
+
+import {LabeledLineList} from "objects/labeledLineList";
 
 

@@ -128,19 +128,16 @@ export interface SubscriptExpression extends Expression {
 
 export interface FunctionDefinition extends Definition {
     identifier: Identifier;
-    lineList: AssemblyLine[];
-    jumpTableLineList: AssemblyLine[];
+    lineList: LabeledLineList;
+    jumpTableLineList: LabeledLineList;
     argVariableDefinitionList: ArgVariableDefinition[];
     localVariableDefinitionList: VariableDefinition[];
-    instructionLabelDefinitionList: LabelDefinition[];
-    jumpTableLabelDefinitionList: LabelDefinition[];
     
     processLines(processLine: LineProcessor): void;
     processJumpTableLines(processLine: LineProcessor): void;
     extractJumpTables(): void;
-    extractInstructionLabelDefinitions(): void;
-    extractJumpTableLabelDefinitions(): void;
     extractVariableDefinitions(): void;
+    extractLabelDefinitions(): void;
     
     // Concrete subclasses must implement these methods:
     getTitle(): string;
@@ -189,6 +186,15 @@ export interface VariableDefinition extends Definition {
 
 export interface ArgVariableDefinition extends VariableDefinition {
     permList: ArgPerm[];
+}
+
+export interface LabeledLineList {
+    lineList: AssemblyLine[];
+    labelDefinitionList: LabelDefinition[];
+    
+    processLines(processLine: LineProcessor): void;
+    extractLabelDefinitions(): void;
+    getDisplayString(title: string, indentationLevel?: number): string;
 }
 
 

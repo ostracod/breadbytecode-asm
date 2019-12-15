@@ -37,7 +37,11 @@ export interface LineUtils {
 }
 
 export interface NiceUtils {
-    getDefinitionListDisplayString(title: string, definitionList: Definition[]): string;
+    getDefinitionListDisplayString(
+        title: string,
+        definitionList: Definition[],
+        indentationLevel?: number
+    ): string;
     joinTextList(textList: string[]): string;
     getReverseMap(map: {[key: string]: any}): {[key: string]: any};
 }
