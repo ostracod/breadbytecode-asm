@@ -20,7 +20,7 @@ export interface Assembler {
     constantDefinitionMap: IdentifierMap<ConstantDefinition>;
     macroDefinitionMap: {[name: string]: MacroDefinition};
     functionDefinitionList: FunctionDefinition[];
-    appDataLineList: AssemblyLine[];
+    appDataLineList: LabeledLineList;
     globalVariableDefinitionList: VariableDefinition[];
     nextMacroInvocationId: number;
     

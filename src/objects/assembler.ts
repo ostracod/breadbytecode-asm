@@ -18,7 +18,7 @@ export class Assembler {
         // Map from name to MacroDefinition.
         this.macroDefinitionMap = {};
         this.functionDefinitionList = [];
-        this.appDataLineList = [];
+        this.appDataLineList = null;
         this.globalVariableDefinitionList = [];
         this.nextMacroInvocationId = 0;
     }
@@ -82,7 +82,7 @@ Assembler.prototype.getDisplayString = function(): string {
         index += 1;
     };
     tempTextList.push("= = = APP DATA LINE LIST = = =\n");
-    tempTextList.push(lineUtils.getLineListDisplayString(this.appDataLineList));
+    tempTextList.push(this.appDataLineList.getDisplayString("Data body"));
     tempTextList.push("");
     return tempTextList.join("\n");
 }
