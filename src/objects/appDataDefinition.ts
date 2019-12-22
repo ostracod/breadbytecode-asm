@@ -2,7 +2,7 @@
 import {AssemblyLine} from "models/objects";
 import {Assembler} from "objects/assembler";
 import {AssemblyError} from "objects/assemblyError";
-import {LabeledLineList} from "objects/labeledLineList";
+import {AppDataLineList} from "objects/labeledLineList";
 import {lineUtils} from "utils/lineUtils";
 
 Assembler.prototype.extractAppDataDefinitions = function(): void {
@@ -23,7 +23,7 @@ Assembler.prototype.extractAppDataDefinitions = function(): void {
         }
         return null
     });
-    self.appDataLineList = new LabeledLineList(tempLineList);
+    self.appDataLineList = new AppDataLineList(tempLineList);
     self.appDataLineList.extractLabelDefinitions();
 }
 

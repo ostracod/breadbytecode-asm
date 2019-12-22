@@ -168,7 +168,8 @@ export interface IdentifierMap<T> {
 
 export interface LabelDefinition extends Definition {
     identifier: Identifier;
-    index: number;
+    lineIndex: number;
+    elementIndex: number;
 }
 
 export interface MacroDefinition extends Definition {
@@ -195,6 +196,10 @@ export interface LabeledLineList {
     processLines(processLine: LineProcessor): void;
     extractLabelDefinitions(): void;
     getDisplayString(title: string, indentationLevel?: number): string;
+    getLineElementIndexMap(): {[lineIndex: number]: number};
+    
+    // Concrete subclasses must implement these methods:
+    getLineElementLength(line: AssemblyLine): number;
 }
 
 

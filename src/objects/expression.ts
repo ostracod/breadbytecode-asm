@@ -190,7 +190,7 @@ ArgString.prototype.evaluateToString = function(): string {
     return this.value;
 }
 
-ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
+ArgString.prototype.getConstantDataTypeHelper = function(): DataType {
     return new StringType(this.value.length);
 }
 

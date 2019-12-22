@@ -17,7 +17,7 @@ export interface FunctionDefinition extends FunctionDefinitionInterface {}
 export abstract class FunctionDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[]) {
         this.identifier = identifier;
-        this.lineList = new LabeledLineList(lineList);
+        this.lineList = new InstructionLineList(lineList);
         this.jumpTableLineList = null;
         this.argVariableDefinitionList = [];
         this.localVariableDefinitionList = [];
@@ -53,7 +53,7 @@ FunctionDefinition.prototype.extractJumpTables = function(): void {
         }
         return null;
     });
-    self.jumpTableLineList = new LabeledLineList(tempLineList);
+    self.jumpTableLineList = new JumpTableLineList(tempLineList);
 }
 
 FunctionDefinition.prototype.getDisplayString = function(): string {
@@ -166,6 +166,6 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
     });
 }
 
-import {LabeledLineList} from "objects/labeledLineList";
+import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
 
 
