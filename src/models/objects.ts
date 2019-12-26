@@ -101,6 +101,12 @@ export interface ArgNumber extends ArgTerm {
     value: number;
 }
 
+export interface ArgVersionNumber extends ArgTerm {
+    majorNumber: number;
+    minorNumber: number;
+    patchNumber: number;
+}
+
 export interface ArgString extends ArgTerm {
     value: string;
 }

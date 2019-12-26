@@ -1,4 +1,5 @@
 
+import {ArgNumeric} from "models/items";
 import {ParseUtils as ParseUtilsInterface} from "models/utils";
 import {Operator, UnaryOperator, BinaryOperator} from "models/delegates";
 import {Expression} from "models/objects";
@@ -15,7 +16,7 @@ var fs = require("fs");
 
 import {AssemblyError} from "objects/assemblyError";
 import {AssemblyLine} from "objects/assemblyLine";
-import {SubscriptExpression, ArgWord, ArgNumber, ArgString} from "objects/expression";
+import {SubscriptExpression, ArgWord, ArgNumber, ArgVersionNumber, ArgString} from "objects/expression";
 import {unaryOperatorList, binaryOperatorList} from "delegates/operator";
 
 var codeBlockDirectiveNameSet = ["PRIVATE_FUNC", "PUBLIC_FUNC", "GUARD_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
@@ -53,20 +54,28 @@ ParseUtils.prototype.isFirstArgWordCharacter = function(character: string): bool
 }
 
 ParseUtils.prototype.isArgWordCharacter = function(character: string): boolean {
-    if (character == "_") {
+    if (parseUtils.isFirstArgWordCharacter(character)) {
         return true;
     }
     var tempCharCode = character.charCodeAt(0);
-    // Uppercase letters, lowercase letters, or digits.
-    return ((tempCharCode >= 65 && tempCharCode <= 90)
-        || (tempCharCode >= 97 && tempCharCode <= 122)
-        || (tempCharCode >= 48 && tempCharCode <= 57));
+    // Digits.
+    return (tempCharCode >= 48 && tempCharCode <= 57);
 }
 
-ParseUtils.prototype.isFirstArgNumberCharacter = function(character: string): boolean {
+ParseUtils.prototype.isFirstArgNumericCharacter = function(character: string): boolean {
+    if (character == ".") {
+        return true;
+    }
     var tempCharCode = character.charCodeAt(0);
     // Digits.
     return (tempCharCode >= 48 && tempCharCode <= 57);
+}
+
+ParseUtils.prototype.isArgNumericCharacter = function(character: string): boolean {
+    if (parseUtils.isFirstArgNumericCharacter(character)) {
+        return true;
+    }
+    return (character == "x");
 }
 
 ParseUtils.prototype.parseArgOperator = function(
@@ -108,24 +117,32 @@ ParseUtils.prototype.parseArgWord = function(text: string, index: number): {argW
     };
 }
 
-ParseUtils.prototype.parseArgNumber = function(text: string, index: number): {argNumber: ArgNumber, index: number} {
-    // TODO: Support hexadecimal numbers, floats, and version numbers.
+ParseUtils.prototype.parseArgNumeric = function(text: string, index: number): {argNumeric: ArgNumeric, index: number} {
+    // TODO: Support hexadecimal numbers and floats.
     var tempStartIndex = index;
     while (index < text.length) {
-        var tempCharCode = text.charCodeAt(index);
-        // Digits.
-        if (!(tempCharCode >= 48 && tempCharCode <= 57)) {
+        var tempCharacter = text.charAt(index);
+        if (!parseUtils.isArgNumericCharacter(tempCharacter)) {
             break;
         }
         index += 1;
     }
     var tempEndIndex = index;
     var tempText = text.substring(tempStartIndex, tempEndIndex);
-    var tempValue = parseInt(tempText);
-    return {
-        argNumber: new ArgNumber(tempValue),
-        index: index
-    };
+    var tempComponentList = tempText.split(".");
+    var tempArgNumeric;
+    if (tempComponentList.length == 1) {
+        tempArgNumeric = new ArgNumber(parseInt(tempComponentList[0]));
+    } else if (tempComponentList.length == 3) {
+        tempArgNumeric = new ArgVersionNumber(
+            parseInt(tempComponentList[0]),
+            parseInt(tempComponentList[1]),
+            parseInt(tempComponentList[2]),
+        );
+    } else {
+        throw new AssemblyError("Malformed numeric argument.");
+    }
+    return {argNumeric: tempArgNumeric, index: index};
 }
 
 ParseUtils.prototype.parseArgString = function(text: string, index: number): {argString: ArgString, index: number} {
@@ -185,11 +202,11 @@ ParseUtils.prototype.parseArgExpression = function(
             var tempResult1 = parseUtils.parseArgWord(text, index);
             index = tempResult1.index;
             outputExpression = tempResult1.argWord;
-        } else if (parseUtils.isFirstArgNumberCharacter(tempCharacter)) {
-            // Parse number literal.
-            var tempResult2 = parseUtils.parseArgNumber(text, index);
+        } else if (parseUtils.isFirstArgNumericCharacter(tempCharacter)) {
+            // Parse number literal or version number.
+            var tempResult2 = parseUtils.parseArgNumeric(text, index);
             index = tempResult2.index;
-            outputExpression = tempResult2.argNumber;
+            outputExpression = tempResult2.argNumeric;
         } else if (tempCharacter == "\"") {
             // Parse string literal.
             var tempResult3 = parseUtils.parseArgString(text, index);

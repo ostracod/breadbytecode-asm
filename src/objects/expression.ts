@@ -6,6 +6,7 @@ import {
     ArgTerm as ArgTermInterface,
     ArgWord as ArgWordInterface,
     ArgNumber as ArgNumberInterface,
+    ArgVersionNumber as ArgVersionNumberInterface,
     ArgString as ArgStringInterface,
     UnaryExpression as UnaryExpressionInterface,
     UnaryAtExpression as UnaryAtExpressionInterface,
@@ -167,6 +168,25 @@ ArgNumber.prototype.getDisplayString = function(): string {
 ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
     // TODO: Accommodate float values.
     return signedInteger64Type;
+}
+
+export interface ArgVersionNumber extends ArgVersionNumberInterface {}
+
+export class ArgVersionNumber extends ArgTerm {
+    constructor(majorNumber: number, minorNumber: number, patchNumber: number) {
+        super();
+        this.majorNumber = majorNumber;
+        this.minorNumber = minorNumber;
+        this.patchNumber = patchNumber;
+    }
+}
+
+ArgVersionNumber.prototype.copy = function(): Expression {
+    return new ArgVersionNumber(this.majorNumber, this.minorNumber, this.patchNumber);
+}
+
+ArgVersionNumber.prototype.getDisplayString = function(): string {
+    return this.majorNumber + "." + this.minorNumber + "." + this.patchNumber;
 }
 
 export interface ArgString extends ArgStringInterface {}
