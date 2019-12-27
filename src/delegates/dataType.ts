@@ -7,8 +7,8 @@ import {
 import {AssemblyError} from "objects/assemblyError";
 
 export var dataTypeList: DataType[] = [];
-
 export var dataTypeMap: {[name: string]: DataType} = {};
+export var signedIntegerTypeList: SignedIntegerType[] = [];
 
 export interface DataType extends DataTypeInterface {}
 
@@ -78,6 +78,7 @@ UnsignedIntegerType.prototype.getClassMergePriority = function(): number {
 export class SignedIntegerType extends IntegerType {
     constructor(byteAmount: number) {
         super(byteAmount);
+        signedIntegerTypeList.push(this);
     }
 }
 
@@ -135,5 +136,9 @@ while (index < dataTypeList.length) {
     dataTypeMap[tempDataType.getName()] = tempDataType;
     index += 1;
 }
+
+signedIntegerTypeList.sort(function(type1, type2) {
+    return type1.byteAmount - type2.byteAmount;
+});
 
 

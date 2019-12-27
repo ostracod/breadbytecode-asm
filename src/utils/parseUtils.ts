@@ -18,6 +18,7 @@ import {AssemblyError} from "objects/assemblyError";
 import {AssemblyLine} from "objects/assemblyLine";
 import {SubscriptExpression, ArgWord, ArgNumber, ArgVersionNumber, ArgString} from "objects/expression";
 import {unaryOperatorList, binaryOperatorList} from "delegates/operator";
+import {signedInteger64Type, float64Type, signedIntegerTypeList} from "delegates/dataType";
 
 var codeBlockDirectiveNameSet = ["PRIVATE_FUNC", "PUBLIC_FUNC", "GUARD_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
 
@@ -67,8 +68,10 @@ ParseUtils.prototype.isFirstArgNumericCharacter = function(character: string): b
         return true;
     }
     var tempCharCode = character.charCodeAt(0);
-    // Digits.
-    return (tempCharCode >= 48 && tempCharCode <= 57);
+    // Hexadecimal digits.
+    return ((tempCharCode >= 48 && tempCharCode <= 57)
+        || (tempCharCode >= 65 && tempCharCode <= 70)
+        || (tempCharCode >= 97 && tempCharCode <= 102));
 }
 
 ParseUtils.prototype.isArgNumericCharacter = function(character: string): boolean {
@@ -117,8 +120,24 @@ ParseUtils.prototype.parseArgWord = function(text: string, index: number): {argW
     };
 }
 
+// text contains only hexadecimal digits.
+ParseUtils.prototype.parseHexadecimalArgNumber = function(text: string): ArgNumber {
+    var tempByteAmount = Math.ceil(text.length / 2);
+    var index = 0;
+    while (index < signedIntegerTypeList.length) {
+        var tempType = signedIntegerTypeList[index];
+        if (tempType.byteAmount >= tempByteAmount) {
+            return new ArgNumber(
+                parseInt(text, 16),
+                tempType
+            );
+        }
+        index += 1;
+    }
+    throw new AssemblyError("Hexadecimal literal has too many digits.");
+}
+
 ParseUtils.prototype.parseArgNumeric = function(text: string, index: number): {argNumeric: ArgNumeric, index: number} {
-    // TODO: Support hexadecimal numbers and floats.
     var tempStartIndex = index;
     while (index < text.length) {
         var tempCharacter = text.charAt(index);
@@ -132,12 +151,26 @@ ParseUtils.prototype.parseArgNumeric = function(text: string, index: number): {a
     var tempComponentList = tempText.split(".");
     var tempArgNumeric;
     if (tempComponentList.length == 1) {
-        tempArgNumeric = new ArgNumber(parseInt(tempComponentList[0]));
+        if (tempText.length > 2 && tempText.substring(0, 2) == "0x") {
+            tempArgNumeric = parseUtils.parseHexadecimalArgNumber(
+                tempText.substring(2, tempText.length)
+            );
+        } else {
+            tempArgNumeric = new ArgNumber(
+                parseInt(tempComponentList[0]),
+                signedInteger64Type
+            );
+        }
+    } else if (tempComponentList.length == 2) {
+        tempArgNumeric = new ArgNumber(
+            parseFloat(tempText),
+            float64Type
+        );
     } else if (tempComponentList.length == 3) {
         tempArgNumeric = new ArgVersionNumber(
             parseInt(tempComponentList[0]),
             parseInt(tempComponentList[1]),
-            parseInt(tempComponentList[2]),
+            parseInt(tempComponentList[2])
         );
     } else {
         throw new AssemblyError("Malformed numeric argument.");

@@ -1,6 +1,6 @@
 
 import {ExpressionProcessor} from "models/items";
-import {UnaryOperator, BinaryOperator, DataType} from "models/delegates";
+import {UnaryOperator, BinaryOperator, DataType, NumberType} from "models/delegates";
 import {
     Expression as ExpressionInterface,
     ArgTerm as ArgTermInterface,
@@ -151,14 +151,15 @@ ArgWord.prototype.getConstantDataTypeHelper = function(): DataType {
 export interface ArgNumber extends ArgNumberInterface {}
 
 export class ArgNumber extends ArgTerm {
-    constructor(value: number) {
+    constructor(value: number, dataType: NumberType) {
         super();
         this.value = value;
+        this.dataType = dataType;
     }
 }
 
 ArgNumber.prototype.copy = function(): Expression {
-    return new ArgNumber(this.value);
+    return new ArgNumber(this.value, this.dataType);
 }
 
 ArgNumber.prototype.getDisplayString = function(): string {
@@ -166,8 +167,7 @@ ArgNumber.prototype.getDisplayString = function(): string {
 }
 
 ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
-    // TODO: Accommodate float values.
-    return signedInteger64Type;
+    return this.dataType;
 }
 
 export interface ArgVersionNumber extends ArgVersionNumberInterface {}

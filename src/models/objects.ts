@@ -1,6 +1,6 @@
 
 import {LineProcessor, ExpressionProcessor} from "models/items";
-import {UnaryOperator, BinaryOperator, DataType} from "models/delegates";
+import {UnaryOperator, BinaryOperator, DataType, NumberType} from "models/delegates";
 
 export interface Definition {
     // Concrete subclasses must implement these methods:
@@ -99,6 +99,7 @@ export interface ArgWord extends ArgTerm {
 
 export interface ArgNumber extends ArgTerm {
     value: number;
+    dataType: NumberType;
 }
 
 export interface ArgVersionNumber extends ArgTerm {

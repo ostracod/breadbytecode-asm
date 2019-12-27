@@ -1,7 +1,7 @@
 
 import {ExpressionProcessor, LineProcessor, NumberTypeClass, ArgNumeric} from "models/items";
 import {Operator, DataType, NumberType} from "models/delegates";
-import {Expression, AssemblyLine, IdentifierMap, Definition, ArgWord, ArgString} from "models/objects";
+import {Expression, AssemblyLine, IdentifierMap, Definition, ArgWord, ArgNumber, ArgString} from "models/objects";
 
 export interface DataTypeUtils {
     getDataTypeByName(name: string): DataType;
@@ -59,6 +59,7 @@ export interface ParseUtils {
         operatorList: Operator[]
     ): {operator: Operator, index: number};
     parseArgWord(text: string, index: number): {argWord: ArgWord, index: number};
+    parseHexadecimalArgNumber(text: string): ArgNumber;
     parseArgNumeric(text: string, index: number): {argNumeric: ArgNumeric, index: number};
     parseArgString(text: string, index: number): {argString: ArgString, index: number};
     parseArgExpression(
