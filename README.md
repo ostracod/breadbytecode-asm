@@ -5,15 +5,18 @@ This utility converts assembly code to BreadBytecode for BreadSystem.
 
 ## Usage
 
-Compile the assembler from TypeScript (3.6) to JavaScript:
+Clone https://github.com/ostracod/breadsystem-spec and generate `bytecodeInstructions.json`:
 
 ```
+# Inside breadsystem-spec:
+node ./generate.js
+```
+
+Compile and run the assembler:
+
+```
+# Inside breadbytecode-asm:
 tsc
-```
-
-Run the assembler:
-
-```
 node ./dist/assemble.js (path to .bbasm file)
 ```
 

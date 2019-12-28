@@ -21,6 +21,7 @@ export abstract class FunctionDefinition {
         this.jumpTableLineList = null;
         this.argVariableDefinitionList = [];
         this.localVariableDefinitionList = [];
+        this.instructionList = [];
         this.extractJumpTables();
         this.extractVariableDefinitions();
         this.extractLabelDefinitions();

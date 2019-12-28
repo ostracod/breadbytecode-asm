@@ -35,4 +35,10 @@ export interface BinaryOperator extends Operator {
     getConstantDataType(operand1: Expression, operand2: Expression): DataType;
 }
 
+export interface InstructionType {
+    name: string;
+    opcode: number;
+    argumentAmount: number;
+}
+
 

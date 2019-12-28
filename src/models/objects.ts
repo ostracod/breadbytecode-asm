@@ -1,6 +1,6 @@
 
 import {LineProcessor, ExpressionProcessor} from "models/items";
-import {UnaryOperator, BinaryOperator, DataType, NumberType} from "models/delegates";
+import {UnaryOperator, BinaryOperator, DataType, NumberType, InstructionType} from "models/delegates";
 
 export interface Definition {
     // Concrete subclasses must implement these methods:
@@ -41,6 +41,7 @@ export interface Assembler {
     extractFunctionDefinitions(): void;
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
+    assembleInstructions(): void;
 }
 
 export interface AssemblyError {
@@ -60,6 +61,7 @@ export interface AssemblyLine {
         processExpression: ExpressionProcessor,
         shouldRecurAfterProcess?: boolean
     ): void;
+    assembleInstruction(): Instruction;
 }
 
 export interface ConstantDefinition extends Definition {
@@ -139,12 +141,14 @@ export interface FunctionDefinition extends Definition {
     jumpTableLineList: LabeledLineList;
     argVariableDefinitionList: ArgVariableDefinition[];
     localVariableDefinitionList: VariableDefinition[];
+    instructionList: Instruction[];
     
     processLines(processLine: LineProcessor): void;
     processJumpTableLines(processLine: LineProcessor): void;
     extractJumpTables(): void;
     extractVariableDefinitions(): void;
     extractLabelDefinitions(): void;
+    assembleInstructions(): void;
     
     // Concrete subclasses must implement these methods:
     getTitle(): string;
@@ -207,6 +211,11 @@ export interface LabeledLineList {
     
     // Concrete subclasses must implement these methods:
     getLineElementLength(line: AssemblyLine): number;
+}
+
+export interface Instruction {
+    instructionType: InstructionType;
+    // TODO: Add member variable for arguments.
 }
 
 

@@ -94,6 +94,7 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
         this.extractFunctionDefinitions();
         this.extractAppDataDefinitions();
         this.extractGlobalVariableDefinitions();
+        this.assembleInstructions();
     } catch(error) {
         if (error instanceof AssemblyError) {
             if (error.lineNumber === null) {
@@ -121,5 +122,6 @@ import "objects/macroDefinition";
 import "objects/functionDefinition";
 import "objects/variableDefinition";
 import "objects/includeDirective";
+import "objects/instruction";
 
 
