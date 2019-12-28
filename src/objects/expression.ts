@@ -14,10 +14,14 @@ import {
     SubscriptExpression as SubscriptExpressionInterface,
     IdentifierMap
 } from "models/objects";
+
 import {AssemblyError} from "objects/assemblyError";
 import {Identifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
+
 import {signedInteger64Type, StringType} from "delegates/dataType";
+import {unaryAtOperator} from "delegates/operator";
+
 import {dataTypeUtils} from "utils/dataTypeUtils";
 
 export interface Expression extends ExpressionInterface {}
@@ -372,7 +376,5 @@ SubscriptExpression.prototype.processExpressionsHelper = function(processExpress
 SubscriptExpression.prototype.getConstantDataTypeHelper = function(): DataType {
     return this.dataTypeExpression.evaluateToDataType()
 }
-
-import {unaryAtOperator} from "delegates/operator";
 
 

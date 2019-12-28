@@ -3,10 +3,21 @@ import * as fs from "fs";
 
 import {LineProcessor, ExpressionProcessor} from "models/items";
 import {Assembler as AssemblerInterface, AssemblyLine} from "models/objects";
+
 import {AssemblyError} from "objects/assemblyError";
 import {IdentifierMap} from "objects/identifier";
+import {MacroDefinition} from "objects/macroDefinition";
+import {ConstantDefinition} from "objects/constantDefinition";
+import {
+    PrivateFunctionDefinition,
+    PublicFunctionDefinition,
+    GuardFunctionDefinition
+} from "objects/functionDefinition";
+import {AppDataLineList} from "objects/labeledLineList";
+
 import {parseUtils} from "utils/parseUtils";
 import {lineUtils} from "utils/lineUtils";
+import {variableUtils} from "utils/variableUtils";
 
 export interface Assembler extends AssemblerInterface {}
 
@@ -36,6 +47,112 @@ Assembler.prototype.processExpressionsInLines = function(
     lineUtils.processExpressionsInLines(this.rootLineList, processExpression, shouldRecurAfterProcess);
 }
 
+Assembler.prototype.extractMacroDefinitions = function(lineList: AssemblyLine[]): AssemblyLine[] {
+    var self = this;
+    var tempResult = lineUtils.processLines(lineList, function(line) {
+        var tempArgList = line.argList;
+        if (line.directiveName == "MACRO") {
+            if (tempArgList.length < 1) {
+                throw new AssemblyError("Expected at least 1 argument.");
+            }
+            var tempNameIdentifier = tempArgList[0].evaluateToIdentifier();
+            var tempName = tempNameIdentifier.name;
+            var tempIdentifierList = [];
+            var index = 1;
+            while (index < tempArgList.length) {
+                var tempIdentifier = tempArgList[index].evaluateToIdentifier();
+                tempIdentifierList.push(tempIdentifier);
+                index += 1;
+            }
+            var tempDefinition = new MacroDefinition(
+                tempName,
+                tempIdentifierList,
+                line.codeBlock
+            );
+            self.macroDefinitionMap[tempName] = tempDefinition;
+            return [];
+        }
+        return null;
+    });
+    return tempResult.lineList;
+}
+
+Assembler.prototype.getNextMacroInvocationId = function(): number {
+    var output = this.nextMacroInvocationId;
+    this.nextMacroInvocationId += 1;
+    return output;
+}
+
+Assembler.prototype.expandMacroInvocations = function(lineList: AssemblyLine[]): {lineList: AssemblyLine[], expandCount: number} {
+    var self = this;
+    var tempResult = lineUtils.processLines(lineList, function(line) {
+        var tempDirectiveName = line.directiveName;
+        if (tempDirectiveName in self.macroDefinitionMap) {
+            var tempDefinition = self.macroDefinitionMap[tempDirectiveName];
+            var macroInvocationId = self.getNextMacroInvocationId();
+            return tempDefinition.invoke(line.argList, macroInvocationId);
+        }
+        return null;
+    }, true);
+    return {
+        lineList: tempResult.lineList,
+        expandCount: tempResult.processCount
+    };
+}
+
+Assembler.prototype.extractConstantDefinitions = function(lineList: AssemblyLine[]): AssemblyLine[] {
+    var self = this;
+    var tempResult = lineUtils.processLines(lineList, function(line) {
+        var tempArgList = line.argList;
+        if (line.directiveName == "DEF") {
+            if (tempArgList.length != 2) {
+                throw new AssemblyError("Expected 2 arguments.");
+            }
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
+            var tempExpression = tempArgList[1];
+            var tempDefinition = new ConstantDefinition(tempIdentifier, tempExpression);
+            self.constantDefinitionMap.set(tempIdentifier, tempDefinition);
+            return [];
+        }
+        return null;
+    });
+    return tempResult.lineList;
+}
+
+Assembler.prototype.expandConstantInvocations = function(): void {
+    var self = this;
+    self.processExpressionsInLines(function(expression) {
+        var tempIdentifier = expression.evaluateToIdentifierOrNull();
+        if (tempIdentifier === null) {
+            return null;
+        }
+        var tempDefinition = self.constantDefinitionMap.get(tempIdentifier);
+        if (tempDefinition === null) {
+            return null;
+        }
+        return tempDefinition.expression.copy();
+    }, true);
+}
+
+Assembler.prototype.processIncludeDirectives = function(lineList: AssemblyLine[]): {lineList: AssemblyLine[], includeCount: number} {
+    var self = this;
+    var tempResult = lineUtils.processLines(lineList, function(line) {
+        var tempArgList = line.argList;
+        if (line.directiveName == "INCLUDE") {
+            if (tempArgList.length != 1) {
+                throw new AssemblyError("Expected 1 argument.");
+            }
+            var tempPath = tempArgList[0].evaluateToString();
+            return self.loadAndParseAssemblyFile(tempPath);
+        }
+        return null;
+    });
+    return {
+        lineList: tempResult.lineList,
+        includeCount: tempResult.processCount
+    };
+}
+
 Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyLine[] {
     var tempLineTextList = parseUtils.loadAssemblyFileContent(path);
     var tempLineList = parseUtils.parseAssemblyLines(tempLineTextList);
@@ -56,6 +173,93 @@ Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyL
         }
     }
     return tempLineList;
+}
+
+Assembler.prototype.extractFunctionDefinitions = function(): void {
+    var self = this;
+    self.processLines(function(line) {
+        var tempDirectiveName = line.directiveName;
+        var tempArgList = line.argList;
+        if (tempDirectiveName == "PRIVATE_FUNC") {
+            if (tempArgList.length != 1) {
+                throw new AssemblyError("Expected 1 argument.");
+            }
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
+            var tempPrivateDefinition = new PrivateFunctionDefinition(
+                tempIdentifier,
+                line.codeBlock
+            );
+            self.functionDefinitionList.push(tempPrivateDefinition);
+            return [];
+        }
+        if (tempDirectiveName == "PUBLIC_FUNC") {
+            if (tempArgList.length != 2) {
+                throw new AssemblyError("Expected 2 arguments.");
+            }
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
+            var tempPublicDefinition = new PublicFunctionDefinition(
+                tempIdentifier,
+                tempArgList[1],
+                line.codeBlock
+            );
+            self.functionDefinitionList.push(tempPublicDefinition);
+            return [];
+        }
+        if (tempDirectiveName == "GUARD_FUNC") {
+            if (tempArgList.length != 2) {
+                throw new AssemblyError("Expected 2 arguments.");
+            }
+            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
+            var tempGuardDefinition = new GuardFunctionDefinition(
+                tempIdentifier,
+                tempArgList[1],
+                line.codeBlock
+            );
+            self.functionDefinitionList.push(tempGuardDefinition);
+            return [];
+        }
+        return null;
+    });
+}
+
+Assembler.prototype.extractAppDataDefinitions = function(): void {
+    var tempLineList = [];
+    var self = this;
+    self.processLines(function(line) {
+        if (line.directiveName == "APP_DATA") {
+            if (line.argList.length != 0) {
+                throw new AssemblyError("Expected 0 arguments.");
+            }
+            var index = 0;
+            while (index < line.codeBlock.length) {
+                var tempLine = line.codeBlock[index];
+                tempLineList.push(tempLine);
+                index += 1;
+            }
+            return [];
+        }
+        return null
+    });
+    self.appDataLineList = new AppDataLineList(tempLineList);
+    self.appDataLineList.extractLabelDefinitions();
+}
+
+Assembler.prototype.extractGlobalVariableDefinitions = function(): void {
+    var self = this;
+    self.processLines(function(line) {
+        var tempDefinition = variableUtils.extractLocalVariableDefinition(line);
+        if (tempDefinition !== null) {
+            self.globalVariableDefinitionList.push(tempDefinition);
+            return [];
+        }
+        return null;
+    });
+}
+
+Assembler.prototype.assembleInstructions = function(): void {
+    for (let functionDefinition of this.functionDefinitionList) {
+        functionDefinition.assembleInstructions();
+    }
 }
 
 Assembler.prototype.getDisplayString = function(): string {
@@ -115,13 +319,5 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
     console.log("Finished assembling.");
     console.log("Destination path: " + destinationPath);
 }
-
-import "objects/constantDefinition";
-import "objects/appDataDefinition";
-import "objects/macroDefinition";
-import "objects/functionDefinition";
-import "objects/variableDefinition";
-import "objects/includeDirective";
-import "objects/instruction";
 
 

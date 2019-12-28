@@ -1,7 +1,7 @@
 
 import {ExpressionProcessor, LineProcessor, NumberTypeClass, ArgNumeric} from "models/items";
 import {Operator, DataType, NumberType} from "models/delegates";
-import {Expression, AssemblyLine, IdentifierMap, Definition, ArgWord, ArgNumber, ArgString} from "models/objects";
+import {Expression, AssemblyLine, IdentifierMap, Definition, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition} from "models/objects";
 
 export interface DataTypeUtils {
     getDataTypeByName(name: string): DataType;
@@ -71,6 +71,11 @@ export interface ParseUtils {
     loadAssemblyFileContent(path: string): string[];
     parseAssemblyLines(lineTextList: string[]): AssemblyLine[];
     collapseCodeBlocks(lineList: AssemblyLine[]): AssemblyLine[];
+}
+
+export interface VariableUtils {
+    extractLocalVariableDefinition(line: AssemblyLine): VariableDefinition;
+    extractArgVariableDefinition(line: AssemblyLine): ArgVariableDefinition;
 }
 
 

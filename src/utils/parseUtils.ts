@@ -1,8 +1,17 @@
 
+import * as fs from "fs";
+
 import {ArgNumeric} from "models/items";
 import {ParseUtils as ParseUtilsInterface} from "models/utils";
 import {Operator, UnaryOperator, BinaryOperator} from "models/delegates";
 import {Expression} from "models/objects";
+
+import {AssemblyError} from "objects/assemblyError";
+import {AssemblyLine} from "objects/assemblyLine";
+import {SubscriptExpression, ArgWord, ArgNumber, ArgVersionNumber, ArgString} from "objects/expression";
+
+import {unaryOperatorList, binaryOperatorList} from "delegates/operator";
+import {signedInteger64Type, float64Type, signedIntegerTypeList} from "delegates/dataType";
 
 export interface ParseUtils extends ParseUtilsInterface {}
 
@@ -11,14 +20,6 @@ export class ParseUtils {
 }
 
 export var parseUtils = new ParseUtils();
-
-var fs = require("fs");
-
-import {AssemblyError} from "objects/assemblyError";
-import {AssemblyLine} from "objects/assemblyLine";
-import {SubscriptExpression, ArgWord, ArgNumber, ArgVersionNumber, ArgString} from "objects/expression";
-import {unaryOperatorList, binaryOperatorList} from "delegates/operator";
-import {signedInteger64Type, float64Type, signedIntegerTypeList} from "delegates/dataType";
 
 var codeBlockDirectiveNameSet = ["PRIVATE_FUNC", "PUBLIC_FUNC", "GUARD_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
 

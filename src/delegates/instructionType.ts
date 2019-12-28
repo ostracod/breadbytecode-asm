@@ -1,7 +1,7 @@
 
-import {InstructionType as InstructionTypeInterface} from "models/delegates";
-
 import * as fs from "fs";
+
+import {InstructionType as InstructionTypeInterface} from "models/delegates";
 
 export interface InstructionType extends InstructionTypeInterface {}
 

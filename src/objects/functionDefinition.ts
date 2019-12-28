@@ -6,11 +6,11 @@ import {
     Identifier, AssemblyLine, Expression
 } from "models/objects";
 
-import {Assembler} from "objects/assembler";
 import {AssemblyError} from "objects/assemblyError";
+import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
 
-import {lineUtils} from "utils/lineUtils";
 import {niceUtils} from "utils/niceUtils";
+import {variableUtils} from "utils/variableUtils";
 
 export interface FunctionDefinition extends FunctionDefinitionInterface {}
 
@@ -74,6 +74,36 @@ FunctionDefinition.prototype.getDisplayString = function(): string {
     return niceUtils.joinTextList(tempTextList);
 }
 
+FunctionDefinition.prototype.extractVariableDefinitions = function(): void {
+    var self = this;
+    self.processLines(function(line) {
+        var tempLocalDefinition = variableUtils.extractLocalVariableDefinition(line);
+        if (tempLocalDefinition !== null) {
+            self.localVariableDefinitionList.push(tempLocalDefinition);
+            return [];
+        }
+        var tempArgDefinition = variableUtils.extractArgVariableDefinition(line);
+        if (tempArgDefinition !== null) {
+            self.argVariableDefinitionList.push(tempArgDefinition);
+            return [];
+        }
+        return null;
+    });
+}
+
+FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
+    this.lineList.extractLabelDefinitions();
+    this.jumpTableLineList.extractLabelDefinitions();
+}
+
+FunctionDefinition.prototype.assembleInstructions = function(): void {
+    this.processLines(line => {
+        var tempInstruction = line.assembleInstruction();
+        this.instructionList.push(tempInstruction);
+        return null;
+    });
+}
+
 export class PrivateFunctionDefinition extends FunctionDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[]) {
         super(identifier, lineList);
@@ -116,57 +146,5 @@ export class GuardFunctionDefinition extends InterfaceFunctionDefinition {
 GuardFunctionDefinition.prototype.getTitlePrefix = function(): string {
     return "Guard";
 }
-
-import "objects/variableDefinition";
-import "objects/labelDefinition";
-
-Assembler.prototype.extractFunctionDefinitions = function(): void {
-    var self = this;
-    self.processLines(function(line) {
-        var tempDirectiveName = line.directiveName;
-        var tempArgList = line.argList;
-        if (tempDirectiveName == "PRIVATE_FUNC") {
-            if (tempArgList.length != 1) {
-                throw new AssemblyError("Expected 1 argument.");
-            }
-            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
-            var tempPrivateDefinition = new PrivateFunctionDefinition(
-                tempIdentifier,
-                line.codeBlock
-            );
-            self.functionDefinitionList.push(tempPrivateDefinition);
-            return [];
-        }
-        if (tempDirectiveName == "PUBLIC_FUNC") {
-            if (tempArgList.length != 2) {
-                throw new AssemblyError("Expected 2 arguments.");
-            }
-            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
-            var tempPublicDefinition = new PublicFunctionDefinition(
-                tempIdentifier,
-                tempArgList[1],
-                line.codeBlock
-            );
-            self.functionDefinitionList.push(tempPublicDefinition);
-            return [];
-        }
-        if (tempDirectiveName == "GUARD_FUNC") {
-            if (tempArgList.length != 2) {
-                throw new AssemblyError("Expected 2 arguments.");
-            }
-            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
-            var tempGuardDefinition = new GuardFunctionDefinition(
-                tempIdentifier,
-                tempArgList[1],
-                line.codeBlock
-            );
-            self.functionDefinitionList.push(tempGuardDefinition);
-            return [];
-        }
-        return null;
-    });
-}
-
-import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
 
 

@@ -1,9 +1,14 @@
 
 import {ExpressionProcessor} from "models/items";
 import {Expression, AssemblyLine as AssemblyLineInterface} from "models/objects";
-import {parseUtils} from "utils/parseUtils";
+
 import {lineUtils} from "utils/lineUtils";
 import {expressionUtils} from "utils/expressionUtils";
+
+import {instructionTypeMap} from "delegates/instructionType";
+
+import {AssemblyError} from "objects/assemblyError";
+import {Instruction} from "objects/instruction";
 
 export interface AssemblyLine extends AssemblyLineInterface {}
 
@@ -65,6 +70,14 @@ AssemblyLine.prototype.processExpressions = function(
     if (this.codeBlock !== null) {
         lineUtils.processExpressionsInLines(this.codeBlock, processExpression, shouldRecurAfterProcess);
     }
+}
+
+AssemblyLine.prototype.assembleInstruction = function(): Instruction {
+    if (!(this.directiveName in instructionTypeMap)) {
+        throw new AssemblyError("Unrecognized opcode mnemonic.");
+    }
+    var tempInstructionType = instructionTypeMap[this.directiveName];
+    return new Instruction(tempInstructionType);
 }
 
 
