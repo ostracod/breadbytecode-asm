@@ -56,14 +56,14 @@ PUBLIC_FUNC init, initableIface
     givePerm launcher, termProducerPerm, -1
 END
 
-PUBLIC_FUNC driver, termProducerIface
+PUBLIC_FUNC driver, termProducerIface, termArbiterIface
     ARG dest, p
     
     # Return the driver.
     wrt dest, driver
 END
 
-PUBLIC_FUNC setDriver, termProducerIface
+PUBLIC_FUNC setDriver, termProducerIface, termArbiterIface
     ARG inputDriver, p
     
     # Set the terminal driver.
@@ -100,11 +100,11 @@ PUBLIC_FUNC setDriver, termProducerIface
     callHandle writeTextHandle
 END
 
-PUBLIC_FUNC sizeChanged, termProducerIface
+PUBLIC_FUNC sizeChanged, termProducerIface, termArbiterIface
     # Do nothing.
 END
 
-PUBLIC_FUNC keyTyped, termProducerIface
+PUBLIC_FUNC keyTyped, termProducerIface, termArbiterIface
     ARG key, u32
     ARG modifiers, u8
     

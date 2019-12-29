@@ -1,5 +1,6 @@
 
 import * as fs from "fs";
+import * as pathUtils from "path";
 
 import {InstructionType as InstructionTypeInterface} from "models/delegates";
 
@@ -16,7 +17,10 @@ export class InstructionType {
     }
 }
 
-const instructionsPath = "../breadsystem-spec/bytecodeInstructions.json";
+const instructionsPath = pathUtils.join(
+    __dirname,
+    "../../../breadsystem-spec/bytecodeInstructions.json"
+);
 let categoryJsonList = JSON.parse(fs.readFileSync(instructionsPath, "utf8"));
 
 var tempCount = 0;

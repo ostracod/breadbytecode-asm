@@ -155,10 +155,17 @@ export interface FunctionDefinition extends Definition {
 }
 
 export interface InterfaceFunctionDefinition extends FunctionDefinition {
-    dependencyIndexExpression: Expression;
+    interfaceIndexExpression: Expression;
+    
+    // Concrete subclasses may override these methods:
+    getTitleSuffix(): string;
     
     // Concrete subclasses must implement these methods:
     getTitlePrefix(): string;
+}
+
+export interface PublicFunctionDefinition extends InterfaceFunctionDefinition {
+    arbiterIndexExpression: Expression;
 }
 
 export interface Identifier {

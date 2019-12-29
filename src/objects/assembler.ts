@@ -193,13 +193,19 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
             return [];
         }
         if (tempDirectiveName == "PUBLIC_FUNC") {
-            if (tempArgList.length != 2) {
-                throw new AssemblyError("Expected 2 arguments.");
+            var tempArbiterIndexExpression;
+            if (tempArgList.length == 3) {
+                tempArbiterIndexExpression = tempArgList[2];
+            } else if (tempArgList.length == 2) {
+                tempArbiterIndexExpression = null;
+            } else {
+                throw new AssemblyError("Expected 2 or 3 arguments.");
             }
             var tempIdentifier = tempArgList[0].evaluateToIdentifier();
             var tempPublicDefinition = new PublicFunctionDefinition(
                 tempIdentifier,
                 tempArgList[1],
+                tempArbiterIndexExpression,
                 line.codeBlock
             );
             self.functionDefinitionList.push(tempPublicDefinition);
@@ -277,7 +283,11 @@ Assembler.prototype.getDisplayString = function(): string {
         tempTextList.push(tempDefinition.getDisplayString());
         tempTextList.push("");
     }
-    tempTextList.push("= = = FUNCTION DEFINITIONS = = =\n");
+    tempTextList.push("= = = GLOBAL VARIABLE DEFINITIONS = = =\n");
+    for (let variableDefinition of this.globalVariableDefinitionList) {
+        tempTextList.push(variableDefinition.getDisplayString());
+    }
+    tempTextList.push("\n= = = FUNCTION DEFINITIONS = = =\n");
     var index = 0;
     while (index < this.functionDefinitionList.length) {
         var tempDefinition = this.functionDefinitionList[index]

@@ -3,6 +3,7 @@ import {LineProcessor} from "models/items";
 import {
     FunctionDefinition as FunctionDefinitionInterface,
     InterfaceFunctionDefinition as InterfaceFunctionDefinitionInterface,
+    PublicFunctionDefinition as PublicFunctionDefinitionInterface,
     Identifier, AssemblyLine, Expression
 } from "models/objects";
 
@@ -117,19 +118,31 @@ PrivateFunctionDefinition.prototype.getTitle = function(): string {
 export interface InterfaceFunctionDefinition extends InterfaceFunctionDefinitionInterface {}
 
 export abstract class InterfaceFunctionDefinition extends FunctionDefinition {
-    constructor(identifier: Identifier, dependencyIndexExpression: Expression, lineList: AssemblyLine[]) {
+    constructor(identifier: Identifier, interfaceIndexExpression: Expression, lineList: AssemblyLine[]) {
         super(identifier, lineList);
-        this.dependencyIndexExpression = dependencyIndexExpression;
+        this.interfaceIndexExpression = interfaceIndexExpression;
     }
 }
 
 InterfaceFunctionDefinition.prototype.getTitle = function(): string {
-    return this.getTitlePrefix() + " function " + this.identifier.getDisplayString() + " (" + this.dependencyIndexExpression.getDisplayString() + ")";
+    return this.getTitlePrefix() + " function " + this.identifier.getDisplayString() + " (" + this.getTitleSuffix() + ")";
 }
 
+InterfaceFunctionDefinition.prototype.getTitleSuffix = function(): string {
+    return this.interfaceIndexExpression.getDisplayString()
+}
+
+export interface PublicFunctionDefinition extends PublicFunctionDefinitionInterface {}
+
 export class PublicFunctionDefinition extends InterfaceFunctionDefinition {
-    constructor(identifier: Identifier, dependencyIndexExpression: Expression, lineList: AssemblyLine[]) {
-        super(identifier, dependencyIndexExpression, lineList);
+    constructor(
+        identifier: Identifier,
+        interfaceIndexExpression: Expression,
+        arbiterIndexExpression: Expression,
+        lineList: AssemblyLine[]
+    ) {
+        super(identifier, interfaceIndexExpression, lineList);
+        this.arbiterIndexExpression = arbiterIndexExpression;
     }
 }
 
@@ -137,9 +150,17 @@ PublicFunctionDefinition.prototype.getTitlePrefix = function(): string {
     return "Public";
 }
 
+PublicFunctionDefinition.prototype.getTitleSuffix = function(): string {
+    var output = InterfaceFunctionDefinition.prototype.getTitleSuffix.call(this);
+    if (this.arbiterIndexExpression !== null) {
+        output += ", " + this.arbiterIndexExpression.getDisplayString();
+    }
+    return output;
+}
+
 export class GuardFunctionDefinition extends InterfaceFunctionDefinition {
-    constructor(identifier: Identifier, dependencyIndexExpression: Expression, lineList: AssemblyLine[]) {
-        super(identifier, dependencyIndexExpression, lineList);
+    constructor(identifier: Identifier, interfaceIndexExpression: Expression, lineList: AssemblyLine[]) {
+        super(identifier, interfaceIndexExpression, lineList);
     }
 }
 

@@ -5,7 +5,7 @@ This utility converts assembly code to BreadBytecode for BreadSystem.
 
 ## Usage
 
-Clone https://github.com/ostracod/breadsystem-spec and generate `bytecodeInstructions.json`:
+Clone https://github.com/ostracod/breadsystem-spec in the parent directory of `breadbytecode-asm`, then generate `bytecodeInstructions.json`:
 
 ```
 # Inside breadsystem-spec:
@@ -111,16 +111,16 @@ Declares a simple dependency with an explicit path.
 `VER_DEP name, path, ver, depModifiers`  
 Declares a bundle dependency with the given version number.
 
-`IFACE_DEP name, path, depIndexes, depModifiers`  
+`IFACE_DEP name, path, ifaceIndexes, depModifiers`  
 Declares an application dependency with the given interfaces.
 
 `PRIVATE_FUNC name ... END`  
 Declares a private function.
 
-`PUBLIC_FUNC name, depIndex ... END`  
+`PUBLIC_FUNC name, ifaceIndex, arbiterIndex? ... END`  
 Declares a public function which belongs to the given interface.
 
-`GUARD_FUNC name, depIndex ... END`  
+`GUARD_FUNC name, ifaceIndex ... END`  
 Declares a guard function which belongs to the given interface.
 
 `VAR name, dataType`  
