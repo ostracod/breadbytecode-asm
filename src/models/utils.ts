@@ -1,7 +1,7 @@
 
 import {ExpressionProcessor, LineProcessor, NumberTypeClass, ArgNumeric} from "models/items";
 import {Operator, DataType, NumberType} from "models/delegates";
-import {Expression, AssemblyLine, IdentifierMap, Definition, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition} from "models/objects";
+import {Expression, AssemblyLine, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition} from "models/objects";
 
 export interface DataTypeUtils {
     getDataTypeByName(name: string): DataType;
@@ -27,7 +27,6 @@ export interface LineUtils {
     ): void;
     substituteIdentifiersInLines(lineList: AssemblyLine[], identifierExpressionMap: IdentifierMap<Expression>): void;
     populateMacroInvocationIdInLines(lineList: AssemblyLine[], macroInvocationId: number): void;
-    getIndentation(indentationLevel: number): string;
     getLineListDisplayString(lineList: AssemblyLine[], indentationLevel?: number): string;
     processLines(
         lineList: AssemblyLine[],
@@ -37,13 +36,17 @@ export interface LineUtils {
 }
 
 export interface NiceUtils {
-    getDefinitionListDisplayString(
+    getIndentation(indentationLevel: number): string;
+    getDisplayableListDisplayString(
         title: string,
-        definitionList: Definition[],
+        displayableList: Displayable[],
         indentationLevel?: number
     ): string;
     joinTextList(textList: string[]): string;
     getReverseMap(map: {[key: string]: any}): {[key: string]: any};
+    pluralize(word: string, amount: number): string;
+    convertNumberToHexadecimal(value: number, length: number): string;
+    convertBufferToHexadecimal(buffer: Buffer): string;
 }
 
 export interface ParseUtils {

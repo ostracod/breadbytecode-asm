@@ -49,16 +49,6 @@ LineUtils.prototype.populateMacroInvocationIdInLines = function(lineList: Assemb
     });
 }
 
-LineUtils.prototype.getIndentation = function(indentationLevel: number): string {
-    var output = "";
-    var tempCount = 0;
-    while (tempCount < indentationLevel) {
-        output = output + "    ";
-        tempCount += 1;
-    }
-    return output;
-}
-
 LineUtils.prototype.getLineListDisplayString = function(lineList: AssemblyLine[], indentationLevel?: number): string {
     if (typeof indentationLevel === "undefined") {
         indentationLevel = 0;

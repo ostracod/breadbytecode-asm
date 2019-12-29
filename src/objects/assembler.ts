@@ -2,7 +2,7 @@
 import * as fs from "fs";
 
 import {LineProcessor, ExpressionProcessor} from "models/items";
-import {Assembler as AssemblerInterface, AssemblyLine} from "models/objects";
+import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition} from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
 import {IdentifierMap} from "objects/identifier";
@@ -175,6 +175,11 @@ Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyL
     return tempLineList;
 }
 
+Assembler.prototype.addFunctionDefinition = function(functionDefinition: FunctionDefinition): void {
+    functionDefinition.assembler = this;
+    this.functionDefinitionList.push(functionDefinition);
+}
+
 Assembler.prototype.extractFunctionDefinitions = function(): void {
     var self = this;
     self.processLines(function(line) {
@@ -189,7 +194,7 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
                 tempIdentifier,
                 line.codeBlock
             );
-            self.functionDefinitionList.push(tempPrivateDefinition);
+            self.addFunctionDefinition(tempPrivateDefinition);
             return [];
         }
         if (tempDirectiveName == "PUBLIC_FUNC") {
@@ -208,7 +213,7 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
                 tempArbiterIndexExpression,
                 line.codeBlock
             );
-            self.functionDefinitionList.push(tempPublicDefinition);
+            self.addFunctionDefinition(tempPublicDefinition);
             return [];
         }
         if (tempDirectiveName == "GUARD_FUNC") {
@@ -221,7 +226,7 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
                 tempArgList[1],
                 line.codeBlock
             );
-            self.functionDefinitionList.push(tempGuardDefinition);
+            self.addFunctionDefinition(tempGuardDefinition);
             return [];
         }
         return null;

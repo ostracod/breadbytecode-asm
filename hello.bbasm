@@ -47,7 +47,7 @@ PUBLIC_FUNC init, initableIface
     # Get permission for termProducerProtab held by this agent.
     VAR termProducerPerm, p
     VAR tempPermList, p
-    perms tempPermList, thisAgent, arbiter, termProducerProtab
+    perms tempPermList, thisAgent, termProducerProtab
     wrt termProducerPerm, tempPermList[0]:p
     
     # Give permission for termProducerProtab to the launcher.

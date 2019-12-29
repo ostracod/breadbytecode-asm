@@ -1,7 +1,6 @@
 
 import {NiceUtils as NiceUtilsInterface} from "models/utils";
-import {Definition} from "models/objects";
-import {lineUtils} from "utils/lineUtils";
+import {Displayable} from "models/objects";
 
 export interface NiceUtils extends NiceUtilsInterface {}
 
@@ -11,25 +10,32 @@ export function NiceUtils() {
 
 export var niceUtils = new NiceUtils();
 
-NiceUtils.prototype.getDefinitionListDisplayString = function(
+NiceUtils.prototype.getIndentation = function(indentationLevel: number): string {
+    var output = "";
+    var tempCount = 0;
+    while (tempCount < indentationLevel) {
+        output = output + "    ";
+        tempCount += 1;
+    }
+    return output;
+}
+
+NiceUtils.prototype.getDisplayableListDisplayString = function(
     title: string,
-    definitionList: Definition[],
+    displayableList: Displayable[],
     indentationLevel?: number
 ): string {
     if (typeof indentationLevel === "undefined") {
         indentationLevel = 0
     }
-    if (definitionList.length <= 0) {
+    if (displayableList.length <= 0) {
         return "";
     }
-    var tempIndentation1 = lineUtils.getIndentation(indentationLevel);
-    var tempIndentation2 = lineUtils.getIndentation(indentationLevel + 1);
-    var tempTextList = [tempIndentation1 + title + ":"];
-    var index = 0;
-    while (index < definitionList.length) {
-        var tempDefinition = definitionList[index];
-        tempTextList.push(tempIndentation2 + tempDefinition.getDisplayString());
-        index += 1;
+    let tempIndentation1 = niceUtils.getIndentation(indentationLevel);
+    let tempIndentation2 = niceUtils.getIndentation(indentationLevel + 1);
+    let tempTextList = [tempIndentation1 + title + ":"];
+    for (let displayable of displayableList) {
+        tempTextList.push(tempIndentation2 + displayable.getDisplayString());
     }
     return tempTextList.join("\n");
 }
@@ -57,4 +63,32 @@ NiceUtils.prototype.getReverseMap = function(map: {[key: string]: any}): {[key: 
     }
     return output;
 }
+
+NiceUtils.prototype.pluralize = function(word: string, amount: number): string {
+    if (amount == 1) {
+        return word;
+    } else {
+        return word + "s";
+    }
+}
+
+NiceUtils.prototype.convertNumberToHexadecimal = function(value: number, length: number): string {
+    let output = value.toString(16).toUpperCase();
+    while (output.length < length) {
+        output = "0" + output;
+    }
+    return "0x" + output;
+}
+
+NiceUtils.prototype.convertBufferToHexadecimal = function(buffer: Buffer): string {
+    let tempTextList = [];
+    let index = 0;
+    while (index < buffer.length) {
+        let tempValue = buffer[index];
+        tempTextList.push(niceUtils.convertNumberToHexadecimal(tempValue, 2));
+        index += 1;
+    }
+    return tempTextList.join(" ");
+}
+
 

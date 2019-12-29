@@ -2,7 +2,7 @@
 import {LineProcessor, ExpressionProcessor} from "models/items";
 import {UnaryOperator, BinaryOperator, DataType, NumberType, InstructionType} from "models/delegates";
 
-export interface Definition {
+export interface Displayable {
     // Concrete subclasses must implement these methods:
     getDisplayString(): string;
 }
@@ -38,6 +38,7 @@ export interface Assembler {
     processIncludeDirectives(lineList: AssemblyLine[]): {lineList: AssemblyLine[], includeCount: number};
     extractConstantDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
     expandConstantInvocations(): void;
+    addFunctionDefinition(functionDefinition: FunctionDefinition): void;
     extractFunctionDefinitions(): void;
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
@@ -61,10 +62,9 @@ export interface AssemblyLine {
         processExpression: ExpressionProcessor,
         shouldRecurAfterProcess?: boolean
     ): void;
-    assembleInstruction(): Instruction;
 }
 
-export interface ConstantDefinition extends Definition {
+export interface ConstantDefinition extends Displayable {
     identifier: Identifier;
     expression: Expression;
 }
@@ -135,9 +135,10 @@ export interface SubscriptExpression extends Expression {
     dataTypeExpression: Expression;
 }
 
-export interface FunctionDefinition extends Definition {
+export interface FunctionDefinition extends Displayable {
     identifier: Identifier;
     lineList: LabeledLineList;
+    assembler: Assembler;
     jumpTableLineList: LabeledLineList;
     argVariableDefinitionList: ArgVariableDefinition[];
     localVariableDefinitionList: VariableDefinition[];
@@ -148,6 +149,8 @@ export interface FunctionDefinition extends Definition {
     extractJumpTables(): void;
     extractVariableDefinitions(): void;
     extractLabelDefinitions(): void;
+    assembleInstructionArgument(expression: Expression): Buffer;
+    assembleInstruction(line: AssemblyLine): Instruction;
     assembleInstructions(): void;
     
     // Concrete subclasses must implement these methods:
@@ -184,13 +187,13 @@ export interface IdentifierMap<T> {
     iterate(handle: (value: T) => void): void;
 }
 
-export interface LabelDefinition extends Definition {
+export interface LabelDefinition extends Displayable {
     identifier: Identifier;
     lineIndex: number;
     elementIndex: number;
 }
 
-export interface MacroDefinition extends Definition {
+export interface MacroDefinition extends Displayable {
     name: string;
     argIdentifierList: Identifier[];
     lineList: AssemblyLine[];
@@ -198,7 +201,7 @@ export interface MacroDefinition extends Definition {
     invoke(argList: Expression[], macroInvocationId: number): AssemblyLine[];
 }
 
-export interface VariableDefinition extends Definition {
+export interface VariableDefinition extends Displayable {
     identifier: Identifier;
     dataType: DataType;
 }
@@ -220,9 +223,9 @@ export interface LabeledLineList {
     getLineElementLength(line: AssemblyLine): number;
 }
 
-export interface Instruction {
+export interface Instruction extends Displayable {
     instructionType: InstructionType;
-    // TODO: Add member variable for arguments.
+    argumentList: Buffer[]
 }
 
 

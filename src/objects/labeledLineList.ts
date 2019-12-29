@@ -79,10 +79,10 @@ LabeledLineList.prototype.getDisplayString = function(title: string, indentation
     if (this.lineList.length <= 0) {
         return "";
     }
-    var tempIndentation = lineUtils.getIndentation(indentationLevel);
+    var tempIndentation = niceUtils.getIndentation(indentationLevel);
     var tempTextList = [tempIndentation + title + ":"];
     tempTextList.push(lineUtils.getLineListDisplayString(this.lineList, indentationLevel + 1));
-    tempTextList.push(niceUtils.getDefinitionListDisplayString(
+    tempTextList.push(niceUtils.getDisplayableListDisplayString(
         title + " labels",
         this.labelDefinitionList,
         indentationLevel

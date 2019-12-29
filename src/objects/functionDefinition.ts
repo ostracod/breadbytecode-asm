@@ -9,6 +9,9 @@ import {
 
 import {AssemblyError} from "objects/assemblyError";
 import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
+import {Instruction} from "objects/instruction";
+
+import {instructionTypeMap} from "delegates/instructionType";
 
 import {niceUtils} from "utils/niceUtils";
 import {variableUtils} from "utils/variableUtils";
@@ -19,6 +22,7 @@ export abstract class FunctionDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[]) {
         this.identifier = identifier;
         this.lineList = new InstructionLineList(lineList);
+        this.assembler = null;
         this.jumpTableLineList = null;
         this.argVariableDefinitionList = [];
         this.localVariableDefinitionList = [];
@@ -61,13 +65,18 @@ FunctionDefinition.prototype.extractJumpTables = function(): void {
 FunctionDefinition.prototype.getDisplayString = function(): string {
     var tempTextList = [this.getTitle() + ":"];
     tempTextList.push(this.lineList.getDisplayString("Instruction body", 1));
+    tempTextList.push(niceUtils.getDisplayableListDisplayString(
+        "Assembled instructions",
+        this.instructionList,
+        1
+    ));
     tempTextList.push(this.jumpTableLineList.getDisplayString("Jump table", 1));
-    tempTextList.push(niceUtils.getDefinitionListDisplayString(
+    tempTextList.push(niceUtils.getDisplayableListDisplayString(
         "Argument variables",
         this.argVariableDefinitionList,
         1
     ));
-    tempTextList.push(niceUtils.getDefinitionListDisplayString(
+    tempTextList.push(niceUtils.getDisplayableListDisplayString(
         "Local variables",
         this.localVariableDefinitionList,
         1
@@ -97,9 +106,31 @@ FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
     this.jumpTableLineList.extractLabelDefinitions();
 }
 
+FunctionDefinition.prototype.assembleInstructionArgument = function(expression: Expression): Buffer {
+    // TODO: Implement.
+    
+    return Buffer.alloc(0);
+}
+
+FunctionDefinition.prototype.assembleInstruction = function(line: AssemblyLine): Instruction {
+    let tempName = line.directiveName;
+    if (!(tempName in instructionTypeMap)) {
+        throw new AssemblyError("Unrecognized opcode mnemonic.");
+    }
+    let tempInstructionType = instructionTypeMap[tempName];
+    let tempAmount = tempInstructionType.argumentAmount;
+    if (line.argList.length !== tempAmount) {
+        throw new AssemblyError(`Expected ${tempInstructionType.argumentAmount} ${niceUtils.pluralize("argument", tempAmount)}.`);
+    }
+    var tempArgumentList = line.argList.map(expression => {
+        return this.assembleInstructionArgument(expression)
+    });
+    return new Instruction(tempInstructionType, tempArgumentList);
+}
+
 FunctionDefinition.prototype.assembleInstructions = function(): void {
     this.processLines(line => {
-        var tempInstruction = line.assembleInstruction();
+        let tempInstruction = this.assembleInstruction(line);
         this.instructionList.push(tempInstruction);
         return null;
     });
