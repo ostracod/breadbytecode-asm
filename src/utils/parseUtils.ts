@@ -9,6 +9,7 @@ import {Expression} from "models/objects";
 import {AssemblyError} from "objects/assemblyError";
 import {AssemblyLine} from "objects/assemblyLine";
 import {SubscriptExpression, ArgWord, ArgNumber, ArgVersionNumber, ArgString} from "objects/expression";
+import {NumberConstant} from "objects/constant";
 
 import {unaryOperatorList, binaryOperatorList} from "delegates/operator";
 import {signedInteger64Type, float64Type, signedIntegerTypeList} from "delegates/dataType";
@@ -128,10 +129,8 @@ ParseUtils.prototype.parseHexadecimalArgNumber = function(text: string): ArgNumb
     while (index < signedIntegerTypeList.length) {
         var tempType = signedIntegerTypeList[index];
         if (tempType.byteAmount >= tempByteAmount) {
-            return new ArgNumber(
-                parseInt(text, 16),
-                tempType
-            );
+            let tempConstant = new NumberConstant(parseInt(text, 16), tempType);
+            return new ArgNumber(tempConstant);
         }
         index += 1;
     }
@@ -157,16 +156,15 @@ ParseUtils.prototype.parseArgNumeric = function(text: string, index: number): {a
                 tempText.substring(2, tempText.length)
             );
         } else {
-            tempArgNumeric = new ArgNumber(
+            let tempConstant = new NumberConstant(
                 parseInt(tempComponentList[0]),
                 signedInteger64Type
             );
+            tempArgNumeric = new ArgNumber(tempConstant);
         }
     } else if (tempComponentList.length == 2) {
-        tempArgNumeric = new ArgNumber(
-            parseFloat(tempText),
-            float64Type
-        );
+        let tempConstant = new NumberConstant(parseFloat(tempText), float64Type);
+        tempArgNumeric = new ArgNumber(tempConstant);
     } else if (tempComponentList.length == 3) {
         tempArgNumeric = new ArgVersionNumber(
             parseInt(tempComponentList[0]),

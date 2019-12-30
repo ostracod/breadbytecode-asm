@@ -6,17 +6,17 @@ import {niceUtils} from "utils/niceUtils";
 export interface Instruction extends InstructionInterface {}
 
 export class Instruction {
-    constructor(instructionType: InstructionType, argumentList: Buffer[]) {
+    constructor(instructionType: InstructionType, argList: Buffer[]) {
         this.instructionType = instructionType;
-        this.argumentList = argumentList;
+        this.argList = argList;
     }
 }
 
 Instruction.prototype.getDisplayString = function(): string {
     let output = niceUtils.convertNumberToHexadecimal(this.instructionType.opcode, 4);
-    if (this.argumentList.length > 0) {
+    if (this.argList.length > 0) {
         var tempTextList = [];
-        for (let buffer of this.argumentList) {
+        for (let buffer of this.argList) {
             tempTextList.push("{" + niceUtils.convertBufferToHexadecimal(buffer) + "}");
         }
         output += " " + tempTextList.join(", ");

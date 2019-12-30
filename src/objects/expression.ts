@@ -12,7 +12,7 @@ import {
     UnaryAtExpression as UnaryAtExpressionInterface,
     BinaryExpression as BinaryExpressionInterface,
     SubscriptExpression as SubscriptExpressionInterface,
-    IdentifierMap
+    IdentifierMap, FunctionDefinition, NumberConstant
 } from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
@@ -97,6 +97,10 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
     throw new AssemblyError("Expected arg perm.");
 }
 
+Expression.prototype.evaluateToInstructionArg = function(functionDefinition: FunctionDefinition): Buffer {
+    throw new AssemblyError("Expected number or pointer.");
+}
+
 Expression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
     // Do nothing.
 }
@@ -155,23 +159,31 @@ ArgWord.prototype.getConstantDataTypeHelper = function(): DataType {
 export interface ArgNumber extends ArgNumberInterface {}
 
 export class ArgNumber extends ArgTerm {
-    constructor(value: number, dataType: NumberType) {
+    constructor(constant: NumberConstant) {
         super();
-        this.value = value;
-        this.dataType = dataType;
+        this.constant = constant;
     }
 }
 
 ArgNumber.prototype.copy = function(): Expression {
-    return new ArgNumber(this.value, this.dataType);
+    return new ArgNumber(this.constant.copy());
 }
 
 ArgNumber.prototype.getDisplayString = function(): string {
-    return this.value + "";
+    return this.constant.value + "";
+}
+
+ArgNumber.prototype.evaluateToInstructionArg = function(functionDefinition: FunctionDefinition): Buffer {
+    let tempConstant: NumberConstant = this.constant.copy();
+    tempConstant.compress();
+    return Buffer.concat([
+        Buffer.from([tempConstant.dataType.argumentPrefix]),
+        tempConstant.getBuffer()
+    ]);
 }
 
 ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
-    return this.dataType;
+    return this.constant.dataType;
 }
 
 export interface ArgVersionNumber extends ArgVersionNumberInterface {}

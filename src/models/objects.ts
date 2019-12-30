@@ -17,7 +17,7 @@ export interface ArgPerm {
 
 export interface Assembler {
     rootLineList: AssemblyLine[];
-    constantDefinitionMap: IdentifierMap<ConstantDefinition>;
+    aliasDefinitionMap: IdentifierMap<AliasDefinition>;
     macroDefinitionMap: {[name: string]: MacroDefinition};
     functionDefinitionList: FunctionDefinition[];
     appDataLineList: LabeledLineList;
@@ -36,8 +36,8 @@ export interface Assembler {
     getNextMacroInvocationId(): number;
     expandMacroInvocations(lineList: AssemblyLine[]): {lineList: AssemblyLine[], expandCount: number};
     processIncludeDirectives(lineList: AssemblyLine[]): {lineList: AssemblyLine[], includeCount: number};
-    extractConstantDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
-    expandConstantInvocations(): void;
+    extractAliasDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
+    expandAliasInvocations(): void;
     addFunctionDefinition(functionDefinition: FunctionDefinition): void;
     extractFunctionDefinitions(): void;
     extractAppDataDefinitions(): void;
@@ -62,9 +62,19 @@ export interface AssemblyLine {
         processExpression: ExpressionProcessor,
         shouldRecurAfterProcess?: boolean
     ): void;
+    assembleInstruction(functionDefinition: FunctionDefinition): Instruction;
 }
 
-export interface ConstantDefinition extends Displayable {
+export interface NumberConstant {
+    value: Number;
+    dataType: NumberType;
+    
+    copy(): NumberConstant;
+    getBuffer(): Buffer;
+    compress(): void;
+}
+
+export interface AliasDefinition extends Displayable {
     identifier: Identifier;
     expression: Expression;
 }
@@ -82,6 +92,7 @@ export interface Expression {
     evaluateToString(): string;
     evaluateToDataType(): DataType;
     evaluateToArgPerm(): ArgPerm;
+    evaluateToInstructionArg(functionDefinition: FunctionDefinition): Buffer;
     populateMacroInvocationId(macroInvocationId: number): void;
     getConstantDataTypeHelper(): DataType;
     
@@ -100,8 +111,7 @@ export interface ArgWord extends ArgTerm {
 }
 
 export interface ArgNumber extends ArgTerm {
-    value: number;
-    dataType: NumberType;
+    constant: NumberConstant;
 }
 
 export interface ArgVersionNumber extends ArgTerm {
@@ -149,8 +159,6 @@ export interface FunctionDefinition extends Displayable {
     extractJumpTables(): void;
     extractVariableDefinitions(): void;
     extractLabelDefinitions(): void;
-    assembleInstructionArgument(expression: Expression): Buffer;
-    assembleInstruction(line: AssemblyLine): Instruction;
     assembleInstructions(): void;
     
     // Concrete subclasses must implement these methods:
@@ -225,7 +233,7 @@ export interface LabeledLineList {
 
 export interface Instruction extends Displayable {
     instructionType: InstructionType;
-    argumentList: Buffer[]
+    argList: Buffer[]
 }
 
 

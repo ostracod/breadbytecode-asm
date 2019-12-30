@@ -102,8 +102,8 @@ END
 `BYTECODE_VER ver`  
 Declares the bytecode version number to be used in the application.
 
-`DEF name, constant`  
-Declares a constant.
+`DEF name, expression`  
+Declares an alias to an expression.
 
 `PATH_DEP name, path, depModifiers`  
 Declares a simple dependency with an explicit path.

@@ -9,9 +9,6 @@ import {
 
 import {AssemblyError} from "objects/assemblyError";
 import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
-import {Instruction} from "objects/instruction";
-
-import {instructionTypeMap} from "delegates/instructionType";
 
 import {niceUtils} from "utils/niceUtils";
 import {variableUtils} from "utils/variableUtils";
@@ -106,31 +103,9 @@ FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
     this.jumpTableLineList.extractLabelDefinitions();
 }
 
-FunctionDefinition.prototype.assembleInstructionArgument = function(expression: Expression): Buffer {
-    // TODO: Implement.
-    
-    return Buffer.alloc(0);
-}
-
-FunctionDefinition.prototype.assembleInstruction = function(line: AssemblyLine): Instruction {
-    let tempName = line.directiveName;
-    if (!(tempName in instructionTypeMap)) {
-        throw new AssemblyError("Unrecognized opcode mnemonic.");
-    }
-    let tempInstructionType = instructionTypeMap[tempName];
-    let tempAmount = tempInstructionType.argumentAmount;
-    if (line.argList.length !== tempAmount) {
-        throw new AssemblyError(`Expected ${tempInstructionType.argumentAmount} ${niceUtils.pluralize("argument", tempAmount)}.`);
-    }
-    var tempArgumentList = line.argList.map(expression => {
-        return this.assembleInstructionArgument(expression)
-    });
-    return new Instruction(tempInstructionType, tempArgumentList);
-}
-
 FunctionDefinition.prototype.assembleInstructions = function(): void {
     this.processLines(line => {
-        let tempInstruction = this.assembleInstruction(line);
+        let tempInstruction = line.assembleInstruction(this);
         this.instructionList.push(tempInstruction);
         return null;
     });

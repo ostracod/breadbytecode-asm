@@ -7,7 +7,7 @@ import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition} from 
 import {AssemblyError} from "objects/assemblyError";
 import {IdentifierMap} from "objects/identifier";
 import {MacroDefinition} from "objects/macroDefinition";
-import {ConstantDefinition} from "objects/constantDefinition";
+import {AliasDefinition} from "objects/aliasDefinition";
 import {
     PrivateFunctionDefinition,
     PublicFunctionDefinition,
@@ -24,8 +24,8 @@ export interface Assembler extends AssemblerInterface {}
 export class Assembler {
     constructor() {
         this.rootLineList = [];
-        // Map from identifier to ConstantDefinition.
-        this.constantDefinitionMap = new IdentifierMap();
+        // Map from identifier to AliasDefinition.
+        this.aliasDefinitionMap = new IdentifierMap();
         // Map from name to MacroDefinition.
         this.macroDefinitionMap = {};
         this.functionDefinitionList = [];
@@ -100,7 +100,7 @@ Assembler.prototype.expandMacroInvocations = function(lineList: AssemblyLine[]):
     };
 }
 
-Assembler.prototype.extractConstantDefinitions = function(lineList: AssemblyLine[]): AssemblyLine[] {
+Assembler.prototype.extractAliasDefinitions = function(lineList: AssemblyLine[]): AssemblyLine[] {
     var self = this;
     var tempResult = lineUtils.processLines(lineList, function(line) {
         var tempArgList = line.argList;
@@ -110,8 +110,8 @@ Assembler.prototype.extractConstantDefinitions = function(lineList: AssemblyLine
             }
             var tempIdentifier = tempArgList[0].evaluateToIdentifier();
             var tempExpression = tempArgList[1];
-            var tempDefinition = new ConstantDefinition(tempIdentifier, tempExpression);
-            self.constantDefinitionMap.set(tempIdentifier, tempDefinition);
+            var tempDefinition = new AliasDefinition(tempIdentifier, tempExpression);
+            self.aliasDefinitionMap.set(tempIdentifier, tempDefinition);
             return [];
         }
         return null;
@@ -119,14 +119,14 @@ Assembler.prototype.extractConstantDefinitions = function(lineList: AssemblyLine
     return tempResult.lineList;
 }
 
-Assembler.prototype.expandConstantInvocations = function(): void {
+Assembler.prototype.expandAliasInvocations = function(): void {
     var self = this;
     self.processExpressionsInLines(function(expression) {
         var tempIdentifier = expression.evaluateToIdentifierOrNull();
         if (tempIdentifier === null) {
             return null;
         }
-        var tempDefinition = self.constantDefinitionMap.get(tempIdentifier);
+        var tempDefinition = self.aliasDefinitionMap.get(tempIdentifier);
         if (tempDefinition === null) {
             return null;
         }
@@ -164,7 +164,7 @@ Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyL
         var tempResult = this.expandMacroInvocations(tempLineList);
         tempLineList = tempResult.lineList;
         var tempExpandCount = tempResult.expandCount;
-        tempLineList = this.extractConstantDefinitions(tempLineList);
+        tempLineList = this.extractAliasDefinitions(tempLineList);
         var tempResult = this.processIncludeDirectives(tempLineList);
         tempLineList = tempResult.lineList;
         var tempIncludeCount = tempResult.includeCount;
@@ -277,8 +277,8 @@ Assembler.prototype.getDisplayString = function(): string {
     var tempTextList = [];
     tempTextList.push("\n= = = ROOT LINE LIST = = =\n");
     tempTextList.push(lineUtils.getLineListDisplayString(this.rootLineList));
-    tempTextList.push("\n= = = CONSTANT DEFINITIONS = = =\n");
-    this.constantDefinitionMap.iterate(function(definition) {
+    tempTextList.push("\n= = = ALIAS DEFINITIONS = = =\n");
+    this.aliasDefinitionMap.iterate(function(definition) {
         tempTextList.push(definition.getDisplayString());
     });
     tempTextList.push("\n= = = MACRO DEFINITIONS = = =\n");
@@ -309,7 +309,7 @@ Assembler.prototype.getDisplayString = function(): string {
 Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationPath: string): void {
     try {
         this.rootLineList = this.loadAndParseAssemblyFile(sourcePath);
-        this.expandConstantInvocations();
+        this.expandAliasInvocations();
         this.extractFunctionDefinitions();
         this.extractAppDataDefinitions();
         this.extractGlobalVariableDefinitions();

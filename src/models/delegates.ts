@@ -2,6 +2,8 @@
 import {Expression} from "models/objects";
 
 export interface DataType {
+    argumentPrefix: number;
+    
     // Concrete subclasses must implement these methods:
     getName(): string;
 }
@@ -15,6 +17,12 @@ export interface NumberType extends BetaType {
     getNamePrefix(): string;
     getClassMergePriority(): number;
     getByteAmountMergePriority(): number;
+    convertNumberToBuffer(value: number): Buffer;
+}
+
+export interface IntegerType extends NumberType {
+    // Concrete subclasses must implement these methods:
+    contains(value: number): boolean;
 }
 
 export interface Operator {
