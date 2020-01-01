@@ -81,4 +81,8 @@ export interface VariableUtils {
     extractArgVariableDefinition(line: AssemblyLine): ArgVariableDefinition;
 }
 
+export interface InstructionUtils {
+    createInstructionArg(refPrefix: number, dataTypePrefix: number, buffer: Buffer): Buffer;
+}
+
 

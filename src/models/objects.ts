@@ -80,6 +80,7 @@ export interface AliasDefinition extends Displayable {
 }
 
 export interface Expression {
+    functionDefinition: FunctionDefinition;
     constantDataType: DataType;
     
     processExpressions(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression;
@@ -92,7 +93,8 @@ export interface Expression {
     evaluateToString(): string;
     evaluateToDataType(): DataType;
     evaluateToArgPerm(): ArgPerm;
-    evaluateToInstructionArg(functionDefinition: FunctionDefinition): Buffer;
+    evaluateToInstructionArg(): Buffer;
+    evaluateToInstructionRef(): InstructionRef;
     populateMacroInvocationId(macroInvocationId: number): void;
     getConstantDataTypeHelper(): DataType;
     
@@ -234,6 +236,13 @@ export interface LabeledLineList {
 export interface Instruction extends Displayable {
     instructionType: InstructionType;
     argList: Buffer[]
+}
+
+export interface InstructionRef {
+    argPrefix: number;
+    
+    // Concrete subclasses may override these methods:
+    createInstructionArg(indexArg: Buffer, dataType: DataType): Buffer;
 }
 
 

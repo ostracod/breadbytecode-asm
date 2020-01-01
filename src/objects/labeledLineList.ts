@@ -1,6 +1,6 @@
 
 import {LineProcessor} from "models/items";
-import {LabeledLineList as LabeledLineListInterface, AssemblyLine} from "models/objects";
+import {LabeledLineList as LabeledLineListInterface, AssemblyLine, FunctionDefinition} from "models/objects";
 
 import {BetaType} from "delegates/dataType";
 
@@ -91,7 +91,13 @@ LabeledLineList.prototype.getDisplayString = function(title: string, indentation
 }
 
 export class InstructionLineList extends LabeledLineList {
-    
+    constructor(lineList: AssemblyLine[], functionDefinition: FunctionDefinition) {
+        super(lineList);
+        lineUtils.processExpressionsInLines(this.lineList, expression => {
+            expression.functionDefinition = functionDefinition;
+            return null;
+        });
+    }
 }
 
 InstructionLineList.prototype.getLineElementLength = function(line: AssemblyLine): number {

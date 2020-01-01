@@ -18,16 +18,19 @@ import {
 import {AssemblyError} from "objects/assemblyError";
 import {Identifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
+import {InstructionRef} from "objects/instruction";
 
 import {signedInteger64Type, StringType} from "delegates/dataType";
 import {unaryAtOperator} from "delegates/operator";
 
 import {dataTypeUtils} from "utils/dataTypeUtils";
+import {instructionUtils} from "utils/instructionUtils";
 
 export interface Expression extends ExpressionInterface {}
 
 export abstract class Expression {
     constructor() {
+        this.functionDefinition = null;
         // We cache this value so that we can verify
         // the output of evaluateToConstant.
         // Use Expression.getConstantDataType to cache
@@ -97,8 +100,12 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
     throw new AssemblyError("Expected arg perm.");
 }
 
-Expression.prototype.evaluateToInstructionArg = function(functionDefinition: FunctionDefinition): Buffer {
+Expression.prototype.evaluateToInstructionArg = function(): Buffer {
     throw new AssemblyError("Expected number or pointer.");
+}
+
+Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
+    throw new AssemblyError("Expected instruction argument reference.");
 }
 
 Expression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
@@ -152,6 +159,13 @@ ArgWord.prototype.evaluateToArgPerm = function(): ArgPerm {
     return new ArgPerm(this.text);
 }
 
+ArgWord.prototype.evaluateToInstructionRef = function(): InstructionRef {
+    if (this.text === "globalFrame") {
+        return new InstructionRef(1);
+    }
+    return ArgTerm.prototype.evaluateToInstructionRef.call(this);
+}
+
 ArgWord.prototype.getConstantDataTypeHelper = function(): DataType {
     return signedInteger64Type;
 }
@@ -173,13 +187,14 @@ ArgNumber.prototype.getDisplayString = function(): string {
     return this.constant.value + "";
 }
 
-ArgNumber.prototype.evaluateToInstructionArg = function(functionDefinition: FunctionDefinition): Buffer {
+ArgNumber.prototype.evaluateToInstructionArg = function(): Buffer {
     let tempConstant: NumberConstant = this.constant.copy();
     tempConstant.compress();
-    return Buffer.concat([
-        Buffer.from([tempConstant.dataType.argumentPrefix]),
+    return instructionUtils.createInstructionArg(
+        0,
+        tempConstant.dataType.argPrefix,
         tempConstant.getBuffer()
-    ]);
+    );
 }
 
 ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
@@ -383,6 +398,14 @@ SubscriptExpression.prototype.processExpressionsHelper = function(processExpress
         shouldRecurAfterProcess
     );
     return null;
+}
+
+SubscriptExpression.prototype.evaluateToInstructionArg = function(): Buffer {
+    let tempRef = this.sequenceExpression.evaluateToInstructionRef();
+    return tempRef.createInstructionArg(
+        this.indexExpression.evaluateToInstructionArg(),
+        this.dataTypeExpression.evaluateToDataType()
+    );
 }
 
 SubscriptExpression.prototype.getConstantDataTypeHelper = function(): DataType {

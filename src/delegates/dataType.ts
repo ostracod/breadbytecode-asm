@@ -14,9 +14,9 @@ export var signedIntegerTypeList: SignedIntegerType[] = [];
 export interface DataType extends DataTypeInterface {}
 
 export abstract class DataType {
-    constructor(argumentPrefix: number) {
-        this.argumentPrefix = argumentPrefix;
-        if (argumentPrefix !== null) {
+    constructor(argPrefix: number) {
+        this.argPrefix = argPrefix;
+        if (argPrefix !== null) {
             dataTypeList.push(this);
         }
     }
@@ -35,8 +35,8 @@ PointerType.prototype.getName = function(): string {
 export interface BetaType extends BetaTypeInterface {}
 
 export abstract class BetaType extends DataType {
-    constructor(argumentPrefix: number, byteAmount: number) {
-        super(argumentPrefix);
+    constructor(argPrefix: number, byteAmount: number) {
+        super(argPrefix);
         this.byteAmount = byteAmount;
     }
 }
@@ -44,8 +44,8 @@ export abstract class BetaType extends DataType {
 export interface NumberType extends NumberTypeInterface {}
 
 export abstract class NumberType extends BetaType {
-    constructor(argumentPrefix: number, byteAmount: number) {
-        super(argumentPrefix, byteAmount);
+    constructor(argPrefix: number, byteAmount: number) {
+        super(argPrefix, byteAmount);
     }
 }
 
@@ -56,8 +56,8 @@ NumberType.prototype.getName = function(): string {
 export interface IntegerType extends IntegerTypeInterface {}
 
 export class IntegerType extends NumberType {
-    constructor(argumentPrefix: number, byteAmount: number) {
-        super(argumentPrefix, byteAmount);
+    constructor(argPrefix: number, byteAmount: number) {
+        super(argPrefix, byteAmount);
     }
 }
 
@@ -66,8 +66,8 @@ IntegerType.prototype.getByteAmountMergePriority = function(): number {
 }
 
 export class UnsignedIntegerType extends IntegerType {
-    constructor(argumentPrefix: number, byteAmount: number) {
-        super(argumentPrefix, byteAmount);
+    constructor(argPrefix: number, byteAmount: number) {
+        super(argPrefix, byteAmount);
         unsignedIntegerTypeList.push(this);
     }
 }
@@ -97,8 +97,8 @@ UnsignedIntegerType.prototype.contains = function(value: number): boolean {
 }
 
 export class SignedIntegerType extends IntegerType {
-    constructor(argumentPrefix: number, byteAmount: number) {
-        super(argumentPrefix, byteAmount);
+    constructor(argPrefix: number, byteAmount: number) {
+        super(argPrefix, byteAmount);
         signedIntegerTypeList.push(this);
     }
 }
@@ -129,8 +129,8 @@ SignedIntegerType.prototype.contains = function(value: number): boolean {
 }
 
 export class FloatType extends NumberType {
-    constructor(argumentPrefix: number, byteAmount: number) {
-        super(argumentPrefix, byteAmount);
+    constructor(argPrefix: number, byteAmount: number) {
+        super(argPrefix, byteAmount);
     }
 }
 

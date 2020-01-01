@@ -18,7 +18,7 @@ export interface FunctionDefinition extends FunctionDefinitionInterface {}
 export abstract class FunctionDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[]) {
         this.identifier = identifier;
-        this.lineList = new InstructionLineList(lineList);
+        this.lineList = new InstructionLineList(lineList, this);
         this.assembler = null;
         this.jumpTableLineList = null;
         this.argVariableDefinitionList = [];

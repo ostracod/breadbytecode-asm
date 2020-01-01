@@ -78,9 +78,9 @@ AssemblyLine.prototype.assembleInstruction = function(functionDefinition: Functi
         throw new AssemblyError("Unrecognized opcode mnemonic.");
     }
     let tempInstructionType = instructionTypeMap[this.directiveName];
-    let tempAmount = tempInstructionType.argumentAmount;
+    let tempAmount = tempInstructionType.argAmount;
     if (this.argList.length !== tempAmount) {
-        throw new AssemblyError(`Expected ${tempInstructionType.argumentAmount} ${niceUtils.pluralize("argument", tempAmount)}.`);
+        throw new AssemblyError(`Expected ${tempInstructionType.argAmount} ${niceUtils.pluralize("argument", tempAmount)}.`);
     }
     var tempArgList = this.argList.map(expression => {
         return expression.evaluateToInstructionArg(functionDefinition);

@@ -2,7 +2,7 @@
 import {Expression} from "models/objects";
 
 export interface DataType {
-    argumentPrefix: number;
+    argPrefix: number;
     
     // Concrete subclasses must implement these methods:
     getName(): string;
@@ -46,7 +46,7 @@ export interface BinaryOperator extends Operator {
 export interface InstructionType {
     name: string;
     opcode: number;
-    argumentAmount: number;
+    argAmount: number;
 }
 
 

@@ -1,7 +1,8 @@
 
-import {Instruction as InstructionInterface} from "models/objects";
-import {InstructionType} from "models/delegates";
+import {Instruction as InstructionInterface, InstructionRef as InstructionRefInterface} from "models/objects";
+import {InstructionType, DataType} from "models/delegates";
 import {niceUtils} from "utils/niceUtils";
+import {instructionUtils} from "utils/instructionUtils";
 
 export interface Instruction extends InstructionInterface {}
 
@@ -22,6 +23,22 @@ Instruction.prototype.getDisplayString = function(): string {
         output += " " + tempTextList.join(", ");
     }
     return output;
+}
+
+export interface InstructionRef extends InstructionRefInterface {}
+
+export class InstructionRef {
+    constructor(argPrefix: number) {
+        this.argPrefix = argPrefix;
+    }
+}
+
+InstructionRef.prototype.createInstructionArg = function(indexArg: Buffer, dataType: DataType): Buffer {
+    return instructionUtils.createInstructionArg(
+        this.argPrefix,
+        dataType.argPrefix,
+        indexArg
+    );
 }
 
 
