@@ -1,5 +1,9 @@
 
-import {Instruction as InstructionInterface, InstructionRef as InstructionRefInterface} from "models/objects";
+import {
+    Instruction as InstructionInterface,
+    InstructionRef as InstructionRefInterface,
+    PointerInstructionRef as PointerInstructionRefInterface
+} from "models/objects";
 import {InstructionType, DataType} from "models/delegates";
 import {niceUtils} from "utils/niceUtils";
 import {instructionUtils} from "utils/instructionUtils";
@@ -38,6 +42,23 @@ InstructionRef.prototype.createInstructionArg = function(indexArg: Buffer, dataT
         this.argPrefix,
         dataType.argPrefix,
         indexArg
+    );
+}
+
+export interface PointerInstructionRef extends PointerInstructionRefInterface {}
+
+export class PointerInstructionRef extends InstructionRef {
+    constructor(pointerArg: Buffer) {
+        super(6);
+        this.pointerArg = pointerArg;
+    }
+}
+
+PointerInstructionRef.prototype.createInstructionArg = function(indexArg: Buffer, dataType: DataType): Buffer {
+    return instructionUtils.createInstructionArg(
+        this.argPrefix,
+        dataType.argPrefix,
+        Buffer.concat([this.pointerArg, indexArg])
     );
 }
 

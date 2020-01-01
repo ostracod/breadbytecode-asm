@@ -18,13 +18,21 @@ import {
 import {AssemblyError} from "objects/assemblyError";
 import {Identifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
-import {InstructionRef} from "objects/instruction";
+import {InstructionRef, PointerInstructionRef} from "objects/instruction";
 
 import {signedInteger64Type, StringType} from "delegates/dataType";
 import {unaryAtOperator} from "delegates/operator";
 
 import {dataTypeUtils} from "utils/dataTypeUtils";
 import {instructionUtils} from "utils/instructionUtils";
+
+const keywordInstructionRefMap = {
+    globalFrame: new InstructionRef(1),
+    localFrame: new InstructionRef(2),
+    prevArgFrame: new InstructionRef(3),
+    nextArgFrame: new InstructionRef(4),
+    appData: new InstructionRef(5)
+};
 
 export interface Expression extends ExpressionInterface {}
 
@@ -105,7 +113,8 @@ Expression.prototype.evaluateToInstructionArg = function(): Buffer {
 }
 
 Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
-    throw new AssemblyError("Expected instruction argument reference.");
+    let tempBuffer = this.evaluateToInstructionArg();
+    return new PointerInstructionRef(tempBuffer);
 }
 
 Expression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
@@ -159,9 +168,16 @@ ArgWord.prototype.evaluateToArgPerm = function(): ArgPerm {
     return new ArgPerm(this.text);
 }
 
+ArgWord.prototype.evaluateToInstructionArg = function(): Buffer {
+    if (this.text === "null") {
+        return instructionUtils.createInstructionArg(0, 0, Buffer.alloc(0));
+    }
+    return ArgTerm.prototype.evaluateToInstructionArg.call(this);
+}
+
 ArgWord.prototype.evaluateToInstructionRef = function(): InstructionRef {
-    if (this.text === "globalFrame") {
-        return new InstructionRef(1);
+    if (this.text in keywordInstructionRefMap) {
+        return keywordInstructionRefMap[this.text];
     }
     return ArgTerm.prototype.evaluateToInstructionRef.call(this);
 }

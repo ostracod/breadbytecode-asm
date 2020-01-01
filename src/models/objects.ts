@@ -245,4 +245,8 @@ export interface InstructionRef {
     createInstructionArg(indexArg: Buffer, dataType: DataType): Buffer;
 }
 
+export interface PointerInstructionRef extends InstructionRef {
+    pointerArg: Buffer;
+}
+
 
