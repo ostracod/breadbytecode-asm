@@ -16,7 +16,7 @@ import {
 } from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
-import {Identifier} from "objects/identifier";
+import {Identifier, MacroIdentifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
 import {InstructionRef, PointerInstructionRef} from "objects/instruction";
 
@@ -109,7 +109,11 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
 }
 
 Expression.prototype.evaluateToInstructionArg = function(): Buffer {
-    throw new AssemblyError("Expected number or pointer.");
+    let tempIdentifier = this.evaluateToIdentifierOrNull();
+    if (tempIdentifier === null) {
+        throw new AssemblyError("Expected number or pointer.");
+    }
+    return this.functionDefinition.convertIdentifierToInstructionArg();
 }
 
 Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
@@ -157,7 +161,7 @@ ArgWord.prototype.getDisplayString = function(): string {
 }
 
 ArgWord.prototype.evaluateToIdentifierOrNull = function(): Identifier {
-    return new Identifier(this.text, null);
+    return new Identifier(this.text);
 }
 
 ArgWord.prototype.evaluateToDataType = function(): DataType {
@@ -318,7 +322,7 @@ UnaryAtExpression.prototype.evaluateToIdentifierOrNull = function(): Identifier 
     if (!(this.operand instanceof ArgTerm)) {
         return null;
     }
-    return new Identifier(this.operand.text, this.macroInvocationId);
+    return new MacroIdentifier(this.operand.text, this.macroInvocationId);
 }
 
 UnaryAtExpression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {

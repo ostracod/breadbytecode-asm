@@ -42,6 +42,11 @@ export interface NiceUtils {
         displayableList: Displayable[],
         indentationLevel?: number
     ): string;
+    getIdentifierMapDisplayString(
+        title: string,
+        identifierMap: IdentifierMap<Displayable>,
+        indentationLevel?: number
+    ): string;
     joinTextList(textList: string[]): string;
     getReverseMap(map: {[key: string]: any}): {[key: string]: any};
     pluralize(word: string, amount: number): string;

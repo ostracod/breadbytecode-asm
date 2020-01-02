@@ -17,6 +17,9 @@ VariableUtils.prototype.extractLocalVariableDefinition = function(line: Assembly
         return null;
     }
     var tempArgList = line.argList;
+    if (tempArgList.length !== 2) {
+        throw new AssemblyError("Expected 2 arguments.");
+    }
     var tempIdentifier = tempArgList[0].evaluateToIdentifier();
     var tempDataType = tempArgList[1].evaluateToDataType();
     return new VariableDefinition(tempIdentifier, tempDataType);

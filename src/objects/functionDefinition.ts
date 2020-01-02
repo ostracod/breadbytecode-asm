@@ -9,6 +9,7 @@ import {
 
 import {AssemblyError} from "objects/assemblyError";
 import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
+import {IdentifierMap} from "objects/identifier";
 
 import {niceUtils} from "utils/niceUtils";
 import {variableUtils} from "utils/variableUtils";
@@ -21,8 +22,8 @@ export abstract class FunctionDefinition {
         this.lineList = new InstructionLineList(lineList, this);
         this.assembler = null;
         this.jumpTableLineList = null;
-        this.argVariableDefinitionList = [];
-        this.localVariableDefinitionList = [];
+        this.argVariableDefinitionMap = new IdentifierMap();
+        this.localVariableDefinitionMap = new IdentifierMap();
         this.instructionList = [];
         this.extractJumpTables();
         this.extractVariableDefinitions();
@@ -68,14 +69,14 @@ FunctionDefinition.prototype.getDisplayString = function(): string {
         1
     ));
     tempTextList.push(this.jumpTableLineList.getDisplayString("Jump table", 1));
-    tempTextList.push(niceUtils.getDisplayableListDisplayString(
+    tempTextList.push(niceUtils.getIdentifierMapDisplayString(
         "Argument variables",
-        this.argVariableDefinitionList,
+        this.argVariableDefinitionMap,
         1
     ));
-    tempTextList.push(niceUtils.getDisplayableListDisplayString(
+    tempTextList.push(niceUtils.getIdentifierMapDisplayString(
         "Local variables",
-        this.localVariableDefinitionList,
+        this.localVariableDefinitionMap,
         1
     ));
     return niceUtils.joinTextList(tempTextList);
@@ -86,12 +87,12 @@ FunctionDefinition.prototype.extractVariableDefinitions = function(): void {
     self.processLines(function(line) {
         var tempLocalDefinition = variableUtils.extractLocalVariableDefinition(line);
         if (tempLocalDefinition !== null) {
-            self.localVariableDefinitionList.push(tempLocalDefinition);
+            self.localVariableDefinitionMap.setVariableDefinition(tempLocalDefinition);
             return [];
         }
         var tempArgDefinition = variableUtils.extractArgVariableDefinition(line);
         if (tempArgDefinition !== null) {
-            self.argVariableDefinitionList.push(tempArgDefinition);
+            self.argVariableDefinitionMap.setVariableDefinition(tempArgDefinition);
             return [];
         }
         return null;
@@ -101,6 +102,11 @@ FunctionDefinition.prototype.extractVariableDefinitions = function(): void {
 FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
     this.lineList.extractLabelDefinitions();
     this.jumpTableLineList.extractLabelDefinitions();
+}
+
+FunctionDefinition.prototype.convertIdentifierToInstructionArg = function(identifier: Identifier): Buffer {
+    // TODO: Implement.
+    return null;
 }
 
 FunctionDefinition.prototype.assembleInstructions = function(): void {

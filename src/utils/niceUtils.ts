@@ -1,6 +1,6 @@
 
 import {NiceUtils as NiceUtilsInterface} from "models/utils";
-import {Displayable} from "models/objects";
+import {Displayable, IdentifierMap} from "models/objects";
 
 export interface NiceUtils extends NiceUtilsInterface {}
 
@@ -38,6 +38,18 @@ NiceUtils.prototype.getDisplayableListDisplayString = function(
         tempTextList.push(tempIndentation2 + displayable.getDisplayString());
     }
     return tempTextList.join("\n");
+}
+
+NiceUtils.prototype.getIdentifierMapDisplayString = function(
+    title: string,
+    identifierMap: IdentifierMap<Displayable>,
+    indentationLevel?: number
+): string {
+    return niceUtils.getDisplayableListDisplayString(
+        title,
+        identifierMap.getValueList(),
+        indentationLevel
+    );
 }
 
 // Excludes empty strings.

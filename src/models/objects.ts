@@ -21,7 +21,7 @@ export interface Assembler {
     macroDefinitionMap: {[name: string]: MacroDefinition};
     functionDefinitionList: FunctionDefinition[];
     appDataLineList: LabeledLineList;
-    globalVariableDefinitionList: VariableDefinition[];
+    globalVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     nextMacroInvocationId: number;
     
     processLines(processLine: LineProcessor): void;
@@ -152,8 +152,8 @@ export interface FunctionDefinition extends Displayable {
     lineList: LabeledLineList;
     assembler: Assembler;
     jumpTableLineList: LabeledLineList;
-    argVariableDefinitionList: ArgVariableDefinition[];
-    localVariableDefinitionList: VariableDefinition[];
+    argVariableDefinitionMap: IdentifierMap<ArgVariableDefinition>;
+    localVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     instructionList: Instruction[];
     
     processLines(processLine: LineProcessor): void;
@@ -161,6 +161,7 @@ export interface FunctionDefinition extends Displayable {
     extractJumpTables(): void;
     extractVariableDefinitions(): void;
     extractLabelDefinitions(): void;
+    convertIdentifierToInstructionArg(identifier: Identifier): Buffer;
     assembleInstructions(): void;
     
     // Concrete subclasses must implement these methods:
@@ -183,10 +184,13 @@ export interface PublicFunctionDefinition extends InterfaceFunctionDefinition {
 
 export interface Identifier {
     name: string;
-    macroInvocationId: number;
     
     getDisplayString(): string;
     getMapKey(): string;
+}
+
+export interface MacroIdentifier extends Identifier {
+    macroInvocationId: number;
 }
 
 export interface IdentifierMap<T> {
@@ -194,7 +198,9 @@ export interface IdentifierMap<T> {
     
     get(identifier: Identifier): T;
     set(identifier: Identifier, value: T): void;
+    setVariableDefinition(variableDefinition: VariableDefinition): void;
     iterate(handle: (value: T) => void): void;
+    getValueList(): T[];
 }
 
 export interface LabelDefinition extends Displayable {

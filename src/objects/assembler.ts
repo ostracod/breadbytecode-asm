@@ -24,13 +24,11 @@ export interface Assembler extends AssemblerInterface {}
 export class Assembler {
     constructor() {
         this.rootLineList = [];
-        // Map from identifier to AliasDefinition.
         this.aliasDefinitionMap = new IdentifierMap();
-        // Map from name to MacroDefinition.
         this.macroDefinitionMap = {};
         this.functionDefinitionList = [];
         this.appDataLineList = null;
-        this.globalVariableDefinitionList = [];
+        this.globalVariableDefinitionMap = new IdentifierMap();
         this.nextMacroInvocationId = 0;
     }
 }
@@ -260,7 +258,7 @@ Assembler.prototype.extractGlobalVariableDefinitions = function(): void {
     self.processLines(function(line) {
         var tempDefinition = variableUtils.extractLocalVariableDefinition(line);
         if (tempDefinition !== null) {
-            self.globalVariableDefinitionList.push(tempDefinition);
+            self.globalVariableDefinitionMap.setVariableDefinition(tempDefinition);
             return [];
         }
         return null;
@@ -289,9 +287,9 @@ Assembler.prototype.getDisplayString = function(): string {
         tempTextList.push("");
     }
     tempTextList.push("= = = GLOBAL VARIABLE DEFINITIONS = = =\n");
-    for (let variableDefinition of this.globalVariableDefinitionList) {
+    this.globalVariableDefinitionMap.iterate(variableDefinition => {
         tempTextList.push(variableDefinition.getDisplayString());
-    }
+    });
     tempTextList.push("\n= = = FUNCTION DEFINITIONS = = =\n");
     var index = 0;
     while (index < this.functionDefinitionList.length) {
