@@ -18,20 +18,20 @@ import {
 import {AssemblyError} from "objects/assemblyError";
 import {Identifier, MacroIdentifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
-import {InstructionRef, PointerInstructionRef} from "objects/instruction";
+import {InstructionRef, PointerInstructionRef, INSTRUCTION_REF_PREFIX} from "objects/instruction";
 
-import {signedInteger64Type, StringType} from "delegates/dataType";
+import {pointerType, signedInteger64Type, StringType} from "delegates/dataType";
 import {unaryAtOperator} from "delegates/operator";
 
 import {dataTypeUtils} from "utils/dataTypeUtils";
 import {instructionUtils} from "utils/instructionUtils";
 
 const keywordInstructionRefMap = {
-    globalFrame: new InstructionRef(1),
-    localFrame: new InstructionRef(2),
-    prevArgFrame: new InstructionRef(3),
-    nextArgFrame: new InstructionRef(4),
-    appData: new InstructionRef(5)
+    globalFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.globalFrame),
+    localFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.localFrame),
+    prevArgFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.prevArgFrame),
+    nextArgFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.nextArgFrame),
+    appData: new InstructionRef(INSTRUCTION_REF_PREFIX.appData)
 };
 
 export interface Expression extends ExpressionInterface {}
@@ -113,7 +113,7 @@ Expression.prototype.evaluateToInstructionArg = function(): Buffer {
     if (tempIdentifier === null) {
         throw new AssemblyError("Expected number or pointer.");
     }
-    return this.functionDefinition.convertIdentifierToInstructionArg();
+    return this.functionDefinition.convertIdentifierToInstructionArg(tempIdentifier);
 }
 
 Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
@@ -174,7 +174,11 @@ ArgWord.prototype.evaluateToArgPerm = function(): ArgPerm {
 
 ArgWord.prototype.evaluateToInstructionArg = function(): Buffer {
     if (this.text === "null") {
-        return instructionUtils.createInstructionArg(0, 0, Buffer.alloc(0));
+        return instructionUtils.createInstructionArg(
+            INSTRUCTION_REF_PREFIX.constant,
+            pointerType,
+            Buffer.alloc(0)
+        );
     }
     return ArgTerm.prototype.evaluateToInstructionArg.call(this);
 }
@@ -210,11 +214,7 @@ ArgNumber.prototype.getDisplayString = function(): string {
 ArgNumber.prototype.evaluateToInstructionArg = function(): Buffer {
     let tempConstant: NumberConstant = this.constant.copy();
     tempConstant.compress();
-    return instructionUtils.createInstructionArg(
-        0,
-        tempConstant.dataType.argPrefix,
-        tempConstant.getBuffer()
-    );
+    return tempConstant.createInstructionArg();
 }
 
 ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {

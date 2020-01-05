@@ -42,6 +42,7 @@ export interface Assembler {
     extractFunctionDefinitions(): void;
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
+    convertIdentifierToInstructionArg(identifier: Identifier): Buffer;
     assembleInstructions(): void;
 }
 
@@ -72,6 +73,7 @@ export interface NumberConstant {
     copy(): NumberConstant;
     getBuffer(): Buffer;
     compress(): void;
+    createInstructionArg(): Buffer;
 }
 
 export interface AliasDefinition extends Displayable {
@@ -220,6 +222,10 @@ export interface MacroDefinition extends Displayable {
 export interface VariableDefinition extends Displayable {
     identifier: Identifier;
     dataType: DataType;
+    index: number;
+    instructionRefPrefix: number;
+    
+    createInstructionArg(): Buffer;
 }
 
 export interface ArgVariableDefinition extends VariableDefinition {

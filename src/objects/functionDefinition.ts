@@ -13,6 +13,7 @@ import {IdentifierMap} from "objects/identifier";
 
 import {niceUtils} from "utils/niceUtils";
 import {variableUtils} from "utils/variableUtils";
+import {instructionUtils} from "utils/instructionUtils";
 
 export interface FunctionDefinition extends FunctionDefinitionInterface {}
 
@@ -83,20 +84,21 @@ FunctionDefinition.prototype.getDisplayString = function(): string {
 }
 
 FunctionDefinition.prototype.extractVariableDefinitions = function(): void {
-    var self = this;
-    self.processLines(function(line) {
+    this.processLines(line => {
         var tempLocalDefinition = variableUtils.extractLocalVariableDefinition(line);
         if (tempLocalDefinition !== null) {
-            self.localVariableDefinitionMap.setVariableDefinition(tempLocalDefinition);
+            this.localVariableDefinitionMap.setVariableDefinition(tempLocalDefinition);
             return [];
         }
         var tempArgDefinition = variableUtils.extractArgVariableDefinition(line);
         if (tempArgDefinition !== null) {
-            self.argVariableDefinitionMap.setVariableDefinition(tempArgDefinition);
+            this.argVariableDefinitionMap.setVariableDefinition(tempArgDefinition);
             return [];
         }
         return null;
     });
+    variableUtils.populateVariableDefinitionIndexes(this.localVariableDefinitionMap);
+    variableUtils.populateVariableDefinitionIndexes(this.argVariableDefinitionMap);
 }
 
 FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
@@ -105,8 +107,17 @@ FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
 }
 
 FunctionDefinition.prototype.convertIdentifierToInstructionArg = function(identifier: Identifier): Buffer {
-    // TODO: Implement.
-    return null;
+    let tempVariableDefinition = this.localVariableDefinitionMap.get(identifier);
+    if (tempVariableDefinition !== null) {
+        return tempVariableDefinition.createInstructionArg();
+    }
+    tempVariableDefinition = this.argVariableDefinitionMap.get(identifier);
+    if (tempVariableDefinition !== null) {
+        return tempVariableDefinition.createInstructionArg();
+    }
+    // TODO: Support labels.
+    
+    return this.assembler.convertIdentifierToInstructionArg(identifier);
 }
 
 FunctionDefinition.prototype.assembleInstructions = function(): void {

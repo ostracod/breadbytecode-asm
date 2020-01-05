@@ -1,7 +1,12 @@
 
 import {VariableUtils as VariableUtilsInterface} from "models/utils";
-import {AssemblyLine, ArgPerm} from "models/objects";
-import {VariableDefinition, ArgVariableDefinition} from "objects/variableDefinition";
+import {AssemblyLine, ArgPerm, VariableDefinition, IdentifierMap} from "models/objects";
+import {VariableDefinitionClass} from "models/items";
+import {BetaType} from "delegates/dataType";
+
+import {PointerType} from "delegates/dataType";
+
+import {GlobalVariableDefinition, LocalVariableDefinition, ArgVariableDefinition} from "objects/variableDefinition";
 import {AssemblyError} from "objects/assemblyError";
 
 export interface VariableUtils extends VariableUtilsInterface {}
@@ -12,7 +17,10 @@ export function VariableUtils() {
 
 export var variableUtils = new VariableUtils();
 
-VariableUtils.prototype.extractLocalVariableDefinition = function(line: AssemblyLine): VariableDefinition {
+VariableUtils.prototype.extractVariableDefinitionHelper = function(
+    line: AssemblyLine,
+    variableDefinitionClass: VariableDefinitionClass
+): VariableDefinition {
     if (line.directiveName != "VAR") {
         return null;
     }
@@ -22,7 +30,15 @@ VariableUtils.prototype.extractLocalVariableDefinition = function(line: Assembly
     }
     var tempIdentifier = tempArgList[0].evaluateToIdentifier();
     var tempDataType = tempArgList[1].evaluateToDataType();
-    return new VariableDefinition(tempIdentifier, tempDataType);
+    return new variableDefinitionClass(tempIdentifier, tempDataType);
+}
+
+VariableUtils.prototype.extractGlobalVariableDefinition = function(line: AssemblyLine): VariableDefinition {
+    return variableUtils.extractVariableDefinitionHelper(line, GlobalVariableDefinition);
+}
+
+VariableUtils.prototype.extractLocalVariableDefinition = function(line: AssemblyLine): VariableDefinition {
+    return variableUtils.extractVariableDefinitionHelper(line, LocalVariableDefinition);
 }
 
 VariableUtils.prototype.extractArgVariableDefinition = function(line: AssemblyLine): ArgVariableDefinition {
@@ -48,6 +64,21 @@ VariableUtils.prototype.extractArgVariableDefinition = function(line: AssemblyLi
         tempDataType,
         tempPermList
     );
+}
+
+VariableUtils.prototype.populateVariableDefinitionIndexes = function(identifierMap: IdentifierMap<VariableDefinition>): void {
+    let nextAlphaIndex = 0;
+    let nextBetaIndex = 0;
+    identifierMap.iterate(variableDefinition => {
+        if (variableDefinition.dataType instanceof PointerType) {
+            variableDefinition.index = nextAlphaIndex;
+            nextAlphaIndex += 1;
+        } else {
+            let tempBetaType = variableDefinition.dataType as BetaType;
+            variableDefinition.index = nextBetaIndex;
+            nextBetaIndex += tempBetaType.byteAmount;
+        }
+    });
 }
 
 

@@ -8,6 +8,16 @@ import {InstructionType, DataType} from "models/delegates";
 import {niceUtils} from "utils/niceUtils";
 import {instructionUtils} from "utils/instructionUtils";
 
+export const INSTRUCTION_REF_PREFIX = {
+    constant: 0,
+    globalFrame: 1,
+    localFrame: 2,
+    prevArgFrame: 3,
+    nextArgFrame: 4,
+    appData: 5,
+    heapAlloc: 6
+};
+
 export interface Instruction extends InstructionInterface {}
 
 export class Instruction {
@@ -49,7 +59,7 @@ export interface PointerInstructionRef extends PointerInstructionRefInterface {}
 
 export class PointerInstructionRef extends InstructionRef {
     constructor(pointerArg: Buffer) {
-        super(6);
+        super(INSTRUCTION_REF_PREFIX.heapAlloc);
         this.pointerArg = pointerArg;
     }
 }

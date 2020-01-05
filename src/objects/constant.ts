@@ -2,7 +2,11 @@
 import {NumberConstant as NumberConstantInterface} from "models/objects";
 import {NumberType, IntegerType} from "models/delegates";
 import {UnsignedIntegerType, SignedIntegerType, unsignedIntegerTypeList, signedIntegerTypeList} from "delegates/dataType";
+
 import {AssemblyError} from "objects/assemblyError";
+import {INSTRUCTION_REF_PREFIX} from "objects/instruction";
+
+import {instructionUtils} from "utils/instructionUtils";
 
 export interface NumberConstant extends NumberConstantInterface {}
 
@@ -37,6 +41,14 @@ NumberConstant.prototype.compress = function(): void {
         }
     }
     throw new AssemblyError("Integer is out of range.");
+}
+
+NumberConstant.prototype.createInstructionArg = function(): Buffer {
+    return instructionUtils.createInstructionArg(
+        INSTRUCTION_REF_PREFIX.constant,
+        this.dataType,
+        this.getBuffer()
+    );
 }
 
 

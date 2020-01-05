@@ -1,5 +1,5 @@
 
-import {ExpressionProcessor, LineProcessor, NumberTypeClass, ArgNumeric} from "models/items";
+import {ExpressionProcessor, LineProcessor, NumberTypeClass, VariableDefinitionClass, ArgNumeric} from "models/items";
 import {Operator, DataType, NumberType} from "models/delegates";
 import {Expression, AssemblyLine, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition} from "models/objects";
 
@@ -82,12 +82,18 @@ export interface ParseUtils {
 }
 
 export interface VariableUtils {
+    extractVariableDefinitionHelper(
+        line: AssemblyLine,
+        VariableDefinitionClass: VariableDefinitionClass
+    ): VariableDefinition;
+    extractGlobalVariableDefinition(line: AssemblyLine): VariableDefinition;
     extractLocalVariableDefinition(line: AssemblyLine): VariableDefinition;
     extractArgVariableDefinition(line: AssemblyLine): ArgVariableDefinition;
+    populateVariableDefinitionIndexes(identifierMap: IdentifierMap<VariableDefinition>): void;
 }
 
 export interface InstructionUtils {
-    createInstructionArg(refPrefix: number, dataTypePrefix: number, buffer: Buffer): Buffer;
+    createInstructionArg(refPrefix: number, dataType: DataType, buffer: Buffer): Buffer;
 }
 
 
