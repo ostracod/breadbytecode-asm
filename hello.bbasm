@@ -11,8 +11,8 @@ IFACE_DEP termArbiter, ":system/apps/termArbiter", termArbiterIface
 
 # Create a text allocation from application data.
 MACRO newTextAlloc, dest, startLbl, endLbl
-    newAlloc dest, 0, endLbl - startLbl
-    wrtBuff dest[0]:u8, startLbl, endLbl - startLbl
+    newAlloc dest, 0, ?endLbl - ?startLbl
+    wrtBuff dest[0]:u8, startLbl, ?endLbl - ?startLbl
 END
 
 VAR driver, p

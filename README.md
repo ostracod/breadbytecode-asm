@@ -177,4 +177,15 @@ PRIVATE_FUNC myFunc
 END
 ```
 
+Use the unary question mark operator (`?`) to refer to the index of a variable or app data label.
+
+```
+PRIVATE_FUNC myFunc
+    VAR dest, u8
+    VAR myVar, u8
+    # ?myVar is the index of myVar in the local frame.
+    wrt dest, ?myVar
+END
+```
+
 

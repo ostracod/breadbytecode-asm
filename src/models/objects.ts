@@ -42,7 +42,7 @@ export interface Assembler {
     extractFunctionDefinitions(): void;
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
-    convertIdentifierToInstructionArg(identifier: Identifier): Buffer;
+    getVariableDefinitionByIdentifier(identifier: Identifier): VariableDefinition;
     assembleInstructions(): void;
 }
 
@@ -92,6 +92,7 @@ export interface Expression {
     
     // Concrete subclasses may override these methods:
     evaluateToIdentifierOrNull(): Identifier;
+    evaluateToNumberConstantOrNull(): NumberConstant;
     evaluateToString(): string;
     evaluateToDataType(): DataType;
     evaluateToArgPerm(): ArgPerm;
@@ -133,7 +134,7 @@ export interface UnaryExpression extends Expression {
     operand: Expression;
 }
 
-export interface UnaryAtExpression extends UnaryExpression {
+export interface MacroIdentifierExpression extends UnaryExpression {
     macroInvocationId: number;
 }
 
@@ -163,7 +164,9 @@ export interface FunctionDefinition extends Displayable {
     extractJumpTables(): void;
     extractVariableDefinitions(): void;
     extractLabelDefinitions(): void;
+    getVariableDefinitionByIdentifier(identifier: Identifier): VariableDefinition;
     convertIdentifierToInstructionArg(identifier: Identifier): Buffer;
+    convertIdentifierToIndex(identifier: Identifier): number;
     assembleInstructions(): void;
     
     // Concrete subclasses must implement these methods:

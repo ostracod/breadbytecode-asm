@@ -9,7 +9,7 @@ import {
     ArgVersionNumber as ArgVersionNumberInterface,
     ArgString as ArgStringInterface,
     UnaryExpression as UnaryExpressionInterface,
-    UnaryAtExpression as UnaryAtExpressionInterface,
+    MacroIdentifierExpression as MacroIdentifierExpressionInterface,
     BinaryExpression as BinaryExpressionInterface,
     SubscriptExpression as SubscriptExpressionInterface,
     IdentifierMap, FunctionDefinition, NumberConstant
@@ -21,7 +21,7 @@ import {ArgPerm} from "objects/argPerm";
 import {InstructionRef, PointerInstructionRef, INSTRUCTION_REF_PREFIX} from "objects/instruction";
 
 import {pointerType, signedInteger64Type, StringType} from "delegates/dataType";
-import {unaryAtOperator} from "delegates/operator";
+import {macroIdentifierOperator} from "delegates/operator";
 
 import {dataTypeUtils} from "utils/dataTypeUtils";
 import {instructionUtils} from "utils/instructionUtils";
@@ -96,6 +96,10 @@ Expression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
     return null;
 }
 
+Expression.prototype.evaluateToNumberConstantOrNull = function(): NumberConstant {
+    return null;
+}
+
 Expression.prototype.evaluateToString = function(): string {
     throw new AssemblyError("Expected string.");
 }
@@ -110,10 +114,15 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
 
 Expression.prototype.evaluateToInstructionArg = function(): Buffer {
     let tempIdentifier = this.evaluateToIdentifierOrNull();
-    if (tempIdentifier === null) {
-        throw new AssemblyError("Expected number or pointer.");
+    if (tempIdentifier !== null) {
+        return this.functionDefinition.convertIdentifierToInstructionArg(tempIdentifier);
     }
-    return this.functionDefinition.convertIdentifierToInstructionArg(tempIdentifier);
+    let tempConstant = this.evaluateToNumberConstantOrNull();
+    if (tempConstant !== null) {
+        return tempConstant.createInstructionArg();
+    }
+    throw new AssemblyError("Expected number or pointer.");
+    
 }
 
 Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
@@ -211,10 +220,10 @@ ArgNumber.prototype.getDisplayString = function(): string {
     return this.constant.value + "";
 }
 
-ArgNumber.prototype.evaluateToInstructionArg = function(): Buffer {
-    let tempConstant: NumberConstant = this.constant.copy();
-    tempConstant.compress();
-    return tempConstant.createInstructionArg();
+ArgNumber.prototype.evaluateToNumberConstantOrNull = function(): NumberConstant {
+    let output = this.constant.copy();
+    output.compress();
+    return output;
 }
 
 ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
@@ -292,40 +301,44 @@ UnaryExpression.prototype.processExpressionsHelper = function(processExpression:
     return null;
 }
 
+UnaryExpression.prototype.evaluateToNumberConstantOrNull = function(): NumberConstant {
+    return this.operator.createNumberConstantOrNull(this.operand);
+}
+
 UnaryExpression.prototype.getConstantDataTypeHelper = function(): DataType {
     return this.operator.getConstantDataType(this.operand);
 }
 
-export interface UnaryAtExpression extends UnaryAtExpressionInterface {}
+export interface MacroIdentifierExpression extends MacroIdentifierExpressionInterface {}
 
-export class UnaryAtExpression extends UnaryExpression {
+export class MacroIdentifierExpression extends UnaryExpression {
     constructor(operand: Expression) {
-        super(unaryAtOperator, operand);
+        super(macroIdentifierOperator, operand);
         this.macroInvocationId = null;
     }
 }
 
-UnaryAtExpression.prototype.copy = function(): Expression {
-    var output = new UnaryAtExpression(this.operand.copy());
+MacroIdentifierExpression.prototype.copy = function(): Expression {
+    var output = new MacroIdentifierExpression(this.operand.copy());
     output.macroInvocationId = this.macroInvocationId;
     return output;
 }
 
-UnaryAtExpression.prototype.getDisplayString = function(): string {
+MacroIdentifierExpression.prototype.getDisplayString = function(): string {
     if (this.macroInvocationId === null) {
         return UnaryExpression.prototype.getDisplayString.call(this);
     }
     return this.operator.text + "{" + this.macroInvocationId + "}" + this.operand.getDisplayString();
 }
 
-UnaryAtExpression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
+MacroIdentifierExpression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
     if (!(this.operand instanceof ArgTerm)) {
         return null;
     }
     return new MacroIdentifier(this.operand.text, this.macroInvocationId);
 }
 
-UnaryAtExpression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
+MacroIdentifierExpression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
     if (this.macroInvocationId === null) {
         this.macroInvocationId = macroInvocationId;
     }

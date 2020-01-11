@@ -2,9 +2,10 @@
 import {Operator, UnaryOperator as UnaryOperatorInterface, BinaryOperator as BinaryOperatorInterface, DataType} from "/models/delegates";
 import {Expression} from "models/objects";
 import {dataTypeUtils} from "utils/dataTypeUtils";
-import {signedInteger64Type, NumberType} from "delegates/dataType";
-import {UnaryExpression, UnaryAtExpression, BinaryExpression} from "objects/expression";
+import {unsignedInteger64Type, signedInteger64Type, NumberType} from "delegates/dataType";
+import {UnaryExpression, MacroIdentifierExpression, BinaryExpression} from "objects/expression";
 import {AssemblyError} from "objects/assemblyError";
+import {NumberConstant} from "objects/constant";
 
 export var unaryOperatorList = [];
 export var binaryOperatorList = [];
@@ -26,14 +27,30 @@ UnaryOperator.prototype.getConstantDataType = function(operand: Expression): Dat
     return operand.getConstantDataType();
 }
 
-export class UnaryAtOperator extends UnaryOperator {
+UnaryOperator.prototype.createNumberConstantOrNull = function(operand: Expression): NumberConstant {
+    return null;
+}
+
+export class MacroIdentifierOperator extends UnaryOperator {
     constructor() {
         super("@");
     }
 }
 
-UnaryAtOperator.prototype.createExpression = function(operand: Expression): Expression {
-    return new UnaryAtExpression(operand);
+MacroIdentifierOperator.prototype.createExpression = function(operand: Expression): Expression {
+    return new MacroIdentifierExpression(operand);
+}
+
+export class IndexOperator extends UnaryOperator {
+    
+}
+
+IndexOperator.prototype.createNumberConstantOrNull = function(operand: Expression): NumberConstant {
+    let tempIdentifier = operand.evaluateToIdentifier();
+    let index = operand.functionDefinition.convertIdentifierToIndex(tempIdentifier);
+    let output = new NumberConstant(index, unsignedInteger64Type);
+    output.compress();
+    return output;
 }
 
 export interface BinaryOperator extends BinaryOperatorInterface {}
@@ -96,7 +113,8 @@ BinaryBitshiftOperator.prototype.getConstantDataType = function(operand1: Expres
 
 new UnaryOperator("-");
 new UnaryOperator("~");
-export var unaryAtOperator = new UnaryAtOperator();
+export var macroIdentifierOperator = new MacroIdentifierOperator();
+new IndexOperator("?");
 
 new TypeCoercionOperator();
 new InterfaceFunctionOperator();

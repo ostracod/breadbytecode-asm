@@ -4,7 +4,7 @@ import {
     FunctionDefinition as FunctionDefinitionInterface,
     InterfaceFunctionDefinition as InterfaceFunctionDefinitionInterface,
     PublicFunctionDefinition as PublicFunctionDefinitionInterface,
-    Identifier, AssemblyLine, Expression
+    Identifier, AssemblyLine, Expression, VariableDefinition
 } from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
@@ -106,18 +106,37 @@ FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
     this.jumpTableLineList.extractLabelDefinitions();
 }
 
-FunctionDefinition.prototype.convertIdentifierToInstructionArg = function(identifier: Identifier): Buffer {
+// TODO: Create an IndexDefinition superclass for variables, functions, and labels.
+FunctionDefinition.prototype.getVariableDefinitionByIdentifier = function(identifier: Identifier): VariableDefinition {
     let tempVariableDefinition = this.localVariableDefinitionMap.get(identifier);
     if (tempVariableDefinition !== null) {
-        return tempVariableDefinition.createInstructionArg();
+        return tempVariableDefinition;
     }
     tempVariableDefinition = this.argVariableDefinitionMap.get(identifier);
+    if (tempVariableDefinition !== null) {
+        return tempVariableDefinition;
+    }
+    return this.assembler.getVariableDefinitionByIdentifier(identifier);
+}
+
+FunctionDefinition.prototype.convertIdentifierToInstructionArg = function(identifier: Identifier): Buffer {
+    let tempVariableDefinition = this.getVariableDefinitionByIdentifier(identifier);
     if (tempVariableDefinition !== null) {
         return tempVariableDefinition.createInstructionArg();
     }
     // TODO: Support labels.
     
     return this.assembler.convertIdentifierToInstructionArg(identifier);
+}
+
+FunctionDefinition.prototype.convertIdentifierToIndex = function(identifier: Identifier): number {
+    let tempVariableDefinition = this.getVariableDefinitionByIdentifier(identifier);
+    if (tempVariableDefinition !== null) {
+        return tempVariableDefinition.index;
+    }
+    // TODO: Support labels.
+    
+    return this.assembler.convertIdentifierToIndex(identifier);
 }
 
 FunctionDefinition.prototype.assembleInstructions = function(): void {

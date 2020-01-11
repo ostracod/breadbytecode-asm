@@ -2,7 +2,7 @@
 import * as fs from "fs";
 
 import {LineProcessor, ExpressionProcessor} from "models/items";
-import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Identifier} from "models/objects";
+import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Identifier, VariableDefinition} from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
 import {IdentifierMap} from "objects/identifier";
@@ -265,14 +265,12 @@ Assembler.prototype.extractGlobalVariableDefinitions = function(): void {
     variableUtils.populateVariableDefinitionIndexes(this.globalVariableDefinitionMap);
 }
 
-Assembler.prototype.convertIdentifierToInstructionArg = function(identifier: Identifier): Buffer {
+Assembler.prototype.getVariableDefinitionByIdentifier = function(identifier: Identifier): VariableDefinition {
     let tempVariableDefinition = this.globalVariableDefinitionMap.get(identifier);
     if (tempVariableDefinition !== null) {
-        return tempVariableDefinition.createInstructionArg();
+        return tempVariableDefinition;
     }
-    // TODO: Support labels and other good stuff.
-    
-    throw new AssemblyError(`Unknown identifier ${identifier.name}.`);
+    throw new AssemblyError(`Unknown variable identifier ${identifier.name}.`);
 }
 
 Assembler.prototype.assembleInstructions = function(): void {
