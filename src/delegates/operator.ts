@@ -47,8 +47,10 @@ export class IndexOperator extends UnaryOperator {
 
 IndexOperator.prototype.createNumberConstantOrNull = function(operand: Expression): NumberConstant {
     let tempIdentifier = operand.evaluateToIdentifier();
-    let index = operand.functionDefinition.convertIdentifierToIndex(tempIdentifier);
-    let output = new NumberConstant(index, unsignedInteger64Type);
+    let tempDefinition = operand.functionDefinition.getIndexDefinitionByIdentifier(
+        tempIdentifier
+    );
+    let output = new NumberConstant(tempDefinition.index, unsignedInteger64Type);
     output.compress();
     return output;
 }

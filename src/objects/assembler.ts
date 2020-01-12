@@ -2,7 +2,7 @@
 import * as fs from "fs";
 
 import {LineProcessor, ExpressionProcessor} from "models/items";
-import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Identifier, VariableDefinition} from "models/objects";
+import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Identifier, IndexDefinition} from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
 import {IdentifierMap} from "objects/identifier";
@@ -174,6 +174,7 @@ Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyL
 }
 
 Assembler.prototype.addFunctionDefinition = function(functionDefinition: FunctionDefinition): void {
+    functionDefinition.index = this.functionDefinitionList.length;
     functionDefinition.assembler = this;
     this.functionDefinitionList.push(functionDefinition);
 }
@@ -265,12 +266,14 @@ Assembler.prototype.extractGlobalVariableDefinitions = function(): void {
     variableUtils.populateVariableDefinitionIndexes(this.globalVariableDefinitionMap);
 }
 
-Assembler.prototype.getVariableDefinitionByIdentifier = function(identifier: Identifier): VariableDefinition {
+Assembler.prototype.getIndexDefinitionByIdentifier = function(identifier: Identifier): IndexDefinition {
     let tempVariableDefinition = this.globalVariableDefinitionMap.get(identifier);
     if (tempVariableDefinition !== null) {
         return tempVariableDefinition;
     }
-    throw new AssemblyError(`Unknown variable identifier ${identifier.name}.`);
+    // TODO: Support other IndexDefinitions.
+    
+    throw new AssemblyError(`Unknown identifier ${identifier.name}.`);
 }
 
 Assembler.prototype.assembleInstructions = function(): void {

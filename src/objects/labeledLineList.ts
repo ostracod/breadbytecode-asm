@@ -67,7 +67,7 @@ LabeledLineList.prototype.extractLabelDefinitions = function(): void {
     var index = 0;
     while (index < this.labelDefinitionList.length) {
         var tempLabel = this.labelDefinitionList[index];
-        tempLabel.elementIndex = lineElementIndexMap[tempLabel.lineIndex];
+        tempLabel.index = lineElementIndexMap[tempLabel.lineIndex];
         index += 1;
     }
 }

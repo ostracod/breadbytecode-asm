@@ -7,6 +7,13 @@ export interface Displayable {
     getDisplayString(): string;
 }
 
+export interface IndexDefinition {
+    index: number;
+    
+    // Concrete subclasses may override these methods:
+    createInstructionArg(): Buffer;
+}
+
 export interface ArgPerm {
     access: number;
     recipient: number;
@@ -42,7 +49,7 @@ export interface Assembler {
     extractFunctionDefinitions(): void;
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
-    getVariableDefinitionByIdentifier(identifier: Identifier): VariableDefinition;
+    getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
     assembleInstructions(): void;
 }
 
@@ -150,7 +157,7 @@ export interface SubscriptExpression extends Expression {
     dataTypeExpression: Expression;
 }
 
-export interface FunctionDefinition extends Displayable {
+export interface FunctionDefinition extends Displayable, IndexDefinition {
     identifier: Identifier;
     lineList: LabeledLineList;
     assembler: Assembler;
@@ -164,9 +171,7 @@ export interface FunctionDefinition extends Displayable {
     extractJumpTables(): void;
     extractVariableDefinitions(): void;
     extractLabelDefinitions(): void;
-    getVariableDefinitionByIdentifier(identifier: Identifier): VariableDefinition;
-    convertIdentifierToInstructionArg(identifier: Identifier): Buffer;
-    convertIdentifierToIndex(identifier: Identifier): number;
+    getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
     assembleInstructions(): void;
     
     // Concrete subclasses must implement these methods:
@@ -208,10 +213,9 @@ export interface IdentifierMap<T> {
     getValueList(): T[];
 }
 
-export interface LabelDefinition extends Displayable {
+export interface LabelDefinition extends Displayable, IndexDefinition {
     identifier: Identifier;
     lineIndex: number;
-    elementIndex: number;
 }
 
 export interface MacroDefinition extends Displayable {
@@ -222,13 +226,10 @@ export interface MacroDefinition extends Displayable {
     invoke(argList: Expression[], macroInvocationId: number): AssemblyLine[];
 }
 
-export interface VariableDefinition extends Displayable {
+export interface VariableDefinition extends Displayable, IndexDefinition {
     identifier: Identifier;
     dataType: DataType;
-    index: number;
     instructionRefPrefix: number;
-    
-    createInstructionArg(): Buffer;
 }
 
 export interface ArgVariableDefinition extends VariableDefinition {

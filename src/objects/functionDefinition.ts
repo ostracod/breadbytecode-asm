@@ -4,9 +4,10 @@ import {
     FunctionDefinition as FunctionDefinitionInterface,
     InterfaceFunctionDefinition as InterfaceFunctionDefinitionInterface,
     PublicFunctionDefinition as PublicFunctionDefinitionInterface,
-    Identifier, AssemblyLine, Expression, VariableDefinition
+    Identifier, AssemblyLine, Expression
 } from "models/objects";
 
+import {IndexDefinition} from "objects/indexDefinition";
 import {AssemblyError} from "objects/assemblyError";
 import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
 import {IdentifierMap} from "objects/identifier";
@@ -17,8 +18,9 @@ import {instructionUtils} from "utils/instructionUtils";
 
 export interface FunctionDefinition extends FunctionDefinitionInterface {}
 
-export abstract class FunctionDefinition {
+export abstract class FunctionDefinition extends IndexDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[]) {
+        super();
         this.identifier = identifier;
         this.lineList = new InstructionLineList(lineList, this);
         this.assembler = null;
@@ -106,37 +108,18 @@ FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
     this.jumpTableLineList.extractLabelDefinitions();
 }
 
-// TODO: Create an IndexDefinition superclass for variables, functions, and labels.
-FunctionDefinition.prototype.getVariableDefinitionByIdentifier = function(identifier: Identifier): VariableDefinition {
-    let tempVariableDefinition = this.localVariableDefinitionMap.get(identifier);
-    if (tempVariableDefinition !== null) {
-        return tempVariableDefinition;
+FunctionDefinition.prototype.getIndexDefinitionByIdentifier = function(identifier: Identifier): IndexDefinition {
+    let tempDefinition: IndexDefinition = this.localVariableDefinitionMap.get(identifier);
+    if (tempDefinition !== null) {
+        return tempDefinition;
     }
-    tempVariableDefinition = this.argVariableDefinitionMap.get(identifier);
-    if (tempVariableDefinition !== null) {
-        return tempVariableDefinition;
-    }
-    return this.assembler.getVariableDefinitionByIdentifier(identifier);
-}
-
-FunctionDefinition.prototype.convertIdentifierToInstructionArg = function(identifier: Identifier): Buffer {
-    let tempVariableDefinition = this.getVariableDefinitionByIdentifier(identifier);
-    if (tempVariableDefinition !== null) {
-        return tempVariableDefinition.createInstructionArg();
+    tempDefinition = this.argVariableDefinitionMap.get(identifier);
+    if (tempDefinition !== null) {
+        return tempDefinition;
     }
     // TODO: Support labels.
     
-    return this.assembler.convertIdentifierToInstructionArg(identifier);
-}
-
-FunctionDefinition.prototype.convertIdentifierToIndex = function(identifier: Identifier): number {
-    let tempVariableDefinition = this.getVariableDefinitionByIdentifier(identifier);
-    if (tempVariableDefinition !== null) {
-        return tempVariableDefinition.index;
-    }
-    // TODO: Support labels.
-    
-    return this.assembler.convertIdentifierToIndex(identifier);
+    return this.assembler.getIndexDefinitionByIdentifier(identifier);
 }
 
 FunctionDefinition.prototype.assembleInstructions = function(): void {

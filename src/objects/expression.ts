@@ -115,7 +115,10 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
 Expression.prototype.evaluateToInstructionArg = function(): Buffer {
     let tempIdentifier = this.evaluateToIdentifierOrNull();
     if (tempIdentifier !== null) {
-        return this.functionDefinition.convertIdentifierToInstructionArg(tempIdentifier);
+        let tempDefinition = this.functionDefinition.getIndexDefinitionByIdentifier(
+            tempIdentifier
+        );
+        return tempDefinition.createInstructionArg();
     }
     let tempConstant = this.evaluateToNumberConstantOrNull();
     if (tempConstant !== null) {

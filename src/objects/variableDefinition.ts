@@ -6,16 +6,17 @@ import {instructionUtils} from "utils/instructionUtils";
 
 import {unsignedInteger64Type} from "delegates/dataType";
 
+import {IndexDefinition} from "objects/indexDefinition";
 import {INSTRUCTION_REF_PREFIX} from "objects/instruction";
 import {NumberConstant} from "objects/constant";
 
 export interface VariableDefinition extends VariableDefinitionInterface {}
 
-export class VariableDefinition {
+export class VariableDefinition extends IndexDefinition {
     constructor(identifier: Identifier, dataType: DataType, instructionRefPrefix: number) {
+        super();
         this.identifier = identifier;
         this.dataType = dataType;
-        this.index = null;
         this.instructionRefPrefix = instructionRefPrefix;
     }
 }
