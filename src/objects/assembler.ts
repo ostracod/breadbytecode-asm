@@ -30,6 +30,7 @@ export class Assembler {
         this.appDataLineList = null;
         this.globalVariableDefinitionMap = new IdentifierMap();
         this.nextMacroInvocationId = 0;
+        this.indexDefinitionMapList = null;
     }
 }
 
@@ -258,7 +259,7 @@ Assembler.prototype.extractGlobalVariableDefinitions = function(): void {
     this.processLines(line => {
         var tempDefinition = variableUtils.extractGlobalVariableDefinition(line);
         if (tempDefinition !== null) {
-            this.globalVariableDefinitionMap.setVariableDefinition(tempDefinition);
+            this.globalVariableDefinitionMap.setIndexDefinition(tempDefinition);
             return [];
         }
         return null;
@@ -267,14 +268,22 @@ Assembler.prototype.extractGlobalVariableDefinitions = function(): void {
 }
 
 Assembler.prototype.getIndexDefinitionByIdentifier = function(identifier: Identifier): IndexDefinition {
-    let tempVariableDefinition = this.globalVariableDefinitionMap.get(identifier);
-    if (tempVariableDefinition !== null) {
-        return tempVariableDefinition;
+    for (let identifierMap of this.indexDefinitionMapList) {
+        let tempDefinition = identifierMap.get(identifier);
+        if (tempDefinition !== null) {
+            return tempDefinition;
+        }
     }
-    // TODO: Support other IndexDefinitions.
-    
     throw new AssemblyError(`Unknown identifier ${identifier.name}.`);
 }
+
+Assembler.prototype.determineIndexDefinitionMapList = function(): void {
+    this.indexDefinitionMapList = [
+        this.globalVariableDefinitionMap,
+        this.appDataLineList.labelDefinitionMap
+    ];
+}
+
 
 Assembler.prototype.assembleInstructions = function(): void {
     for (let functionDefinition of this.functionDefinitionList) {
@@ -322,6 +331,7 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
         this.extractFunctionDefinitions();
         this.extractAppDataDefinitions();
         this.extractGlobalVariableDefinitions();
+        this.determineIndexDefinitionMapList();
         this.assembleInstructions();
     } catch(error) {
         if (error instanceof AssemblyError) {

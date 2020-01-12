@@ -1,5 +1,5 @@
 
-import {LineProcessor, ExpressionProcessor} from "models/items";
+import {LineProcessor, ExpressionProcessor, LabelDefinitionClass} from "models/items";
 import {UnaryOperator, BinaryOperator, DataType, NumberType, InstructionType} from "models/delegates";
 
 export interface Displayable {
@@ -8,6 +8,7 @@ export interface Displayable {
 }
 
 export interface IndexDefinition {
+    identifier: Identifier;
     index: number;
     
     // Concrete subclasses may override these methods:
@@ -30,6 +31,7 @@ export interface Assembler {
     appDataLineList: LabeledLineList;
     globalVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     nextMacroInvocationId: number;
+    indexDefinitionMapList: IdentifierMap<IndexDefinition>[];
     
     processLines(processLine: LineProcessor): void;
     processExpressionsInLines(
@@ -50,6 +52,7 @@ export interface Assembler {
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
     getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
+    determineIndexDefinitionMapList(): void;
     assembleInstructions(): void;
 }
 
@@ -158,13 +161,13 @@ export interface SubscriptExpression extends Expression {
 }
 
 export interface FunctionDefinition extends Displayable, IndexDefinition {
-    identifier: Identifier;
     lineList: LabeledLineList;
     assembler: Assembler;
     jumpTableLineList: LabeledLineList;
     argVariableDefinitionMap: IdentifierMap<ArgVariableDefinition>;
     localVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     instructionList: Instruction[];
+    indexDefinitionMapList: IdentifierMap<IndexDefinition>[]
     
     processLines(processLine: LineProcessor): void;
     processJumpTableLines(processLine: LineProcessor): void;
@@ -208,13 +211,12 @@ export interface IdentifierMap<T> {
     
     get(identifier: Identifier): T;
     set(identifier: Identifier, value: T): void;
-    setVariableDefinition(variableDefinition: VariableDefinition): void;
+    setIndexDefinition(indexDefinition: IndexDefinition): void;
     iterate(handle: (value: T) => void): void;
     getValueList(): T[];
 }
 
 export interface LabelDefinition extends Displayable, IndexDefinition {
-    identifier: Identifier;
     lineIndex: number;
 }
 
@@ -227,7 +229,6 @@ export interface MacroDefinition extends Displayable {
 }
 
 export interface VariableDefinition extends Displayable, IndexDefinition {
-    identifier: Identifier;
     dataType: DataType;
     instructionRefPrefix: number;
 }
@@ -238,12 +239,15 @@ export interface ArgVariableDefinition extends VariableDefinition {
 
 export interface LabeledLineList {
     lineList: AssemblyLine[];
-    labelDefinitionList: LabelDefinition[];
+    labelDefinitionMap: IdentifierMap<LabelDefinition>;
     
     processLines(processLine: LineProcessor): void;
+    getLineElementIndexMap(): {[lineIndex: number]: number};
     extractLabelDefinitions(): void;
     getDisplayString(title: string, indentationLevel?: number): string;
-    getLineElementIndexMap(): {[lineIndex: number]: number};
+    
+    // Concrete subclasses may override these methods:
+    getLabelDefinitionClass(): LabelDefinitionClass;
     
     // Concrete subclasses must implement these methods:
     getLineElementLength(line: AssemblyLine): number;

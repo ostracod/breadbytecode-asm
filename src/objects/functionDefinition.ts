@@ -20,17 +20,24 @@ export interface FunctionDefinition extends FunctionDefinitionInterface {}
 
 export abstract class FunctionDefinition extends IndexDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[]) {
-        super();
-        this.identifier = identifier;
+        super(identifier);
         this.lineList = new InstructionLineList(lineList, this);
         this.assembler = null;
         this.jumpTableLineList = null;
         this.argVariableDefinitionMap = new IdentifierMap();
         this.localVariableDefinitionMap = new IdentifierMap();
         this.instructionList = [];
+        
         this.extractJumpTables();
         this.extractVariableDefinitions();
         this.extractLabelDefinitions();
+        
+        this.indexDefinitionMapList = [
+            this.localVariableDefinitionMap,
+            this.argVariableDefinitionMap,
+            this.lineList.labelDefinitionMap,
+            this.jumpTableLineList.labelDefinitionMap
+        ];
     }
 }
 
@@ -89,12 +96,12 @@ FunctionDefinition.prototype.extractVariableDefinitions = function(): void {
     this.processLines(line => {
         var tempLocalDefinition = variableUtils.extractLocalVariableDefinition(line);
         if (tempLocalDefinition !== null) {
-            this.localVariableDefinitionMap.setVariableDefinition(tempLocalDefinition);
+            this.localVariableDefinitionMap.setIndexDefinition(tempLocalDefinition);
             return [];
         }
         var tempArgDefinition = variableUtils.extractArgVariableDefinition(line);
         if (tempArgDefinition !== null) {
-            this.argVariableDefinitionMap.setVariableDefinition(tempArgDefinition);
+            this.argVariableDefinitionMap.setIndexDefinition(tempArgDefinition);
             return [];
         }
         return null;
@@ -109,16 +116,12 @@ FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
 }
 
 FunctionDefinition.prototype.getIndexDefinitionByIdentifier = function(identifier: Identifier): IndexDefinition {
-    let tempDefinition: IndexDefinition = this.localVariableDefinitionMap.get(identifier);
-    if (tempDefinition !== null) {
-        return tempDefinition;
+    for (let identifierMap of this.indexDefinitionMapList) {
+        let tempDefinition = identifierMap.get(identifier);
+        if (tempDefinition !== null) {
+            return tempDefinition;
+        }
     }
-    tempDefinition = this.argVariableDefinitionMap.get(identifier);
-    if (tempDefinition !== null) {
-        return tempDefinition;
-    }
-    // TODO: Support labels.
-    
     return this.assembler.getIndexDefinitionByIdentifier(identifier);
 }
 

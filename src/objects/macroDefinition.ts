@@ -41,7 +41,11 @@ MacroDefinition.prototype.getDisplayString = function(): string {
         tempIdentifierTextList.push(tempIdentifier.getDisplayString());
         index += 1;
     }
-    tempTextList.push(this.name + " " + tempIdentifierTextList.join(", ") + ":");
+    let tempText = this.name;
+    if (tempIdentifierTextList.length > 0) {
+        tempText += " " + tempIdentifierTextList.join(", ");
+    }
+    tempTextList.push(tempText + ":");
     tempTextList.push(lineUtils.getLineListDisplayString(this.lineList, 1));
     return tempTextList.join("\n");
 }

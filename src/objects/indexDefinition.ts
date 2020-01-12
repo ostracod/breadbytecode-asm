@@ -6,7 +6,8 @@ import {NumberConstant} from "objects/constant";
 export interface IndexDefinition extends IndexDefinitionInterface {}
 
 export abstract class IndexDefinition {
-    constructor() {
+    constructor(identifier: Identifier) {
+        this.identifier = identifier;
         this.index = null;
     }
 }

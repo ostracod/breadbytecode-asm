@@ -4,8 +4,6 @@ import {VariableDefinition as VariableDefinitionInterface, ArgVariableDefinition
 
 import {instructionUtils} from "utils/instructionUtils";
 
-import {unsignedInteger64Type} from "delegates/dataType";
-
 import {IndexDefinition} from "objects/indexDefinition";
 import {INSTRUCTION_REF_PREFIX} from "objects/instruction";
 import {NumberConstant} from "objects/constant";
@@ -14,8 +12,7 @@ export interface VariableDefinition extends VariableDefinitionInterface {}
 
 export class VariableDefinition extends IndexDefinition {
     constructor(identifier: Identifier, dataType: DataType, instructionRefPrefix: number) {
-        super();
-        this.identifier = identifier;
+        super(identifier);
         this.dataType = dataType;
         this.instructionRefPrefix = instructionRefPrefix;
     }
@@ -26,15 +23,10 @@ VariableDefinition.prototype.getDisplayString = function(): string {
 }
 
 VariableDefinition.prototype.createInstructionArg = function(): Buffer {
-    let tempNumberConstant = new NumberConstant(
-        this.index,
-        unsignedInteger64Type
-    );
-    tempNumberConstant.compress();
-    return instructionUtils.createInstructionArg(
+    return instructionUtils.createInstructionArgWithIndex(
         this.instructionRefPrefix,
         this.dataType,
-        tempNumberConstant.createInstructionArg()
+        this.index
     );
 }
 

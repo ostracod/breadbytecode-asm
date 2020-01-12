@@ -94,6 +94,11 @@ export interface VariableUtils {
 
 export interface InstructionUtils {
     createInstructionArg(refPrefix: number, dataType: DataType, buffer: Buffer): Buffer;
+    createInstructionArgWithIndex(
+        refPrefix: number,
+        dataType: DataType,
+        index: number
+    ): Buffer;
 }
 
 

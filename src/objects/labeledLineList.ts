@@ -1,11 +1,12 @@
 
-import {LineProcessor} from "models/items";
+import {LineProcessor, LabelDefinitionClass} from "models/items";
 import {LabeledLineList as LabeledLineListInterface, AssemblyLine, FunctionDefinition} from "models/objects";
 
 import {BetaType} from "delegates/dataType";
 
 import {AssemblyError} from "objects/assemblyError";
-import {LabelDefinition} from "objects/labelDefinition";
+import {LabelDefinition, AppDataLabelDefinition} from "objects/labelDefinition";
+import {IdentifierMap} from "objects/identifier";
 
 import {niceUtils} from "utils/niceUtils";
 import {lineUtils} from "utils/lineUtils";
@@ -15,7 +16,7 @@ export interface LabeledLineList extends LabeledLineListInterface {}
 export class LabeledLineList {
     constructor(lineList: AssemblyLine[]) {
         this.lineList = lineList;
-        this.labelDefinitionList = null;
+        this.labelDefinitionMap = null;
     }
 }
 
@@ -46,30 +47,28 @@ LabeledLineList.prototype.getLineElementIndexMap = function(): {[lineIndex: numb
 }
 
 LabeledLineList.prototype.extractLabelDefinitions = function(): void {
-    var self = this;
-    self.labelDefinitionList = [];
-    var index = 0;
-    self.processLines(function(line) {
+    let tempLabelDefinitionClass = this.getLabelDefinitionClass();
+    this.labelDefinitionMap = new IdentifierMap();
+    let index = 0;
+    this.processLines(line => {
         var tempArgList = line.argList;
         if (line.directiveName == "LBL") {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
             var tempIdentifier = tempArgList[0].evaluateToIdentifier();
-            var tempDefinition = new LabelDefinition(tempIdentifier, index);
-            self.labelDefinitionList.push(tempDefinition);
+            var tempDefinition = new tempLabelDefinitionClass(tempIdentifier, index);
+            this.labelDefinitionMap.setIndexDefinition(tempDefinition);
             return [];
         }
         index += 1;
         return null;
     });
-    var lineElementIndexMap = this.getLineElementIndexMap();
-    var index = 0;
-    while (index < this.labelDefinitionList.length) {
-        var tempLabel = this.labelDefinitionList[index];
-        tempLabel.index = lineElementIndexMap[tempLabel.lineIndex];
+    let lineElementIndexMap = this.getLineElementIndexMap();
+    this.labelDefinitionMap.iterate(labelDefinition => {
+        labelDefinition.index = lineElementIndexMap[labelDefinition.lineIndex];
         index += 1;
-    }
+    });
 }
 
 LabeledLineList.prototype.getDisplayString = function(title: string, indentationLevel?: number): string {
@@ -82,12 +81,16 @@ LabeledLineList.prototype.getDisplayString = function(title: string, indentation
     var tempIndentation = niceUtils.getIndentation(indentationLevel);
     var tempTextList = [tempIndentation + title + ":"];
     tempTextList.push(lineUtils.getLineListDisplayString(this.lineList, indentationLevel + 1));
-    tempTextList.push(niceUtils.getDisplayableListDisplayString(
+    tempTextList.push(niceUtils.getIdentifierMapDisplayString(
         title + " labels",
-        this.labelDefinitionList,
+        this.labelDefinitionMap,
         indentationLevel
     ));
     return niceUtils.joinTextList(tempTextList);
+}
+
+LabeledLineList.prototype.getLabelDefinitionClass = function(): LabelDefinitionClass {
+    return LabelDefinition;
 }
 
 export class InstructionLineList extends LabeledLineList {
@@ -117,6 +120,10 @@ JumpTableLineList.prototype.getLineElementLength = function(line: AssemblyLine):
 
 export class AppDataLineList extends LabeledLineList {
     
+}
+
+AppDataLineList.prototype.getLabelDefinitionClass = function(): LabelDefinitionClass {
+    return AppDataLabelDefinition;
 }
 
 AppDataLineList.prototype.getLineElementLength = function(line: AssemblyLine): number {

@@ -3,7 +3,7 @@ import {
     Identifier as IdentifierInterface,
     MacroIdentifier as MacroIdentifierInterface,
     IdentifierMap as IdentifierMapInterface,
-    VariableDefinition
+    IndexDefinition
 } from "models/objects";
 
 export interface Identifier extends IdentifierInterface {}
@@ -62,8 +62,8 @@ IdentifierMap.prototype.set = function(identifier: Identifier, value: any): void
     this.map[tempKey] = value;
 }
 
-IdentifierMap.prototype.setVariableDefinition = function(variableDefinition: VariableDefinition): void {
-    this.set(variableDefinition.identifier, variableDefinition);
+IdentifierMap.prototype.setIndexDefinition = function(indexDefinition: IndexDefinition): void {
+    this.set(indexDefinition.identifier, indexDefinition);
 }
 
 IdentifierMap.prototype.iterate = function(handle: (value: any) => void): void {
