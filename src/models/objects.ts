@@ -27,10 +27,11 @@ export interface Assembler {
     rootLineList: AssemblyLine[];
     aliasDefinitionMap: IdentifierMap<AliasDefinition>;
     macroDefinitionMap: {[name: string]: MacroDefinition};
-    functionDefinitionList: FunctionDefinition[];
+    functionDefinitionMap: IdentifierMap<FunctionDefinition>;
     appDataLineList: LabeledLineList;
     globalVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     nextMacroInvocationId: number;
+    nextFunctionDefinitionIndex: number;
     indexDefinitionMapList: IdentifierMap<IndexDefinition>[];
     
     processLines(processLine: LineProcessor): void;

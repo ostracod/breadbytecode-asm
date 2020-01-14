@@ -26,10 +26,11 @@ export class Assembler {
         this.rootLineList = [];
         this.aliasDefinitionMap = new IdentifierMap();
         this.macroDefinitionMap = {};
-        this.functionDefinitionList = [];
+        this.functionDefinitionMap = new IdentifierMap();
         this.appDataLineList = null;
         this.globalVariableDefinitionMap = new IdentifierMap();
         this.nextMacroInvocationId = 0;
+        this.nextFunctionDefinitionIndex = 0;
         this.indexDefinitionMapList = null;
     }
 }
@@ -175,9 +176,10 @@ Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyL
 }
 
 Assembler.prototype.addFunctionDefinition = function(functionDefinition: FunctionDefinition): void {
-    functionDefinition.index = this.functionDefinitionList.length;
+    functionDefinition.index = this.nextFunctionDefinitionIndex;
+    this.nextFunctionDefinitionIndex += 1;
     functionDefinition.assembler = this;
-    this.functionDefinitionList.push(functionDefinition);
+    this.functionDefinitionMap.setIndexDefinition(functionDefinition);
 }
 
 Assembler.prototype.extractFunctionDefinitions = function(): void {
@@ -280,15 +282,16 @@ Assembler.prototype.getIndexDefinitionByIdentifier = function(identifier: Identi
 Assembler.prototype.determineIndexDefinitionMapList = function(): void {
     this.indexDefinitionMapList = [
         this.globalVariableDefinitionMap,
-        this.appDataLineList.labelDefinitionMap
+        this.appDataLineList.labelDefinitionMap,
+        this.functionDefinitionMap
     ];
 }
 
 
 Assembler.prototype.assembleInstructions = function(): void {
-    for (let functionDefinition of this.functionDefinitionList) {
+    this.functionDefinitionMap.iterate(functionDefinition => {
         functionDefinition.assembleInstructions();
-    }
+    });
 }
 
 Assembler.prototype.getDisplayString = function(): string {
@@ -311,13 +314,10 @@ Assembler.prototype.getDisplayString = function(): string {
         tempTextList.push(variableDefinition.getDisplayString());
     });
     tempTextList.push("\n= = = FUNCTION DEFINITIONS = = =\n");
-    var index = 0;
-    while (index < this.functionDefinitionList.length) {
-        var tempDefinition = this.functionDefinitionList[index]
-        tempTextList.push(tempDefinition.getDisplayString());
+    this.functionDefinitionMap.iterate(functionDefinition => {
+        tempTextList.push(functionDefinition.getDisplayString());
         tempTextList.push("");
-        index += 1;
-    };
+    });
     tempTextList.push("= = = APP DATA LINE LIST = = =\n");
     tempTextList.push(this.appDataLineList.getDisplayString("Data body"));
     tempTextList.push("");
