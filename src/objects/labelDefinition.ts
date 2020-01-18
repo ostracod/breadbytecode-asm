@@ -1,5 +1,5 @@
 
-import {LabelDefinition as LabelDefinitionInterface, Identifier} from "models/objects";
+import {LabelDefinition as LabelDefinitionInterface, Identifier, InstructionArg} from "models/objects";
 
 import {instructionUtils} from "utils/instructionUtils";
 
@@ -25,7 +25,7 @@ export class AppDataLabelDefinition extends LabelDefinition {
     
 }
 
-AppDataLabelDefinition.prototype.createInstructionArg = function(): Buffer {
+AppDataLabelDefinition.prototype.createInstructionArg = function(): InstructionArg {
     return instructionUtils.createInstructionArgWithIndex(
         INSTRUCTION_REF_PREFIX.appData,
         unsignedInteger64Type,

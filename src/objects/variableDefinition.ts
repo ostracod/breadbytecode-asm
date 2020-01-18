@@ -1,6 +1,6 @@
 
 import {DataType} from "models/delegates";
-import {VariableDefinition as VariableDefinitionInterface, ArgVariableDefinition as ArgVariableDefinitionInterface, Identifier, ArgPerm} from "models/objects";
+import {VariableDefinition as VariableDefinitionInterface, ArgVariableDefinition as ArgVariableDefinitionInterface, Identifier, ArgPerm, InstructionArg} from "models/objects";
 
 import {instructionUtils} from "utils/instructionUtils";
 
@@ -22,7 +22,7 @@ VariableDefinition.prototype.getDisplayString = function(): string {
     return "VAR " + this.identifier.getDisplayString() + ", " + this.dataType.getName();
 }
 
-VariableDefinition.prototype.createInstructionArg = function(): Buffer {
+VariableDefinition.prototype.createInstructionArg = function(): InstructionArg {
     return instructionUtils.createInstructionArgWithIndex(
         this.instructionRefPrefix,
         this.dataType,

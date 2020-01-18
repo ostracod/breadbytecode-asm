@@ -1,7 +1,8 @@
 
-import {IndexDefinition as IndexDefinitionInterface, Identifier} from "models/objects";
+import {IndexDefinition as IndexDefinitionInterface, Identifier, InstructionArg} from "models/objects";
 import {unsignedInteger64Type} from "delegates/dataType";
 import {NumberConstant} from "objects/constant";
+import {ConstantInstructionArg} from "objects/instruction";
 
 export interface IndexDefinition extends IndexDefinitionInterface {}
 
@@ -12,10 +13,10 @@ export abstract class IndexDefinition {
     }
 }
 
-IndexDefinition.prototype.createInstructionArg = function(): Buffer {
+IndexDefinition.prototype.createInstructionArg = function(): InstructionArg {
     let tempConstant = new NumberConstant(this.index, unsignedInteger64Type);
     tempConstant.compress();
-    return tempConstant.createInstructionArg();
+    return new ConstantInstructionArg(tempConstant);
 }
 
 

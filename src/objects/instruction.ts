@@ -2,7 +2,11 @@
 import {
     Instruction as InstructionInterface,
     InstructionRef as InstructionRefInterface,
-    PointerInstructionRef as PointerInstructionRefInterface
+    PointerInstructionRef as PointerInstructionRefInterface,
+    InstructionArg as InstructionArgInterface,
+    ConstantInstructionArg as ConstantInstructionArgInterface,
+    RefInstructionArg as RefInstructionArgInterface,
+    Constant
 } from "models/objects";
 import {InstructionType, DataType} from "models/delegates";
 import {niceUtils} from "utils/niceUtils";
@@ -21,7 +25,7 @@ export const INSTRUCTION_REF_PREFIX = {
 export interface Instruction extends InstructionInterface {}
 
 export class Instruction {
-    constructor(instructionType: InstructionType, argList: Buffer[]) {
+    constructor(instructionType: InstructionType, argList: InstructionArg[]) {
         this.instructionType = instructionType;
         this.argList = argList;
     }
@@ -31,8 +35,8 @@ Instruction.prototype.getDisplayString = function(): string {
     let output = niceUtils.convertNumberToHexadecimal(this.instructionType.opcode, 4);
     if (this.argList.length > 0) {
         var tempTextList = [];
-        for (let buffer of this.argList) {
-            tempTextList.push("{" + niceUtils.convertBufferToHexadecimal(buffer) + "}");
+        for (let arg of this.argList) {
+            tempTextList.push(arg.getDisplayString());
         }
         output += " " + tempTextList.join(", ");
     }
@@ -47,29 +51,95 @@ export class InstructionRef {
     }
 }
 
-InstructionRef.prototype.createInstructionArg = function(indexArg: Buffer, dataType: DataType): Buffer {
-    return instructionUtils.createInstructionArg(
+InstructionRef.prototype.createBuffer = function(dataType: DataType, indexArg: InstructionArg): Buffer {
+    return instructionUtils.createArgBuffer(
         this.argPrefix,
-        dataType.argPrefix,
-        indexArg
+        dataType,
+        indexArg.createBuffer()
     );
 }
 
 export interface PointerInstructionRef extends PointerInstructionRefInterface {}
 
 export class PointerInstructionRef extends InstructionRef {
-    constructor(pointerArg: Buffer) {
+    constructor(pointerArg: InstructionArg) {
         super(INSTRUCTION_REF_PREFIX.heapAlloc);
         this.pointerArg = pointerArg;
     }
 }
 
-PointerInstructionRef.prototype.createInstructionArg = function(indexArg: Buffer, dataType: DataType): Buffer {
-    return instructionUtils.createInstructionArg(
+PointerInstructionRef.prototype.createBuffer = function(dataType: DataType, indexArg: InstructionArg): Buffer {
+    return instructionUtils.createArgBuffer(
         this.argPrefix,
-        dataType.argPrefix,
-        Buffer.concat([this.pointerArg, indexArg])
+        dataType,
+        Buffer.concat([this.pointerArg.createBuffer(), indexArg.createBuffer()])
     );
+}
+
+export interface InstructionArg extends InstructionArgInterface {}
+
+export class InstructionArg {
+    constructor() {
+        // Do nothing.
+        
+    }
+}
+
+InstructionArg.prototype.getDisplayString = function(): string {
+    let tempBuffer = this.createBuffer();
+    return "{" + niceUtils.convertBufferToHexadecimal(tempBuffer) + "}";
+}
+
+export interface ConstantInstructionArg extends ConstantInstructionArgInterface {}
+
+export class ConstantInstructionArg extends InstructionArg {
+    constructor(constant: Constant) {
+        super();
+        this.constant = constant.copy();
+    }
+}
+
+ConstantInstructionArg.prototype.getDataType = function(): DataType {
+     return this.constant.getDataType();
+}
+
+ConstantInstructionArg.prototype.setDataType = function(dataType: DataType): void {
+    this.constant.setDataType(dataType);
+}
+
+ConstantInstructionArg.prototype.createBuffer = function(): Buffer {
+    return instructionUtils.createArgBuffer(
+        INSTRUCTION_REF_PREFIX.constant,
+        this.constant.getDataType(),
+        this.constant.createBuffer()
+    );
+}
+
+export interface RefInstructionArg extends RefInstructionArgInterface {}
+
+export class RefInstructionArg extends InstructionArg {
+    constructor(
+        instructionRef: InstructionRef,
+        dataType: DataType,
+        indexArg: InstructionArg
+    ) {
+        super();
+        this.instructionRef = instructionRef;
+        this.dataType = dataType;
+        this.indexArg = indexArg;
+    }
+}
+
+RefInstructionArg.prototype.getDataType = function(): DataType {
+    return this.dataType;
+}
+
+RefInstructionArg.prototype.setDataType = function(dataType: DataType): void {
+    this.dataType = dataType;
+}
+
+RefInstructionArg.prototype.createBuffer = function(): Buffer {
+    return this.instructionRef.createBuffer(this.dataType, this.indexArg);
 }
 
 

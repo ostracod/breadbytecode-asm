@@ -14,7 +14,6 @@ import {IdentifierMap} from "objects/identifier";
 
 import {niceUtils} from "utils/niceUtils";
 import {variableUtils} from "utils/variableUtils";
-import {instructionUtils} from "utils/instructionUtils";
 
 export interface FunctionDefinition extends FunctionDefinitionInterface {}
 

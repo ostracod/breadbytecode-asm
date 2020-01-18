@@ -12,20 +12,19 @@ import {
     MacroIdentifierExpression as MacroIdentifierExpressionInterface,
     BinaryExpression as BinaryExpressionInterface,
     SubscriptExpression as SubscriptExpressionInterface,
-    IdentifierMap, FunctionDefinition, Constant, NumberConstant
+    IdentifierMap, FunctionDefinition, Constant, NumberConstant, InstructionArg
 } from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
 import {Identifier, MacroIdentifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
-import {InstructionRef, PointerInstructionRef, INSTRUCTION_REF_PREFIX} from "objects/instruction";
+import {InstructionRef, PointerInstructionRef, ConstantInstructionArg, RefInstructionArg, INSTRUCTION_REF_PREFIX} from "objects/instruction";
 import {NullConstant} from "objects/constant";
 
-import {pointerType, signedInteger64Type, StringType} from "delegates/dataType";
+import {PointerType, pointerType, signedInteger64Type, StringType} from "delegates/dataType";
 import {macroIdentifierOperator} from "delegates/operator";
 
 import {dataTypeUtils} from "utils/dataTypeUtils";
-import {instructionUtils} from "utils/instructionUtils";
 
 const keywordInstructionRefMap = {
     globalFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.globalFrame),
@@ -113,10 +112,10 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
     throw new AssemblyError("Expected arg perm.");
 }
 
-Expression.prototype.evaluateToInstructionArg = function(): Buffer {
+Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
     let tempConstant = this.evaluateToConstantOrNull();
     if (tempConstant !== null) {
-        return tempConstant.createInstructionArg();
+        return new ConstantInstructionArg(tempConstant);
     }
     let tempIdentifier = this.evaluateToIdentifierOrNull();
     if (tempIdentifier !== null) {
@@ -126,14 +125,14 @@ Expression.prototype.evaluateToInstructionArg = function(): Buffer {
         return tempDefinition.createInstructionArg();
     }
     throw new AssemblyError("Expected number or pointer.");
-    
 }
 
 Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
-    let tempBuffer = this.evaluateToInstructionArg();
-    // TODO: When we introduce an InstructionArg class, validate
-    // that the data type is a pointer.
-    return new PointerInstructionRef(tempBuffer);
+    let tempArg = this.evaluateToInstructionArg();
+    if (!(tempArg.getDataType() instanceof PointerType)) {
+        throw new AssemblyError("Expected pointer for instruction ref.");
+    }
+    return new PointerInstructionRef(tempArg);
 }
 
 Expression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
@@ -435,11 +434,11 @@ SubscriptExpression.prototype.processExpressionsHelper = function(processExpress
     return null;
 }
 
-SubscriptExpression.prototype.evaluateToInstructionArg = function(): Buffer {
-    let tempRef = this.sequenceExpression.evaluateToInstructionRef();
-    return tempRef.createInstructionArg(
-        this.indexExpression.evaluateToInstructionArg(),
-        this.dataTypeExpression.evaluateToDataType()
+SubscriptExpression.prototype.evaluateToInstructionArg = function(): InstructionArg {
+    return new RefInstructionArg(
+        this.sequenceExpression.evaluateToInstructionRef(),
+        this.dataTypeExpression.evaluateToDataType(),
+        this.indexExpression.evaluateToInstructionArg()
     );
 }
 

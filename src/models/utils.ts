@@ -1,7 +1,7 @@
 
 import {ExpressionProcessor, LineProcessor, NumberTypeClass, VariableDefinitionClass, ArgNumeric} from "models/items";
 import {Operator, DataType, NumberType} from "models/delegates";
-import {Expression, AssemblyLine, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition} from "models/objects";
+import {Expression, AssemblyLine, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition, InstructionArg} from "models/objects";
 
 export interface DataTypeUtils {
     getDataTypeByName(name: string): DataType;
@@ -93,12 +93,12 @@ export interface VariableUtils {
 }
 
 export interface InstructionUtils {
-    createInstructionArg(refPrefix: number, dataType: DataType, buffer: Buffer): Buffer;
+    createArgBuffer(refPrefix: number, dataType: DataType, buffer: Buffer): Buffer;
     createInstructionArgWithIndex(
         refPrefix: number,
         dataType: DataType,
         index: number
-    ): Buffer;
+    ): InstructionArg;
 }
 
 

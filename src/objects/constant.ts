@@ -1,13 +1,13 @@
 
-import {Constant as ConstantInterface, NumberConstant as NumberConstantInterface} from "models/objects";
+import {
+    Constant as ConstantInterface,
+    NumberConstant as NumberConstantInterface
+} from "models/objects";
 import {DataType, NumberType, IntegerType} from "models/delegates";
 
-import {UnsignedIntegerType, SignedIntegerType, unsignedIntegerTypeList, signedIntegerTypeList, pointerType} from "delegates/dataType";
+import {UnsignedIntegerType, SignedIntegerType, unsignedIntegerTypeList, signedIntegerTypeList, PointerType, pointerType} from "delegates/dataType";
 
 import {AssemblyError} from "objects/assemblyError";
-import {INSTRUCTION_REF_PREFIX} from "objects/instruction";
-
-import {instructionUtils} from "utils/instructionUtils";
 
 export interface Constant extends ConstantInterface {}
 
@@ -21,14 +21,6 @@ export class Constant {
 Constant.prototype.compress = function(): void {
     // Do nothing.
     
-}
-
-Constant.prototype.createInstructionArg = function(): Buffer {
-    return instructionUtils.createInstructionArg(
-        INSTRUCTION_REF_PREFIX.constant,
-        this.getDataType(),
-        this.getBuffer()
-    );
 }
 
 export interface NumberConstant extends NumberConstantInterface {}
@@ -45,11 +37,16 @@ NumberConstant.prototype.getDataType = function(): DataType {
     return this.numberType;
 }
 
+NumberConstant.prototype.setDataType = function(dataType: DataType): void {
+    // TODO: Implement.
+    throw new AssemblyError("Not yet implemented.");
+}
+
 NumberConstant.prototype.copy = function(): Constant {
     return new NumberConstant(this.value, this.numberType);
 }
 
-NumberConstant.prototype.getBuffer = function(): Buffer {
+NumberConstant.prototype.createBuffer = function(): Buffer {
     return this.numberType.convertNumberToBuffer(this.value);
 }
 
@@ -79,11 +76,17 @@ NullConstant.prototype.getDataType = function(): DataType {
     return pointerType;
 }
 
+NullConstant.prototype.setDataType = function(dataType: DataType): void {
+    if (!(dataType instanceof PointerType)) {
+        throw new AssemblyError("Cannot convert alpha type to beta type.");
+    }
+}
+
 NullConstant.prototype.copy = function(): Constant {
     return new NullConstant();
 }
 
-NullConstant.prototype.getBuffer = function(): Buffer {
+NullConstant.prototype.createBuffer = function(): Buffer {
     return Buffer.alloc(0);
 }
 

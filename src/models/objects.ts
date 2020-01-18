@@ -12,7 +12,7 @@ export interface IndexDefinition {
     index: number;
     
     // Concrete subclasses may override these methods:
-    createInstructionArg(): Buffer;
+    createInstructionArg(): InstructionArg;
 }
 
 export interface ArgPerm {
@@ -78,15 +78,14 @@ export interface AssemblyLine {
 }
 
 export interface Constant {
-    createInstructionArg(): Buffer;
-    
     // Concrete subclasses may override these methods:
     compress(): void;
     
     // Concrete subclasses must implement these methods:
-    getDataType(): DataType
+    getDataType(): DataType;
+    setDataType(dataType: DataType): void;
     copy(): Constant;
-    getBuffer(): Buffer;
+    createBuffer(): Buffer;
 }
 
 export interface NumberConstant extends Constant {
@@ -114,7 +113,7 @@ export interface Expression {
     evaluateToString(): string;
     evaluateToDataType(): DataType;
     evaluateToArgPerm(): ArgPerm;
-    evaluateToInstructionArg(): Buffer;
+    evaluateToInstructionArg(): InstructionArg;
     evaluateToInstructionRef(): InstructionRef;
     populateMacroInvocationId(macroInvocationId: number): void;
     getConstantDataTypeHelper(): DataType;
@@ -263,18 +262,37 @@ export interface LabeledLineList {
 
 export interface Instruction extends Displayable {
     instructionType: InstructionType;
-    argList: Buffer[]
+    argList: InstructionArg[];
 }
 
 export interface InstructionRef {
     argPrefix: number;
     
     // Concrete subclasses may override these methods:
-    createInstructionArg(indexArg: Buffer, dataType: DataType): Buffer;
+    createBuffer(dataType: DataType, indexArg: InstructionArg): Buffer;
 }
 
 export interface PointerInstructionRef extends InstructionRef {
-    pointerArg: Buffer;
+    pointerArg: InstructionArg;
+}
+
+export interface InstructionArg {
+    getDisplayString(): string;
+    
+    // Concrete subclasses must implement these methods:
+    getDataType(): DataType;
+    setDataType(dataType: DataType): void;
+    createBuffer(): Buffer;
+}
+
+export interface ConstantInstructionArg extends InstructionArg {
+    constant: Constant;
+}
+
+export interface RefInstructionArg extends InstructionArg {
+    instructionRef: InstructionRef;
+    dataType: DataType;
+    indexArg: InstructionArg;
 }
 
 
