@@ -77,14 +77,21 @@ export interface AssemblyLine {
     assembleInstruction(functionDefinition: FunctionDefinition): Instruction;
 }
 
-export interface NumberConstant {
-    value: Number;
-    dataType: NumberType;
-    
-    copy(): NumberConstant;
-    getBuffer(): Buffer;
-    compress(): void;
+export interface Constant {
     createInstructionArg(): Buffer;
+    
+    // Concrete subclasses may override these methods:
+    compress(): void;
+    
+    // Concrete subclasses must implement these methods:
+    getDataType(): DataType
+    copy(): Constant;
+    getBuffer(): Buffer;
+}
+
+export interface NumberConstant extends Constant {
+    value: number;
+    numberType: NumberType;
 }
 
 export interface AliasDefinition extends Displayable {
@@ -103,7 +110,7 @@ export interface Expression {
     
     // Concrete subclasses may override these methods:
     evaluateToIdentifierOrNull(): Identifier;
-    evaluateToNumberConstantOrNull(): NumberConstant;
+    evaluateToConstantOrNull(): Constant;
     evaluateToString(): string;
     evaluateToDataType(): DataType;
     evaluateToArgPerm(): ArgPerm;

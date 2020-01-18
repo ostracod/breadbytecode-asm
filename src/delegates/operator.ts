@@ -1,6 +1,6 @@
 
 import {Operator, UnaryOperator as UnaryOperatorInterface, BinaryOperator as BinaryOperatorInterface, DataType} from "/models/delegates";
-import {Expression} from "models/objects";
+import {Expression, Constant} from "models/objects";
 import {dataTypeUtils} from "utils/dataTypeUtils";
 import {unsignedInteger64Type, signedInteger64Type, NumberType} from "delegates/dataType";
 import {UnaryExpression, MacroIdentifierExpression, BinaryExpression} from "objects/expression";
@@ -27,7 +27,7 @@ UnaryOperator.prototype.getConstantDataType = function(operand: Expression): Dat
     return operand.getConstantDataType();
 }
 
-UnaryOperator.prototype.createNumberConstantOrNull = function(operand: Expression): NumberConstant {
+UnaryOperator.prototype.createConstantOrNull = function(operand: Expression): Constant {
     return null;
 }
 
@@ -45,7 +45,7 @@ export class IndexOperator extends UnaryOperator {
     
 }
 
-IndexOperator.prototype.createNumberConstantOrNull = function(operand: Expression): NumberConstant {
+IndexOperator.prototype.createConstantOrNull = function(operand: Expression): Constant {
     let tempIdentifier = operand.evaluateToIdentifier();
     let tempDefinition = operand.functionDefinition.getIndexDefinitionByIdentifier(
         tempIdentifier

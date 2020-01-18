@@ -1,5 +1,5 @@
 
-import {Expression, NumberConstant} from "models/objects";
+import {Expression, Constant} from "models/objects";
 
 export interface DataType {
     argPrefix: number;
@@ -33,7 +33,7 @@ export interface UnaryOperator extends Operator {
     // Concrete subclasses may override these methods:
     createExpression(operand: Expression): Expression;
     getConstantDataType(operand: Expression): DataType;
-    createNumberConstantOrNull(operand: Expression): NumberConstant;
+    createConstantOrNull(operand: Expression): Constant;
 }
 
 export interface BinaryOperator extends Operator {

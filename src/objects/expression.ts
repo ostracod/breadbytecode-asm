@@ -12,13 +12,14 @@ import {
     MacroIdentifierExpression as MacroIdentifierExpressionInterface,
     BinaryExpression as BinaryExpressionInterface,
     SubscriptExpression as SubscriptExpressionInterface,
-    IdentifierMap, FunctionDefinition, NumberConstant
+    IdentifierMap, FunctionDefinition, Constant, NumberConstant
 } from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
 import {Identifier, MacroIdentifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
 import {InstructionRef, PointerInstructionRef, INSTRUCTION_REF_PREFIX} from "objects/instruction";
+import {NullConstant} from "objects/constant";
 
 import {pointerType, signedInteger64Type, StringType} from "delegates/dataType";
 import {macroIdentifierOperator} from "delegates/operator";
@@ -96,7 +97,7 @@ Expression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
     return null;
 }
 
-Expression.prototype.evaluateToNumberConstantOrNull = function(): NumberConstant {
+Expression.prototype.evaluateToConstantOrNull = function(): Constant {
     return null;
 }
 
@@ -113,6 +114,10 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
 }
 
 Expression.prototype.evaluateToInstructionArg = function(): Buffer {
+    let tempConstant = this.evaluateToConstantOrNull();
+    if (tempConstant !== null) {
+        return tempConstant.createInstructionArg();
+    }
     let tempIdentifier = this.evaluateToIdentifierOrNull();
     if (tempIdentifier !== null) {
         let tempDefinition = this.functionDefinition.getIndexDefinitionByIdentifier(
@@ -120,16 +125,14 @@ Expression.prototype.evaluateToInstructionArg = function(): Buffer {
         );
         return tempDefinition.createInstructionArg();
     }
-    let tempConstant = this.evaluateToNumberConstantOrNull();
-    if (tempConstant !== null) {
-        return tempConstant.createInstructionArg();
-    }
     throw new AssemblyError("Expected number or pointer.");
     
 }
 
 Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
     let tempBuffer = this.evaluateToInstructionArg();
+    // TODO: When we introduce an InstructionArg class, validate
+    // that the data type is a pointer.
     return new PointerInstructionRef(tempBuffer);
 }
 
@@ -176,23 +179,19 @@ ArgWord.prototype.evaluateToIdentifierOrNull = function(): Identifier {
     return new Identifier(this.text);
 }
 
+ArgWord.prototype.evaluateToConstantOrNull = function(): Constant {
+    if (this.text === "null") {
+        return new NullConstant();
+    }
+    return ArgTerm.prototype.evaluateToConstantOrNull.call(this);
+}
+
 ArgWord.prototype.evaluateToDataType = function(): DataType {
     return dataTypeUtils.getDataTypeByName(this.text);
 }
 
 ArgWord.prototype.evaluateToArgPerm = function(): ArgPerm {
     return new ArgPerm(this.text);
-}
-
-ArgWord.prototype.evaluateToInstructionArg = function(): Buffer {
-    if (this.text === "null") {
-        return instructionUtils.createInstructionArg(
-            INSTRUCTION_REF_PREFIX.constant,
-            pointerType,
-            Buffer.alloc(0)
-        );
-    }
-    return ArgTerm.prototype.evaluateToInstructionArg.call(this);
 }
 
 ArgWord.prototype.evaluateToInstructionRef = function(): InstructionRef {
@@ -223,14 +222,14 @@ ArgNumber.prototype.getDisplayString = function(): string {
     return this.constant.value + "";
 }
 
-ArgNumber.prototype.evaluateToNumberConstantOrNull = function(): NumberConstant {
+ArgNumber.prototype.evaluateToConstantOrNull = function(): Constant {
     let output = this.constant.copy();
     output.compress();
     return output;
 }
 
 ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
-    return this.constant.dataType;
+    return this.constant.numberType;
 }
 
 export interface ArgVersionNumber extends ArgVersionNumberInterface {}
@@ -304,8 +303,8 @@ UnaryExpression.prototype.processExpressionsHelper = function(processExpression:
     return null;
 }
 
-UnaryExpression.prototype.evaluateToNumberConstantOrNull = function(): NumberConstant {
-    return this.operator.createNumberConstantOrNull(this.operand);
+UnaryExpression.prototype.evaluateToConstantOrNull = function(): Constant {
+    return this.operator.createConstantOrNull(this.operand);
 }
 
 UnaryExpression.prototype.getConstantDataTypeHelper = function(): DataType {
