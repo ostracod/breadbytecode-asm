@@ -1,5 +1,6 @@
 
-import {Expression, Constant, InstructionArg} from "models/objects";
+import {MixedNumber} from "models/items";
+import {Expression, Constant, NumberConstant, InstructionArg} from "models/objects";
 
 export interface DataType {
     argPrefix: number;
@@ -15,21 +16,21 @@ export interface BetaType extends DataType {
 
 export interface NumberType extends BetaType {
     // Concrete subclasses may override these methods:
-    restrictNumber(value: number): number;
+    restrictNumber(value: MixedNumber): MixedNumber;
     
     // Concrete subclasses must implement these methods:
     getNamePrefix(): string;
     getClassMergePriority(): number;
     getByteAmountMergePriority(): number;
-    convertNumberToBuffer(value: number): Buffer;
+    convertNumberToBuffer(value: MixedNumber): Buffer;
 }
 
 export interface IntegerType extends NumberType {
-    contains(value: number): boolean;
+    contains(value: MixedNumber): boolean;
     
     // Concrete subclasses must implement these methods:
-    getMinimumNumber(): number;
-    getMaximumNumber(): number;
+    getMinimumNumber(): bigint;
+    getMaximumNumber(): bigint;
 }
 
 export interface Operator {
@@ -54,6 +55,21 @@ export interface BinaryOperator extends Operator {
     
     // Concrete subclasses must implement these methods:
     getConstantDataType(operand1: Expression, operand2: Expression): DataType;
+}
+
+export interface BinaryNumberOperator extends BinaryOperator {
+    // Concrete subclasses must implement these methods:
+    getConstantDataTypeHelper(numberType1: NumberType, numberType2: NumberType): NumberType;
+    createConstantOrNullHelper(
+        numberConstant1: NumberConstant,
+        numberConstant2: NumberConstant
+    ): NumberConstant;
+}
+
+export interface BinaryTypeMergeOperator extends BinaryNumberOperator {
+    // Concrete subclasses may override these methods:
+    calculateInteger(value1: bigint, value2: bigint): bigint;
+    calculateFloat(value1: number, value2: number): number;
 }
 
 export interface InstructionType {

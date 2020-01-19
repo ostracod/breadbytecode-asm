@@ -1,5 +1,5 @@
 
-import {ExpressionProcessor, LineProcessor, NumberTypeClass, VariableDefinitionClass, ArgNumeric} from "models/items";
+import {ExpressionProcessor, LineProcessor, NumberTypeClass, VariableDefinitionClass, ArgNumeric, MixedNumber} from "models/items";
 import {Operator, DataType, NumberType} from "models/delegates";
 import {Expression, AssemblyLine, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition, InstructionArg} from "models/objects";
 
@@ -50,8 +50,6 @@ export interface NiceUtils {
     joinTextList(textList: string[]): string;
     getReverseMap(map: {[key: string]: any}): {[key: string]: any};
     pluralize(word: string, amount: number): string;
-    convertNumberToHexadecimal(value: number, length: number): string;
-    convertBufferToHexadecimal(buffer: Buffer): string;
 }
 
 export interface ParseUtils {
@@ -99,6 +97,12 @@ export interface InstructionUtils {
         dataType: DataType,
         index: number
     ): InstructionArg;
+}
+
+export interface MathUtils {
+    convertMixedNumberToBigInt(value: MixedNumber): bigint;
+    convertNumberToHexadecimal(value: number, length: number): string;
+    convertBufferToHexadecimal(buffer: Buffer): string;
 }
 
 

@@ -1,4 +1,5 @@
 
+import {MixedNumber} from "models/items";
 import {
     Constant as ConstantInterface,
     NumberConstant as NumberConstantInterface
@@ -26,7 +27,7 @@ Constant.prototype.compress = function(): void {
 export interface NumberConstant extends NumberConstantInterface {}
 
 export class NumberConstant extends Constant {
-    constructor(value: number, numberType: NumberType) {
+    constructor(value: MixedNumber, numberType: NumberType) {
         super();
         this.value = value;
         this.numberType = numberType;

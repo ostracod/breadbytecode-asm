@@ -9,7 +9,7 @@ import {
     Constant
 } from "models/objects";
 import {InstructionType, DataType} from "models/delegates";
-import {niceUtils} from "utils/niceUtils";
+import {mathUtils} from "utils/mathUtils";
 import {instructionUtils} from "utils/instructionUtils";
 
 export const INSTRUCTION_REF_PREFIX = {
@@ -32,7 +32,7 @@ export class Instruction {
 }
 
 Instruction.prototype.getDisplayString = function(): string {
-    let output = niceUtils.convertNumberToHexadecimal(this.instructionType.opcode, 4);
+    let output = mathUtils.convertNumberToHexadecimal(this.instructionType.opcode, 4);
     if (this.argList.length > 0) {
         var tempTextList = [];
         for (let arg of this.argList) {
@@ -87,7 +87,7 @@ export class InstructionArg {
 
 InstructionArg.prototype.getDisplayString = function(): string {
     let tempBuffer = this.createBuffer();
-    return "{" + niceUtils.convertBufferToHexadecimal(tempBuffer) + "}";
+    return "{" + mathUtils.convertBufferToHexadecimal(tempBuffer) + "}";
 }
 
 export interface ConstantInstructionArg extends ConstantInstructionArgInterface {}

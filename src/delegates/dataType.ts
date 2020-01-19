@@ -1,10 +1,12 @@
 
+import {MixedNumber} from "models/items";
 import {
     DataType as DataTypeInterface,
     BetaType as BetaTypeInterface,
     NumberType as NumberTypeInterface,
     IntegerType as IntegerTypeInterface
 } from "models/delegates";
+import {mathUtils} from "utils/mathUtils";
 
 export var dataTypeList: DataType[] = [];
 export var dataTypeMap: {[name: string]: DataType} = {};
@@ -54,7 +56,7 @@ NumberType.prototype.getName = function(): string {
     return this.getNamePrefix() + this.bitAmount;
 }
 
-NumberType.prototype.restrictNumber = function(value: number): number {
+NumberType.prototype.restrictNumber = function(value: MixedNumber): MixedNumber {
     return value;
 }
 
@@ -70,8 +72,9 @@ IntegerType.prototype.getByteAmountMergePriority = function(): number {
     return 1;
 }
 
-IntegerType.prototype.contains = function(value: number): boolean {
-    return (value >= this.getMinimumNumber() && value <= this.getMaximumNumber());
+IntegerType.prototype.contains = function(value: MixedNumber): boolean {
+    let tempValue = mathUtils.convertMixedNumberToBigInt(value);
+    return (tempValue >= this.getMinimumNumber() && tempValue <= this.getMaximumNumber());
 }
 
 export class UnsignedIntegerType extends IntegerType {
@@ -89,28 +92,26 @@ UnsignedIntegerType.prototype.getClassMergePriority = function(): number {
     return 1;
 }
 
-UnsignedIntegerType.prototype.convertNumberToBuffer = function(value: number): Buffer {
+UnsignedIntegerType.prototype.convertNumberToBuffer = function(value: MixedNumber): Buffer {
     let output = Buffer.alloc(this.byteAmount);
-    let tempAmount;
-    if (this.byteAmount > 6) {
-        tempAmount = 6;
+    if (this.byteAmount === 8) {
+        output.writeBigUInt64LE(mathUtils.convertMixedNumberToBigInt(value), 0);
     } else {
-        tempAmount = this.byteAmount;
+        output.writeUIntLE(Number(value), 0, this.byteAmount);
     }
-    output.writeUIntLE(value, 0, tempAmount);
     return output;
 }
 
-UnsignedIntegerType.prototype.getMinimumNumber = function(): number {
-    return 0;
+UnsignedIntegerType.prototype.getMinimumNumber = function(): bigint {
+    return 0n;
 }
 
-UnsignedIntegerType.prototype.getMaximumNumber = function(): number {
-    return Math.pow(2, this.bitAmount) - 1;
+UnsignedIntegerType.prototype.getMaximumNumber = function(): bigint {
+    return (1n << BigInt(this.bitAmount)) - 1n;
 }
 
-UnsignedIntegerType.prototype.restrictNumber = function(value: number): number {
-    return Math.floor(value) & (Math.pow(2, this.bitAmount) - 1);
+UnsignedIntegerType.prototype.restrictNumber = function(value: MixedNumber): MixedNumber {
+    return mathUtils.convertMixedNumberToBigInt(value) & ((1n << BigInt(this.bitAmount)) - 1n);
 }
 
 export class SignedIntegerType extends IntegerType {
@@ -128,29 +129,28 @@ SignedIntegerType.prototype.getClassMergePriority = function(): number {
     return 2;
 }
 
-SignedIntegerType.prototype.convertNumberToBuffer = function(value: number): Buffer {
+SignedIntegerType.prototype.convertNumberToBuffer = function(value: MixedNumber): Buffer {
     let output = Buffer.alloc(this.byteAmount);
     let tempAmount;
-    if (this.byteAmount > 6) {
-        tempAmount = 6;
+    if (this.byteAmount === 8) {
+        output.writeBigInt64LE(mathUtils.convertMixedNumberToBigInt(value), 0);
     } else {
-        tempAmount = this.byteAmount;
+        output.writeIntLE(Number(value), 0, this.byteAmount);
     }
-    output.writeIntLE(value, 0, tempAmount);
     return output;
 }
 
-SignedIntegerType.prototype.getMinimumNumber = function(): number {
-    return -Math.pow(2, this.bitAmount - 1);
+SignedIntegerType.prototype.getMinimumNumber = function(): bigint {
+    return -(1n << BigInt(this.bitAmount - 1));
 }
 
-SignedIntegerType.prototype.getMaximumNumber = function(): number {
-    return Math.pow(2, this.bitAmount - 1) - 1;
+SignedIntegerType.prototype.getMaximumNumber = function(): bigint {
+    return (1n << BigInt(this.bitAmount - 1)) - 1n;
 }
 
-SignedIntegerType.prototype.restrictNumber = function(value: number): number {
-    let tempOffset = Math.pow(2, this.bitAmount);
-    value = Math.floor(value) & (tempOffset - 1);
+SignedIntegerType.prototype.restrictNumber = function(value: MixedNumber): MixedNumber {
+    let tempOffset = 1n << BigInt(this.bitAmount);
+    value = mathUtils.convertMixedNumberToBigInt(value) & (tempOffset - 1n);
     if (value > this.getMaximumNumber()) {
         value -= tempOffset;
     }
@@ -175,14 +175,15 @@ FloatType.prototype.getByteAmountMergePriority = function(): number {
     return 2;
 }
 
-FloatType.prototype.convertNumberToBuffer = function(value: number): Buffer {
+FloatType.prototype.convertNumberToBuffer = function(value: MixedNumber): Buffer {
+    let tempNumber = Number(value);
     let output;
     if (this.byteAmount <= 4) {
         output = Buffer.alloc(4);
-        output.writeFloatLE(value, 0);
+        output.writeFloatLE(tempNumber, 0);
     } else {
         output = Buffer.alloc(8);
-        output.writeDoubleLE(value, 0);
+        output.writeDoubleLE(tempNumber, 0);
     }
     return output;
 }

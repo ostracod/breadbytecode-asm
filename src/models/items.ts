@@ -14,4 +14,6 @@ export type LabelDefinitionClass = (new (...args: any[]) => LabelDefinition);
 
 export type ArgNumeric = (ArgNumber | ArgVersionNumber);
 
+export type MixedNumber = (number | bigint);
+
 

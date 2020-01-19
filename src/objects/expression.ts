@@ -123,6 +123,7 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
 Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
     let tempConstant = this.evaluateToConstantOrNull();
     if (tempConstant !== null) {
+        tempConstant.compress();
         return new ConstantInstructionArg(tempConstant);
     }
     let tempIdentifier = this.evaluateToIdentifierOrNull();
@@ -230,9 +231,7 @@ ArgNumber.prototype.getDisplayString = function(): string {
 }
 
 ArgNumber.prototype.evaluateToConstantOrNull = function(): Constant {
-    let output = this.constant.copy();
-    output.compress();
-    return output;
+    return this.constant.copy();
 }
 
 ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {

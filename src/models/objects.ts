@@ -1,5 +1,5 @@
 
-import {LineProcessor, ExpressionProcessor, LabelDefinitionClass} from "models/items";
+import {LineProcessor, ExpressionProcessor, LabelDefinitionClass, MixedNumber} from "models/items";
 import {UnaryOperator, BinaryOperator, DataType, NumberType, InstructionType} from "models/delegates";
 
 export interface Displayable {
@@ -89,7 +89,7 @@ export interface Constant {
 }
 
 export interface NumberConstant extends Constant {
-    value: number;
+    value: MixedNumber;
     numberType: NumberType;
 }
 

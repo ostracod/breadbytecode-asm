@@ -5,6 +5,8 @@ This utility converts assembly code to BreadBytecode for BreadSystem.
 
 ## Usage
 
+The assembler requires Node.js 12 and TypeScript 3.6 or higher.
+
 Clone https://github.com/ostracod/breadsystem-spec in the parent directory of `breadbytecode-asm`, then generate `bytecodeInstructions.json`:
 
 ```
