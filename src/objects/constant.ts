@@ -3,9 +3,9 @@ import {
     Constant as ConstantInterface,
     NumberConstant as NumberConstantInterface
 } from "models/objects";
-import {DataType, NumberType, IntegerType} from "models/delegates";
+import {DataType, IntegerType} from "models/delegates";
 
-import {UnsignedIntegerType, SignedIntegerType, unsignedIntegerTypeList, signedIntegerTypeList, PointerType, pointerType} from "delegates/dataType";
+import {UnsignedIntegerType, SignedIntegerType, unsignedIntegerTypeList, signedIntegerTypeList, PointerType, pointerType, BetaType, NumberType} from "delegates/dataType";
 
 import {AssemblyError} from "objects/assemblyError";
 
@@ -38,8 +38,14 @@ NumberConstant.prototype.getDataType = function(): DataType {
 }
 
 NumberConstant.prototype.setDataType = function(dataType: DataType): void {
-    // TODO: Implement.
-    throw new AssemblyError("Not yet implemented.");
+    if (!(dataType instanceof BetaType)) {
+        throw new AssemblyError("Cannot convert beta type to alpha type.");
+    }
+    if (!(dataType instanceof NumberType)) {
+        throw new AssemblyError("Conversion is only supported between number types.");
+    }
+    this.numberType = dataType as NumberType;
+    this.value = this.numberType.restrictNumber(this.value);
 }
 
 NumberConstant.prototype.copy = function(): Constant {

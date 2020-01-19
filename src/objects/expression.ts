@@ -73,6 +73,14 @@ Expression.prototype.evaluateToIdentifier = function(): Identifier {
     return output;
 }
 
+Expression.prototype.evaluateToConstant = function(): Constant {
+    var output = this.evaluateToConstantOrNull();
+    if (output === null) {
+        throw new AssemblyError("Expected constant.");
+    }
+    return output;
+}
+
 Expression.prototype.substituteIdentifiers = function(identifierExpressionMap: IdentifierMap<Expression>): Expression {
     var tempIdentifier = this.evaluateToIdentifierOrNull();
     if (tempIdentifier === null) {
@@ -381,6 +389,18 @@ BinaryExpression.prototype.processExpressionsHelper = function(processExpression
 BinaryExpression.prototype.evaluateToString = function(): string {
     // TODO: Accommodate string concatenation.
     throw new AssemblyError("Not yet implemented.");
+}
+
+BinaryExpression.prototype.evaluateToConstantOrNull = function(): Constant {
+    return this.operator.createConstantOrNull(this.operand1, this.operand2);
+}
+
+BinaryExpression.prototype.evaluateToInstructionArg = function(): InstructionArg {
+    let tempResult = this.operator.createInstructionArgOrNull(this.operand1, this.operand2);
+    if (tempResult !== null) {
+        return tempResult;
+    }
+    return Expression.prototype.evaluateToInstructionArg.call(this);
 }
 
 BinaryExpression.prototype.getConstantDataTypeHelper = function(): DataType {

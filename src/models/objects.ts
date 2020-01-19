@@ -104,6 +104,7 @@ export interface Expression {
     
     processExpressions(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression;
     evaluateToIdentifier(): Identifier;
+    evaluateToConstant(): Constant;
     substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression;
     getConstantDataType(): DataType;
     

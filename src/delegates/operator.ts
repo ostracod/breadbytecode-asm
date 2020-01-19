@@ -1,6 +1,6 @@
 
 import {Operator, UnaryOperator as UnaryOperatorInterface, BinaryOperator as BinaryOperatorInterface, DataType} from "/models/delegates";
-import {Expression, Constant} from "models/objects";
+import {Expression, Constant, InstructionArg} from "models/objects";
 import {dataTypeUtils} from "utils/dataTypeUtils";
 import {unsignedInteger64Type, signedInteger64Type, NumberType} from "delegates/dataType";
 import {UnaryExpression, MacroIdentifierExpression, BinaryExpression} from "objects/expression";
@@ -69,6 +69,14 @@ BinaryOperator.prototype.createExpression = function(operand1: Expression, opera
     return new BinaryExpression(this, operand1, operand2);
 }
 
+BinaryOperator.prototype.createConstantOrNull = function(operand1: Expression, operand2: Expression): Constant {
+    return null;
+}
+
+BinaryOperator.prototype.createInstructionArgOrNull = function(operand1: Expression, operand2: Expression): InstructionArg {
+    return null;
+}
+
 export class TypeCoercionOperator extends BinaryOperator {
     constructor() {
         super(":", 1);
@@ -77,6 +85,23 @@ export class TypeCoercionOperator extends BinaryOperator {
 
 TypeCoercionOperator.prototype.getConstantDataType = function(operand1: Expression, operand2: Expression): DataType {
     return operand2.evaluateToDataType();
+}
+
+TypeCoercionOperator.prototype.createConstantOrNull = function(operand1: Expression, operand2: Expression): Constant {
+    let tempConstant = operand1.evaluateToConstantOrNull();
+    if (tempConstant === null) {
+        return null;
+    }
+    let tempDataType = operand2.evaluateToDataType();
+    tempConstant.setDataType(tempDataType);
+    return tempConstant;
+}
+
+TypeCoercionOperator.prototype.createInstructionArgOrNull = function(operand1: Expression, operand2: Expression): InstructionArg {
+    let tempArg = operand1.evaluateToInstructionArg();
+    let tempDataType = operand2.evaluateToDataType();
+    tempArg.setDataType(tempDataType);
+    return tempArg;
 }
 
 export class InterfaceFunctionOperator extends BinaryOperator {

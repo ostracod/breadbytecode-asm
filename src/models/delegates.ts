@@ -1,5 +1,5 @@
 
-import {Expression, Constant} from "models/objects";
+import {Expression, Constant, InstructionArg} from "models/objects";
 
 export interface DataType {
     argPrefix: number;
@@ -10,9 +10,13 @@ export interface DataType {
 
 export interface BetaType extends DataType {
     byteAmount: number;
+    bitAmount: number;
 }
 
 export interface NumberType extends BetaType {
+    // Concrete subclasses may override these methods:
+    restrictNumber(value: number): number;
+    
     // Concrete subclasses must implement these methods:
     getNamePrefix(): string;
     getClassMergePriority(): number;
@@ -21,8 +25,11 @@ export interface NumberType extends BetaType {
 }
 
 export interface IntegerType extends NumberType {
-    // Concrete subclasses must implement these methods:
     contains(value: number): boolean;
+    
+    // Concrete subclasses must implement these methods:
+    getMinimumNumber(): number;
+    getMaximumNumber(): number;
 }
 
 export interface Operator {
@@ -40,6 +47,10 @@ export interface BinaryOperator extends Operator {
     precedence: number;
     
     createExpression(operand1: Expression, operand2: Expression): Expression;
+    
+    // Concrete subclasses may override these methods:
+    createConstantOrNull(operand1: Expression, operand2: Expression): Constant;
+    createInstructionArgOrNull(operand1: Expression, operand2: Expression): InstructionArg;
     
     // Concrete subclasses must implement these methods:
     getConstantDataType(operand1: Expression, operand2: Expression): DataType;

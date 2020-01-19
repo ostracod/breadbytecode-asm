@@ -38,6 +38,7 @@ export abstract class BetaType extends DataType {
     constructor(argPrefix: number, byteAmount: number) {
         super(argPrefix);
         this.byteAmount = byteAmount;
+        this.bitAmount = this.byteAmount * 8;
     }
 }
 
@@ -50,7 +51,11 @@ export abstract class NumberType extends BetaType {
 }
 
 NumberType.prototype.getName = function(): string {
-    return this.getNamePrefix() + (this.byteAmount * 8);
+    return this.getNamePrefix() + this.bitAmount;
+}
+
+NumberType.prototype.restrictNumber = function(value: number): number {
+    return value;
 }
 
 export interface IntegerType extends IntegerTypeInterface {}
@@ -63,6 +68,10 @@ export class IntegerType extends NumberType {
 
 IntegerType.prototype.getByteAmountMergePriority = function(): number {
     return 1;
+}
+
+IntegerType.prototype.contains = function(value: number): boolean {
+    return (value >= this.getMinimumNumber() && value <= this.getMaximumNumber());
 }
 
 export class UnsignedIntegerType extends IntegerType {
@@ -92,8 +101,16 @@ UnsignedIntegerType.prototype.convertNumberToBuffer = function(value: number): B
     return output;
 }
 
-UnsignedIntegerType.prototype.contains = function(value: number): boolean {
-    return (value >= 0 && value < Math.pow(2, this.byteAmount * 8));
+UnsignedIntegerType.prototype.getMinimumNumber = function(): number {
+    return 0;
+}
+
+UnsignedIntegerType.prototype.getMaximumNumber = function(): number {
+    return Math.pow(2, this.bitAmount) - 1;
+}
+
+UnsignedIntegerType.prototype.restrictNumber = function(value: number): number {
+    return Math.floor(value) & (Math.pow(2, this.bitAmount) - 1);
 }
 
 export class SignedIntegerType extends IntegerType {
@@ -123,9 +140,21 @@ SignedIntegerType.prototype.convertNumberToBuffer = function(value: number): Buf
     return output;
 }
 
-SignedIntegerType.prototype.contains = function(value: number): boolean {
-    let tempThreshold = Math.pow(2, (this.byteAmount * 8 - 1));
-    return (value >= -tempThreshold && value < tempThreshold);
+SignedIntegerType.prototype.getMinimumNumber = function(): number {
+    return -Math.pow(2, this.bitAmount - 1);
+}
+
+SignedIntegerType.prototype.getMaximumNumber = function(): number {
+    return Math.pow(2, this.bitAmount - 1) - 1;
+}
+
+SignedIntegerType.prototype.restrictNumber = function(value: number): number {
+    let tempOffset = Math.pow(2, this.bitAmount);
+    value = Math.floor(value) & (tempOffset - 1);
+    if (value > this.getMaximumNumber()) {
+        value -= tempOffset;
+    }
+    return value;
 }
 
 export class FloatType extends NumberType {
