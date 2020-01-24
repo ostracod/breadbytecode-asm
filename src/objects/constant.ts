@@ -29,7 +29,7 @@ export interface NumberConstant extends NumberConstantInterface {}
 export class NumberConstant extends Constant {
     constructor(value: MixedNumber, numberType: NumberType) {
         super();
-        this.value = value;
+        this.value = numberType.restrictNumber(value);
         this.numberType = numberType;
     }
 }

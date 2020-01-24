@@ -44,6 +44,12 @@ export interface UnaryOperator extends Operator {
     createConstantOrNull(operand: Expression): Constant;
 }
 
+export interface UnaryNumberOperator extends UnaryOperator {
+    // Concrete subclasses may override these methods:
+    calculateInteger(value: bigint): bigint;
+    calculateFloat(value: number): number;
+}
+
 export interface BinaryOperator extends Operator {
     precedence: number;
     

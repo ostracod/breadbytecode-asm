@@ -2,6 +2,7 @@
 import {MixedNumber} from "models/items";
 import {
     UnaryOperator as UnaryOperatorInterface,
+    UnaryNumberOperator as UnaryNumberOperatorInterface,
     BinaryOperator as BinaryOperatorInterface,
     BinaryNumberOperator as BinaryNumberOperatorInterface,
     BinaryTypeMergeOperator as BinaryTypeMergeOperatorInterface,
@@ -41,6 +42,65 @@ UnaryOperator.prototype.getConstantDataType = function(operand: Expression): Dat
 
 UnaryOperator.prototype.createConstantOrNull = function(operand: Expression): Constant {
     return null;
+}
+
+export interface UnaryNumberOperator extends UnaryNumberOperatorInterface {}
+
+export class UnaryNumberOperator extends UnaryOperator {
+    
+}
+
+UnaryNumberOperator.prototype.createConstantOrNull = function(operand: Expression): Constant {
+    let tempConstant = operand.evaluateToConstantOrNull();
+    if (tempConstant === null) {
+        return null;
+    }
+    if (!(tempConstant instanceof NumberConstant)) {
+        throw new AssemblyError("Expected numeric value.");
+    }
+    let tempNumberConstant = tempConstant.copy() as NumberConstant;
+    let tempNumberType = this.getConstantDataType(operand);
+    let tempValue: MixedNumber;
+    if (tempNumberType instanceof IntegerType) {
+        tempValue = this.calculateInteger(
+            mathUtils.convertMixedNumberToBigInt(tempNumberConstant.value)
+        );
+    } else {
+        tempValue = this.calculateFloat(Number(tempNumberConstant.value));
+    }
+    return new NumberConstant(tempValue, tempNumberType);
+}
+
+UnaryNumberOperator.prototype.calculateInteger = function(value: bigint): bigint {
+    throw new AssemblyError("Unsupported operation on integer.");
+}
+
+UnaryNumberOperator.prototype.calculateFloat = function(value: number): number {
+    throw new AssemblyError("Unsupported operation on floating point number.");
+}
+
+export class NegationOperator extends UnaryNumberOperator {
+    constructor() {
+        super("-");
+    }
+}
+
+NegationOperator.prototype.calculateInteger = function(value: bigint): bigint {
+    return -value;
+}
+
+NegationOperator.prototype.calculateFloat = function(value: number): number {
+    return -value;
+}
+
+export class BitwiseInversionOperator extends UnaryNumberOperator {
+    constructor() {
+        super("~");
+    }
+}
+
+BitwiseInversionOperator.prototype.calculateInteger = function(value: bigint): bigint {
+    return ~value;
 }
 
 export class MacroIdentifierOperator extends UnaryOperator {
@@ -190,7 +250,6 @@ BinaryTypeMergeOperator.prototype.createConstantOrNullHelper = function(numberCo
             Number(numberConstant2.value)
         );
     }
-    tempValue = tempNumberType.restrictNumber(tempValue);
     return new NumberConstant(tempValue, tempNumberType);
 }
 
@@ -324,7 +383,6 @@ BinaryBitshiftOperator.prototype.createConstantOrNullHelper = function(numberCon
         mathUtils.convertMixedNumberToBigInt(numberConstant1.value),
         mathUtils.convertMixedNumberToBigInt(numberConstant2.value)
     );
-    tempValue = tempNumberType.restrictNumber(tempValue);
     return new NumberConstant(tempValue, tempNumberType);
 }
 
@@ -348,8 +406,8 @@ BitshiftRightOperator.prototype.calculateInteger = function(value: bigint, offse
     return value >> offset;
 }
 
-new UnaryOperator("-");
-new UnaryOperator("~");
+new NegationOperator();
+new BitwiseInversionOperator();
 export var macroIdentifierOperator = new MacroIdentifierOperator();
 new IndexOperator();
 
