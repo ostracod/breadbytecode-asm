@@ -72,6 +72,11 @@ export interface BinaryTypeMergeOperator extends BinaryNumberOperator {
     calculateFloat(value1: number, value2: number): number;
 }
 
+export interface BinaryBitshiftOperator extends BinaryNumberOperator {
+    // Concrete subclasses must implement these methods:
+    calculateInteger(value: bigint, offset: bigint): bigint;
+}
+
 export interface InstructionType {
     name: string;
     opcode: number;

@@ -5,6 +5,7 @@ import {
     BinaryOperator as BinaryOperatorInterface,
     BinaryNumberOperator as BinaryNumberOperatorInterface,
     BinaryTypeMergeOperator as BinaryTypeMergeOperatorInterface,
+    BinaryBitshiftOperator as BinaryBitshiftOperatorInterface,
     Operator, DataType
 } from "models/delegates";
 import {Expression, Constant, InstructionArg} from "models/objects";
@@ -53,7 +54,9 @@ MacroIdentifierOperator.prototype.createExpression = function(operand: Expressio
 }
 
 export class IndexOperator extends UnaryOperator {
-    
+    constructor() {
+        super("?");
+    }
 }
 
 IndexOperator.prototype.createConstantOrNull = function(operand: Expression): Constant {
@@ -213,30 +216,154 @@ AdditionOperator.prototype.calculateFloat = function(value1: number, value2: num
     return value1 + value2;
 }
 
+export class SubtractionOperator extends BinaryTypeMergeOperator {
+    constructor() {
+        super("-", 4);
+    }
+}
+
+SubtractionOperator.prototype.calculateInteger = function(value1: bigint, value2: bigint): bigint {
+    return value1 - value2;
+}
+
+SubtractionOperator.prototype.calculateFloat = function(value1: number, value2: number): number {
+    return value1 - value2;
+}
+
+export class MultiplicationOperator extends BinaryTypeMergeOperator {
+    constructor() {
+        super("*", 3);
+    }
+}
+
+MultiplicationOperator.prototype.calculateInteger = function(value1: bigint, value2: bigint): bigint {
+    return value1 * value2;
+}
+
+MultiplicationOperator.prototype.calculateFloat = function(value1: number, value2: number): number {
+    return value1 * value2;
+}
+
+export class DivisionOperator extends BinaryTypeMergeOperator {
+    constructor() {
+        super("/", 3);
+    }
+}
+
+DivisionOperator.prototype.calculateInteger = function(value1: bigint, value2: bigint): bigint {
+    return value1 / value2;
+}
+
+DivisionOperator.prototype.calculateFloat = function(value1: number, value2: number): number {
+    return value1 / value2;
+}
+
+export class ModulusOperator extends BinaryTypeMergeOperator {
+    constructor() {
+        super("%", 3);
+    }
+}
+
+ModulusOperator.prototype.calculateInteger = function(value1: bigint, value2: bigint): bigint {
+    return value1 % value2;
+}
+
+ModulusOperator.prototype.calculateFloat = function(value1: number, value2: number): number {
+    return value1 % value2;
+}
+
+export class BitwiseAndOperator extends BinaryTypeMergeOperator {
+    constructor() {
+        super("&", 6);
+    }
+}
+
+BitwiseAndOperator.prototype.calculateInteger = function(value1: bigint, value2: bigint): bigint {
+    return value1 & value2;
+}
+
+export class BitwiseXorOperator extends BinaryTypeMergeOperator {
+    constructor() {
+        super("^", 7);
+    }
+}
+
+BitwiseXorOperator.prototype.calculateInteger = function(value1: bigint, value2: bigint): bigint {
+    return value1 ^ value2;
+}
+
+export class BitwiseOrOperator extends BinaryTypeMergeOperator {
+    constructor() {
+        super("|", 8);
+    }
+}
+
+BitwiseOrOperator.prototype.calculateInteger = function(value1: bigint, value2: bigint): bigint {
+    return value1 | value2;
+}
+
+export interface BinaryBitshiftOperator extends BinaryBitshiftOperatorInterface {}
+
 export class BinaryBitshiftOperator extends BinaryNumberOperator {
     
 }
 
 BinaryBitshiftOperator.prototype.getConstantDataTypeHelper = function(numberType1: NumberType, numberType2: NumberType): NumberType {
+    if (!(numberType1 instanceof IntegerType)) {
+        throw new AssemblyError("Unsupported operation on floating point number.");
+    }
     return numberType1;
+}
+
+BinaryBitshiftOperator.prototype.createConstantOrNullHelper = function(numberConstant1: NumberConstant, numberConstant2: NumberConstant): NumberConstant {
+    let tempNumberType = this.getConstantDataTypeHelper(
+        numberConstant1.numberType,
+        numberConstant2.numberType
+    );
+    let tempValue = this.calculateInteger(
+        mathUtils.convertMixedNumberToBigInt(numberConstant1.value),
+        mathUtils.convertMixedNumberToBigInt(numberConstant2.value)
+    );
+    tempValue = tempNumberType.restrictNumber(tempValue);
+    return new NumberConstant(tempValue, tempNumberType);
+}
+
+export class BitshiftLeftOperator extends BinaryBitshiftOperator {
+    constructor() {
+        super("<<", 5);
+    }
+}
+
+BitshiftLeftOperator.prototype.calculateInteger = function(value: bigint, offset: bigint): bigint {
+    return value << offset;
+}
+
+export class BitshiftRightOperator extends BinaryBitshiftOperator {
+    constructor() {
+        super(">>", 5);
+    }
+}
+
+BitshiftRightOperator.prototype.calculateInteger = function(value: bigint, offset: bigint): bigint {
+    return value >> offset;
 }
 
 new UnaryOperator("-");
 new UnaryOperator("~");
 export var macroIdentifierOperator = new MacroIdentifierOperator();
-new IndexOperator("?");
+new IndexOperator();
 
 new TypeCoercionOperator();
 new InterfaceFunctionOperator();
-new BinaryTypeMergeOperator("*", 3);
-new BinaryTypeMergeOperator("/", 3);
-new BinaryTypeMergeOperator("%", 3);
 new AdditionOperator();
-new BinaryTypeMergeOperator("-", 4);
-new BinaryBitshiftOperator(">>", 5);
-new BinaryBitshiftOperator("<<", 5);
-new BinaryTypeMergeOperator("&", 6);
-new BinaryTypeMergeOperator("^", 7);
-new BinaryTypeMergeOperator("|", 8);
+new SubtractionOperator();
+new MultiplicationOperator();
+new DivisionOperator();
+new ModulusOperator();
+new BitwiseAndOperator();
+new BitwiseXorOperator();
+new BitwiseOrOperator();
+new BitshiftLeftOperator();
+new BitshiftRightOperator();
 
 
