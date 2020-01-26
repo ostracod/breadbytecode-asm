@@ -94,7 +94,7 @@ Example argument permissions:
 Certain directives initiate code blocks which are terminated by the `END` directive. For example:
 
 ```
-PRIVATE_FUNC myFunction
+PRIV_FUNC myFunction
     # Code block body goes here.
 END
 ```
@@ -116,10 +116,10 @@ Declares a bundle dependency with the given version number.
 `IFACE_DEP name, path, ifaceIndexes, depModifiers`  
 Declares an application dependency with the given interfaces.
 
-`PRIVATE_FUNC name ... END`  
+`PRIV_FUNC name ... END`  
 Declares a private function.
 
-`PUBLIC_FUNC name, ifaceIndex, arbiterIndex? ... END`  
+`PUB_FUNC name, ifaceIndex, arbiterIndex? ... END`  
 Declares a public function which belongs to the given interface.
 
 `GUARD_FUNC name, ifaceIndex ... END`  
@@ -155,7 +155,7 @@ Comments are preceded by a pound symbol (`#`).
 
 ```
 # This function does exciting stuff.
-PRIVATE_FUNC myFunc
+PRIV_FUNC myFunc
     ARG myArg, u8 # Input number for the function.
     # TODO: Implement.
 END
@@ -171,7 +171,7 @@ MACRO myMacro, myArg
     add myArg, @myVar, myArg
 END
 
-PRIVATE_FUNC myFunc
+PRIV_FUNC myFunc
     # Variable "myVar" is distinct from "@myVar".
     VAR myVar, u8
     wrt myVar, 5
@@ -182,7 +182,7 @@ END
 Use the unary question mark operator (`?`) to refer to the index of a variable or app data label.
 
 ```
-PRIVATE_FUNC myFunc
+PRIV_FUNC myFunc
     VAR dest, u8
     VAR myVar, u8
     # ?myVar is the index of myVar in the local frame.

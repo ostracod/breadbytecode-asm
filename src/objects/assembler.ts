@@ -187,7 +187,7 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
     self.processLines(function(line) {
         var tempDirectiveName = line.directiveName;
         var tempArgList = line.argList;
-        if (tempDirectiveName == "PRIVATE_FUNC") {
+        if (tempDirectiveName == "PRIV_FUNC") {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
@@ -199,7 +199,7 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
             self.addFunctionDefinition(tempPrivateDefinition);
             return [];
         }
-        if (tempDirectiveName == "PUBLIC_FUNC") {
+        if (tempDirectiveName == "PUB_FUNC") {
             var tempArbiterIndexExpression;
             if (tempArgList.length == 3) {
                 tempArbiterIndexExpression = tempArgList[2];
