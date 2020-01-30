@@ -43,6 +43,16 @@ Instruction.prototype.getDisplayString = function(): string {
     return output;
 }
 
+Instruction.prototype.createBuffer = function(): Buffer {
+    let tempBuffer = Buffer.alloc(3);
+    tempBuffer.writeUInt16LE(this.instructionType.opcode, 0);
+    tempBuffer.writeUInt8(this.argList.length, 2);
+    let tempBufferList = [tempBuffer].concat(
+        this.argList.map(arg => arg.createBuffer())
+    );
+    return Buffer.concat(tempBufferList);
+}
+
 export interface InstructionRef extends InstructionRefInterface {}
 
 export class InstructionRef {

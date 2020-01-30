@@ -170,6 +170,7 @@ export interface SubscriptExpression extends Expression {
 
 export interface FunctionDefinition extends Displayable, IndexDefinition {
     lineList: LabeledLineList;
+    regionType: number;
     assembler: Assembler;
     jumpTableLineList: LabeledLineList;
     argVariableDefinitionMap: IdentifierMap<ArgVariableDefinition>;
@@ -184,6 +185,10 @@ export interface FunctionDefinition extends Displayable, IndexDefinition {
     extractLabelDefinitions(): void;
     getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
     assembleInstructions(): void;
+    createRegion(): Region;
+    
+    // Concrete subclasses may override these methods:
+    createRegionHelper(): Region[];
     
     // Concrete subclasses must implement these methods:
     getTitle(): string;
@@ -264,6 +269,8 @@ export interface LabeledLineList {
 export interface Instruction extends Displayable {
     instructionType: InstructionType;
     argList: InstructionArg[];
+    
+    createBuffer(): Buffer;
 }
 
 export interface InstructionRef {
@@ -294,6 +301,23 @@ export interface RefInstructionArg extends InstructionArg {
     instructionRef: InstructionRef;
     dataType: DataType;
     indexArg: InstructionArg;
+}
+
+export interface Region {
+    regionType: number;
+    
+    createBuffer(): Buffer;
+    
+    // Concrete subclasses must implement these methods:
+    getContentBuffer(): Buffer;
+}
+
+export interface AtomicRegion extends Region {
+    contentBuffer: Buffer;
+}
+
+export interface CompositeRegion extends Region {
+    regionList: Region[];
 }
 
 

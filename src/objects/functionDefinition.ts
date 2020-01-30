@@ -4,13 +4,14 @@ import {
     FunctionDefinition as FunctionDefinitionInterface,
     InterfaceFunctionDefinition as InterfaceFunctionDefinitionInterface,
     PublicFunctionDefinition as PublicFunctionDefinitionInterface,
-    Identifier, AssemblyLine, Expression
+    Identifier, AssemblyLine, Expression, Region
 } from "models/objects";
 
 import {IndexDefinition} from "objects/indexDefinition";
 import {AssemblyError} from "objects/assemblyError";
 import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
 import {IdentifierMap} from "objects/identifier";
+import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
 
 import {niceUtils} from "utils/niceUtils";
 import {variableUtils} from "utils/variableUtils";
@@ -18,9 +19,10 @@ import {variableUtils} from "utils/variableUtils";
 export interface FunctionDefinition extends FunctionDefinitionInterface {}
 
 export abstract class FunctionDefinition extends IndexDefinition {
-    constructor(identifier: Identifier, lineList: AssemblyLine[]) {
+    constructor(identifier: Identifier, lineList: AssemblyLine[], regionType: number) {
         super(identifier);
         this.lineList = new InstructionLineList(lineList, this);
+        this.regionType = regionType;
         this.assembler = null;
         this.jumpTableLineList = null;
         this.argVariableDefinitionMap = new IdentifierMap();
@@ -132,9 +134,26 @@ FunctionDefinition.prototype.assembleInstructions = function(): void {
     });
 }
 
+FunctionDefinition.prototype.createRegion = function(): Region {
+    let tempBuffer = Buffer.concat(
+        this.instructionList.map(instruction => instruction.createBuffer())
+    );
+    let instructionRegion = new AtomicRegion(REGION_TYPE.instrs, tempBuffer);
+    let tempRegionList = [
+        instructionRegion
+        // TODO: Add more regions.
+        
+    ].concat(this.createRegionHelper());
+    return new CompositeRegion(this.regionType, tempRegionList);
+}
+
+FunctionDefinition.prototype.createRegionHelper = function(): Region[] {
+    return [];
+}
+
 export class PrivateFunctionDefinition extends FunctionDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[]) {
-        super(identifier, lineList);
+        super(identifier, lineList, REGION_TYPE.privFunc);
     }
 }
 
@@ -145,8 +164,8 @@ PrivateFunctionDefinition.prototype.getTitle = function(): string {
 export interface InterfaceFunctionDefinition extends InterfaceFunctionDefinitionInterface {}
 
 export abstract class InterfaceFunctionDefinition extends FunctionDefinition {
-    constructor(identifier: Identifier, interfaceIndexExpression: Expression, lineList: AssemblyLine[]) {
-        super(identifier, lineList);
+    constructor(identifier: Identifier, interfaceIndexExpression: Expression, lineList: AssemblyLine[], regionType: number) {
+        super(identifier, lineList, regionType);
         this.interfaceIndexExpression = interfaceIndexExpression;
     }
 }
@@ -168,7 +187,7 @@ export class PublicFunctionDefinition extends InterfaceFunctionDefinition {
         arbiterIndexExpression: Expression,
         lineList: AssemblyLine[]
     ) {
-        super(identifier, interfaceIndexExpression, lineList);
+        super(identifier, interfaceIndexExpression, lineList, REGION_TYPE.pubFunc);
         this.arbiterIndexExpression = arbiterIndexExpression;
     }
 }
@@ -187,7 +206,7 @@ PublicFunctionDefinition.prototype.getTitleSuffix = function(): string {
 
 export class GuardFunctionDefinition extends InterfaceFunctionDefinition {
     constructor(identifier: Identifier, interfaceIndexExpression: Expression, lineList: AssemblyLine[]) {
-        super(identifier, interfaceIndexExpression, lineList);
+        super(identifier, interfaceIndexExpression, lineList, REGION_TYPE.guardFunc);
     }
 }
 
