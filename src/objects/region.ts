@@ -4,6 +4,8 @@ import {
     AtomicRegion as AtomicRegionInterface,
     CompositeRegion as CompositeRegionInterface,
 } from "models/objects";
+import {niceUtils} from "utils/niceUtils";
+import {mathUtils} from "utils/mathUtils";
 import {unsignedInteger64Type} from "delegates/dataType";
 import {NumberConstant} from "objects/constant";
 
@@ -43,6 +45,8 @@ export const REGION_TYPE = {
     ifaceFile: 0x8301
 };
 
+const regionTypeNameMap = niceUtils.getReverseMap(REGION_TYPE);
+
 export interface Region extends RegionInterface {}
 
 export class Region {
@@ -69,6 +73,21 @@ Region.prototype.createBuffer = function(): Buffer {
     ]);
 }
 
+Region.prototype.getDisplayString = function(indentationLevel?: number): string {
+    if (typeof indentationLevel === "undefined") {
+        indentationLevel = 0;
+    }
+    let nextIndentationLevel = indentationLevel + 1;
+    let tempIndentation1 = niceUtils.getIndentation(indentationLevel);
+    let tempIndentation2 = niceUtils.getIndentation(nextIndentationLevel);
+    let tempLineList = this.getDisplayStringHelper(nextIndentationLevel);
+    if (tempLineList.length <= 0) {
+        tempLineList = [tempIndentation2 + "(Empty)"];
+    }
+    let tempName = regionTypeNameMap[this.regionType];
+    return tempIndentation1 + tempName + " region:\n" + tempLineList.join("\n");
+}
+
 export interface AtomicRegion extends AtomicRegionInterface {}
 
 export class AtomicRegion extends Region {
@@ -82,6 +101,24 @@ AtomicRegion.prototype.getContentBuffer = function(): Buffer {
     return this.contentBuffer;
 }
 
+AtomicRegion.prototype.getDisplayStringHelper = function(indentationLevel: number): string[] {
+    let tempIndentation = niceUtils.getIndentation(indentationLevel);
+    let output = [];
+    let tempLength = this.contentBuffer.length;
+    let startIndex = 0;
+    while (startIndex < tempLength) {
+        let endIndex = startIndex + 12;
+        if (endIndex >= tempLength) {
+            endIndex = tempLength;
+        }
+        let tempBuffer = this.contentBuffer.slice(startIndex, endIndex);
+        let tempText = mathUtils.convertBufferToHexadecimal(tempBuffer);
+        output.push(tempIndentation + tempText);
+        startIndex = endIndex;
+    }
+    return output;
+}
+
 export interface CompositeRegion extends CompositeRegionInterface {}
 
 export class CompositeRegion extends Region {
@@ -93,6 +130,10 @@ export class CompositeRegion extends Region {
 
 CompositeRegion.prototype.getContentBuffer = function(): Buffer {
     return Buffer.concat(this.regionList.map(region => region.createBuffer()));
+}
+
+CompositeRegion.prototype.getDisplayStringHelper = function(indentationLevel: number): string[] {
+    return this.regionList.map(region => region.getDisplayString(indentationLevel));
 }
 
 

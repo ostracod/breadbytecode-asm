@@ -2,7 +2,7 @@
 import * as fs from "fs";
 
 import {LineProcessor, ExpressionProcessor} from "models/items";
-import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Identifier, IndexDefinition} from "models/objects";
+import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Identifier, IndexDefinition, Region} from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
 import {IdentifierMap} from "objects/identifier";
@@ -14,6 +14,7 @@ import {
     GuardFunctionDefinition
 } from "objects/functionDefinition";
 import {AppDataLineList} from "objects/labeledLineList";
+import {REGION_TYPE, CompositeRegion} from "objects/region";
 
 import {parseUtils} from "utils/parseUtils";
 import {lineUtils} from "utils/lineUtils";
@@ -32,6 +33,7 @@ export class Assembler {
         this.nextMacroInvocationId = 0;
         this.nextFunctionDefinitionIndex = 0;
         this.indexDefinitionMapList = null;
+        this.appFileRegion = null;
     }
 }
 
@@ -294,6 +296,20 @@ Assembler.prototype.assembleInstructions = function(): void {
     });
 }
 
+Assembler.prototype.generateAppFileRegion = function(): void {
+    let funcRegionList = [];
+    this.functionDefinitionMap.iterate(functionDefinition => {
+        let tempRegion = functionDefinition.createRegion();
+        funcRegionList.push(tempRegion);
+    });
+    let appFuncsRegion = new CompositeRegion(REGION_TYPE.appFuncs, funcRegionList);
+    this.appFileRegion = new CompositeRegion(REGION_TYPE.appFile, [
+        appFuncsRegion
+        // TODO: Add more regions.
+        
+    ]);
+}
+
 Assembler.prototype.getDisplayString = function(): string {
     var tempTextList = [];
     tempTextList.push("\n= = = ROOT LINE LIST = = =\n");
@@ -320,6 +336,8 @@ Assembler.prototype.getDisplayString = function(): string {
     });
     tempTextList.push("= = = APP DATA LINE LIST = = =\n");
     tempTextList.push(this.appDataLineList.getDisplayString("Data body"));
+    tempTextList.push("\n= = = APP FILE REGION = = =\n");
+    tempTextList.push(this.appFileRegion.getDisplayString());
     tempTextList.push("");
     return tempTextList.join("\n");
 }
@@ -333,6 +351,7 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
         this.extractGlobalVariableDefinitions();
         this.determineIndexDefinitionMapList();
         this.assembleInstructions();
+        this.generateAppFileRegion();
     } catch(error) {
         if (error instanceof AssemblyError) {
             if (error.lineNumber === null) {
@@ -349,7 +368,7 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
     // TEST CODE.
     console.log(this.getDisplayString());
     
-    fs.writeFileSync(destinationPath, "TODO: Put actual bytecode here.");
+    fs.writeFileSync(destinationPath, this.appFileRegion.createBuffer());
     console.log("Finished assembling.");
     console.log("Destination path: " + destinationPath);
 }

@@ -33,6 +33,7 @@ export interface Assembler {
     nextMacroInvocationId: number;
     nextFunctionDefinitionIndex: number;
     indexDefinitionMapList: IdentifierMap<IndexDefinition>[];
+    appFileRegion: Region;
     
     processLines(processLine: LineProcessor): void;
     processExpressionsInLines(
@@ -55,6 +56,7 @@ export interface Assembler {
     getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
     determineIndexDefinitionMapList(): void;
     assembleInstructions(): void;
+    generateAppFileRegion(): void;
 }
 
 export interface AssemblyError {
@@ -307,9 +309,11 @@ export interface Region {
     regionType: number;
     
     createBuffer(): Buffer;
+    getDisplayString(indentationLevel?: number): string;
     
     // Concrete subclasses must implement these methods:
     getContentBuffer(): Buffer;
+    getDisplayStringHelper(indentationLevel: number): string[];
 }
 
 export interface AtomicRegion extends Region {
