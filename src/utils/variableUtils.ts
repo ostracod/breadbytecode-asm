@@ -8,6 +8,7 @@ import {PointerType} from "delegates/dataType";
 
 import {GlobalVariableDefinition, LocalVariableDefinition, ArgVariableDefinition} from "objects/variableDefinition";
 import {AssemblyError} from "objects/assemblyError";
+import {FrameLength} from "objects/frameLength";
 
 export interface VariableUtils extends VariableUtilsInterface {}
 
@@ -66,7 +67,9 @@ VariableUtils.prototype.extractArgVariableDefinition = function(line: AssemblyLi
     );
 }
 
-VariableUtils.prototype.populateVariableDefinitionIndexes = function(identifierMap: IdentifierMap<VariableDefinition>): void {
+VariableUtils.prototype.populateVariableDefinitionIndexes = function(
+    identifierMap: IdentifierMap<VariableDefinition>
+): FrameLength {
     let nextAlphaIndex = 0;
     let nextBetaIndex = 0;
     identifierMap.iterate(variableDefinition => {
@@ -79,6 +82,7 @@ VariableUtils.prototype.populateVariableDefinitionIndexes = function(identifierM
             nextBetaIndex += tempBetaType.byteAmount;
         }
     });
+    return new FrameLength(nextAlphaIndex, nextBetaIndex);
 }
 
 

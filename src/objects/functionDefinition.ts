@@ -28,6 +28,8 @@ export abstract class FunctionDefinition extends IndexDefinition {
         this.argVariableDefinitionMap = new IdentifierMap();
         this.localVariableDefinitionMap = new IdentifierMap();
         this.instructionList = [];
+        this.localFrameLength = null;
+        this.argFrameLength = null;
         
         this.extractJumpTables();
         this.extractVariableDefinitions();
@@ -107,8 +109,12 @@ FunctionDefinition.prototype.extractVariableDefinitions = function(): void {
         }
         return null;
     });
-    variableUtils.populateVariableDefinitionIndexes(this.localVariableDefinitionMap);
-    variableUtils.populateVariableDefinitionIndexes(this.argVariableDefinitionMap);
+    this.localFrameLength = variableUtils.populateVariableDefinitionIndexes(
+        this.localVariableDefinitionMap
+    );
+    this.argFrameLength = variableUtils.populateVariableDefinitionIndexes(
+        this.argVariableDefinitionMap
+    );
 }
 
 FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
@@ -135,12 +141,22 @@ FunctionDefinition.prototype.assembleInstructions = function(): void {
 }
 
 FunctionDefinition.prototype.createRegion = function(): Region {
+    let argFrameLengthRegion = new AtomicRegion(
+        REGION_TYPE.argFrameLen,
+        this.argFrameLength.createBuffer()
+    );
+    let localFrameLengthRegion = new AtomicRegion(
+        REGION_TYPE.localFrameLen,
+        this.localFrameLength.createBuffer()
+    );
     let tempBuffer = Buffer.concat(
         this.instructionList.map(instruction => instruction.createBuffer())
     );
-    let instructionRegion = new AtomicRegion(REGION_TYPE.instrs, tempBuffer);
+    let instructionsRegion = new AtomicRegion(REGION_TYPE.instrs, tempBuffer);
     let tempRegionList = [
-        instructionRegion
+        argFrameLengthRegion,
+        localFrameLengthRegion,
+        instructionsRegion
         // TODO: Add more regions.
         
     ].concat(this.createRegionHelper());

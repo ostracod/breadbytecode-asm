@@ -14,7 +14,7 @@ import {
     GuardFunctionDefinition
 } from "objects/functionDefinition";
 import {AppDataLineList} from "objects/labeledLineList";
-import {REGION_TYPE, CompositeRegion} from "objects/region";
+import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
 
 import {parseUtils} from "utils/parseUtils";
 import {lineUtils} from "utils/lineUtils";
@@ -33,6 +33,7 @@ export class Assembler {
         this.nextMacroInvocationId = 0;
         this.nextFunctionDefinitionIndex = 0;
         this.indexDefinitionMapList = null;
+        this.globalFrameLength = null;
         this.appFileRegion = null;
     }
 }
@@ -268,7 +269,9 @@ Assembler.prototype.extractGlobalVariableDefinitions = function(): void {
         }
         return null;
     });
-    variableUtils.populateVariableDefinitionIndexes(this.globalVariableDefinitionMap);
+    this.globalFrameLength = variableUtils.populateVariableDefinitionIndexes(
+        this.globalVariableDefinitionMap
+    );
 }
 
 Assembler.prototype.getIndexDefinitionByIdentifier = function(identifier: Identifier): IndexDefinition {
@@ -297,6 +300,10 @@ Assembler.prototype.assembleInstructions = function(): void {
 }
 
 Assembler.prototype.generateAppFileRegion = function(): void {
+    let globalFrameLengthRegion = new AtomicRegion(
+        REGION_TYPE.globalFrameLen,
+        this.globalFrameLength.createBuffer()
+    );
     let funcRegionList = [];
     this.functionDefinitionMap.iterate(functionDefinition => {
         let tempRegion = functionDefinition.createRegion();
@@ -304,6 +311,7 @@ Assembler.prototype.generateAppFileRegion = function(): void {
     });
     let appFuncsRegion = new CompositeRegion(REGION_TYPE.appFuncs, funcRegionList);
     this.appFileRegion = new CompositeRegion(REGION_TYPE.appFile, [
+        globalFrameLengthRegion,
         appFuncsRegion
         // TODO: Add more regions.
         

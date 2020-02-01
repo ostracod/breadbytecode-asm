@@ -1,7 +1,7 @@
 
 import {ExpressionProcessor, LineProcessor, NumberTypeClass, VariableDefinitionClass, ArgNumeric, MixedNumber} from "models/items";
 import {Operator, DataType, NumberType} from "models/delegates";
-import {Expression, AssemblyLine, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition, InstructionArg} from "models/objects";
+import {Expression, AssemblyLine, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition, InstructionArg, FrameLength} from "models/objects";
 
 export interface DataTypeUtils {
     getDataTypeByName(name: string): DataType;
@@ -87,7 +87,9 @@ export interface VariableUtils {
     extractGlobalVariableDefinition(line: AssemblyLine): VariableDefinition;
     extractLocalVariableDefinition(line: AssemblyLine): VariableDefinition;
     extractArgVariableDefinition(line: AssemblyLine): ArgVariableDefinition;
-    populateVariableDefinitionIndexes(identifierMap: IdentifierMap<VariableDefinition>): void;
+    populateVariableDefinitionIndexes(
+        identifierMap: IdentifierMap<VariableDefinition>
+    ): FrameLength;
 }
 
 export interface InstructionUtils {

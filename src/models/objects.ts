@@ -33,6 +33,7 @@ export interface Assembler {
     nextMacroInvocationId: number;
     nextFunctionDefinitionIndex: number;
     indexDefinitionMapList: IdentifierMap<IndexDefinition>[];
+    globalFrameLength: FrameLength;
     appFileRegion: Region;
     
     processLines(processLine: LineProcessor): void;
@@ -179,6 +180,8 @@ export interface FunctionDefinition extends Displayable, IndexDefinition {
     localVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     instructionList: Instruction[];
     indexDefinitionMapList: IdentifierMap<IndexDefinition>[]
+    localFrameLength: FrameLength;
+    argFrameLength: FrameLength;
     
     processLines(processLine: LineProcessor): void;
     processJumpTableLines(processLine: LineProcessor): void;
@@ -223,6 +226,7 @@ export interface MacroIdentifier extends Identifier {
 
 export interface IdentifierMap<T> {
     map: {[key: string]: T};
+    keyList: string[];
     
     get(identifier: Identifier): T;
     set(identifier: Identifier, value: T): void;
@@ -322,6 +326,13 @@ export interface AtomicRegion extends Region {
 
 export interface CompositeRegion extends Region {
     regionList: Region[];
+}
+
+export interface FrameLength {
+    alphaLength: number;
+    betaLength: number;
+    
+    createBuffer(): Buffer;
 }
 
 

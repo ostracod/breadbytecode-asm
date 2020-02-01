@@ -45,6 +45,8 @@ export interface IdentifierMap<T> extends IdentifierMapInterface<T> {}
 export class IdentifierMap<T> {
     constructor() {
         this.map = {};
+        // Ensures correct order for iteration.
+        this.keyList = [];
     }
 }
 
@@ -59,6 +61,9 @@ IdentifierMap.prototype.get = function(identifier: Identifier): any {
 
 IdentifierMap.prototype.set = function(identifier: Identifier, value: any): void {
     var tempKey = identifier.getMapKey();
+    if (!(tempKey in this.map)) {
+        this.keyList.push(tempKey);
+    }
     this.map[tempKey] = value;
 }
 
@@ -67,8 +72,7 @@ IdentifierMap.prototype.setIndexDefinition = function(indexDefinition: IndexDefi
 }
 
 IdentifierMap.prototype.iterate = function(handle: (value: any) => void): void {
-    var key;
-    for (key in this.map) {
+    for (let key of this.keyList) {
         handle(this.map[key]);
     }
 }
