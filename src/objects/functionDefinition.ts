@@ -70,7 +70,7 @@ FunctionDefinition.prototype.extractJumpTables = function(): void {
         }
         return null;
     });
-    self.jumpTableLineList = new JumpTableLineList(tempLineList);
+    self.jumpTableLineList = new JumpTableLineList(tempLineList, this);
 }
 
 FunctionDefinition.prototype.getDisplayString = function(): string {
@@ -133,11 +133,7 @@ FunctionDefinition.prototype.getIndexDefinitionByIdentifier = function(identifie
 }
 
 FunctionDefinition.prototype.assembleInstructions = function(): void {
-    this.processLines(line => {
-        let tempInstruction = line.assembleInstruction(this);
-        this.instructionList.push(tempInstruction);
-        return null;
-    });
+    this.instructionList = this.lineList.assembleInstructions();
 }
 
 FunctionDefinition.prototype.createRegion = function(): Region {

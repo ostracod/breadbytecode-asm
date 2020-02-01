@@ -256,7 +256,7 @@ Assembler.prototype.extractAppDataDefinitions = function(): void {
         }
         return null
     });
-    self.appDataLineList = new AppDataLineList(tempLineList);
+    self.appDataLineList = new AppDataLineList(tempLineList, this);
     self.appDataLineList.extractLabelDefinitions();
 }
 

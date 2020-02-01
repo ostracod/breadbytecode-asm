@@ -23,7 +23,12 @@ export interface ArgPerm {
     getDisplayString(): string;
 }
 
-export interface Assembler {
+export interface Scope {
+    // Concrete subclasses must implement these methods:
+    getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
+}
+
+export interface Assembler extends Scope {
     rootLineList: AssemblyLine[];
     aliasDefinitionMap: IdentifierMap<AliasDefinition>;
     macroDefinitionMap: {[name: string]: MacroDefinition};
@@ -54,7 +59,6 @@ export interface Assembler {
     extractFunctionDefinitions(): void;
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
-    getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
     determineIndexDefinitionMapList(): void;
     assembleInstructions(): void;
     generateAppFileRegion(): void;
@@ -77,7 +81,7 @@ export interface AssemblyLine {
         processExpression: ExpressionProcessor,
         shouldRecurAfterProcess?: boolean
     ): void;
-    assembleInstruction(functionDefinition: FunctionDefinition): Instruction;
+    assembleInstruction(): Instruction;
 }
 
 export interface Constant {
@@ -102,7 +106,7 @@ export interface AliasDefinition extends Displayable {
 }
 
 export interface Expression {
-    functionDefinition: FunctionDefinition;
+    scope: Scope;
     constantDataType: DataType;
     
     processExpressions(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression;
@@ -171,7 +175,7 @@ export interface SubscriptExpression extends Expression {
     dataTypeExpression: Expression;
 }
 
-export interface FunctionDefinition extends Displayable, IndexDefinition {
+export interface FunctionDefinition extends Displayable, IndexDefinition, Scope {
     lineList: LabeledLineList;
     regionType: number;
     assembler: Assembler;
@@ -188,7 +192,6 @@ export interface FunctionDefinition extends Displayable, IndexDefinition {
     extractJumpTables(): void;
     extractVariableDefinitions(): void;
     extractLabelDefinitions(): void;
-    getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
     assembleInstructions(): void;
     createRegion(): Region;
     
@@ -270,6 +273,10 @@ export interface LabeledLineList {
     
     // Concrete subclasses must implement these methods:
     getLineElementLength(line: AssemblyLine): number;
+}
+
+export interface InstructionLineList extends LabeledLineList {
+    assembleInstructions(): Instruction[];
 }
 
 export interface Instruction extends Displayable {

@@ -121,7 +121,7 @@ export class IndexOperator extends UnaryOperator {
 
 IndexOperator.prototype.createConstantOrNull = function(operand: Expression): Constant {
     let tempIdentifier = operand.evaluateToIdentifier();
-    let tempDefinition = operand.functionDefinition.getIndexDefinitionByIdentifier(
+    let tempDefinition = operand.scope.getIndexDefinitionByIdentifier(
         tempIdentifier
     );
     let output = new NumberConstant(tempDefinition.index, unsignedInteger64Type);

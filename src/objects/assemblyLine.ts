@@ -73,7 +73,7 @@ AssemblyLine.prototype.processExpressions = function(
     }
 }
 
-AssemblyLine.prototype.assembleInstruction = function(functionDefinition: FunctionDefinition): Instruction {
+AssemblyLine.prototype.assembleInstruction = function(): Instruction {
     if (!(this.directiveName in instructionTypeMap)) {
         throw new AssemblyError("Unrecognized opcode mnemonic.");
     }
@@ -83,7 +83,7 @@ AssemblyLine.prototype.assembleInstruction = function(functionDefinition: Functi
         throw new AssemblyError(`Expected ${tempInstructionType.argAmount} ${niceUtils.pluralize("argument", tempAmount)}.`);
     }
     var tempArgList = this.argList.map(expression => {
-        return expression.evaluateToInstructionArg(functionDefinition);
+        return expression.evaluateToInstructionArg();
     });
     return new Instruction(tempInstructionType, tempArgList);
 }

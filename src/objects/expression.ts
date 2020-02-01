@@ -38,7 +38,7 @@ export interface Expression extends ExpressionInterface {}
 
 export abstract class Expression {
     constructor() {
-        this.functionDefinition = null;
+        this.scope = null;
         // We cache this value so that we can verify
         // the output of evaluateToConstant.
         // Use Expression.getConstantDataType to cache
@@ -128,7 +128,7 @@ Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
     }
     let tempIdentifier = this.evaluateToIdentifierOrNull();
     if (tempIdentifier !== null) {
-        let tempDefinition = this.functionDefinition.getIndexDefinitionByIdentifier(
+        let tempDefinition = this.scope.getIndexDefinitionByIdentifier(
             tempIdentifier
         );
         return tempDefinition.createInstructionArg();

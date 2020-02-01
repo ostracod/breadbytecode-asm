@@ -1,6 +1,10 @@
 
 import {LineProcessor, LabelDefinitionClass} from "models/items";
-import {LabeledLineList as LabeledLineListInterface, AssemblyLine, FunctionDefinition} from "models/objects";
+import {
+    LabeledLineList as LabeledLineListInterface,
+    InstructionLineList as InstructionLineListInterface,
+    AssemblyLine, FunctionDefinition, Instruction, Scope
+} from "models/objects";
 
 import {BetaType} from "delegates/dataType";
 
@@ -14,9 +18,13 @@ import {lineUtils} from "utils/lineUtils";
 export interface LabeledLineList extends LabeledLineListInterface {}
 
 export class LabeledLineList {
-    constructor(lineList: AssemblyLine[]) {
+    constructor(lineList: AssemblyLine[], scope: Scope) {
         this.lineList = lineList;
         this.labelDefinitionMap = null;
+        lineUtils.processExpressionsInLines(this.lineList, expression => {
+            expression.scope = scope;
+            return null;
+        });
     }
 }
 
@@ -93,18 +101,18 @@ LabeledLineList.prototype.getLabelDefinitionClass = function(): LabelDefinitionC
     return LabelDefinition;
 }
 
+export interface InstructionLineList extends InstructionLineListInterface {}
+
 export class InstructionLineList extends LabeledLineList {
-    constructor(lineList: AssemblyLine[], functionDefinition: FunctionDefinition) {
-        super(lineList);
-        lineUtils.processExpressionsInLines(this.lineList, expression => {
-            expression.functionDefinition = functionDefinition;
-            return null;
-        });
-    }
+    
 }
 
 InstructionLineList.prototype.getLineElementLength = function(line: AssemblyLine): number {
     return 1;
+}
+
+InstructionLineList.prototype.assembleInstructions = function(): Instruction[] {
+    return this.lineList.map(line => line.assembleInstruction());
 }
 
 export class JumpTableLineList extends LabeledLineList {
