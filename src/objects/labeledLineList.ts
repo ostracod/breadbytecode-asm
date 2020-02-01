@@ -3,10 +3,11 @@ import {LineProcessor, LabelDefinitionClass} from "models/items";
 import {
     LabeledLineList as LabeledLineListInterface,
     InstructionLineList as InstructionLineListInterface,
-    AssemblyLine, FunctionDefinition, Instruction, Scope
+    DataLineList as DataLineListInterface,
+    AssemblyLine, FunctionDefinition, Instruction, Scope, Expression, Constant
 } from "models/objects";
 
-import {BetaType} from "delegates/dataType";
+import {BetaType, unsignedInteger64Type} from "delegates/dataType";
 
 import {AssemblyError} from "objects/assemblyError";
 import {LabelDefinition, AppDataLabelDefinition} from "objects/labelDefinition";
@@ -112,21 +113,61 @@ InstructionLineList.prototype.getLineElementLength = function(line: AssemblyLine
 }
 
 InstructionLineList.prototype.assembleInstructions = function(): Instruction[] {
-    return this.lineList.map(line => line.assembleInstruction());
+    let output = [];
+    this.processLines(line => {
+        output.push(line.assembleInstruction());
+        return null;
+    });
+    return output;
 }
 
-export class JumpTableLineList extends LabeledLineList {
+export interface DataLineList extends DataLineListInterface {}
+
+export class DataLineList extends LabeledLineList {
+    
+}
+
+DataLineList.prototype.extractLabelDefinitions = function(): void {
+    LabeledLineList.prototype.extractLabelDefinitions.call(this);
+    this.processLines(line => {
+        if (line.directiveName != "DATA") {
+            throw new AssemblyError("Expected DATA directive.");
+        }
+        return null;
+    });
+}
+
+DataLineList.prototype.createBuffer = function(): Buffer {
+    let bufferList = [];
+    this.processLines(line => {
+        let tempBufferList = line.argList.map(arg => {
+            let tempConstant = this.convertExpressionToConstant(arg);
+            if (!(tempConstant.getDataType() instanceof BetaType)) {
+                throw new AssemblyError("Expected beta type.");
+            }
+            return tempConstant.createBuffer();
+        });
+        bufferList.push(Buffer.concat(tempBufferList));
+        return null;
+    });
+    return Buffer.concat(bufferList);
+}
+
+export class JumpTableLineList extends DataLineList {
     
 }
 
 JumpTableLineList.prototype.getLineElementLength = function(line: AssemblyLine): number {
-    if (line.directiveName != "DATA") {
-        throw new AssemblyError("Expected DATA directive.");
-    }
     return line.argList.length;
 }
 
-export class AppDataLineList extends LabeledLineList {
+JumpTableLineList.prototype.convertExpressionToConstant = function(expression: Expression): Constant {
+    let output = expression.evaluateToConstant();
+    output.setDataType(unsignedInteger64Type);
+    return output;
+}
+
+export class AppDataLineList extends DataLineList {
     
 }
 
@@ -135,9 +176,6 @@ AppDataLineList.prototype.getLabelDefinitionClass = function(): LabelDefinitionC
 }
 
 AppDataLineList.prototype.getLineElementLength = function(line: AssemblyLine): number {
-    if (line.directiveName != "DATA") {
-        throw new AssemblyError("Expected DATA directive.");
-    }
     var output = 0;
     var index = 0;
     while (index < line.argList.length) {
@@ -150,6 +188,10 @@ AppDataLineList.prototype.getLineElementLength = function(line: AssemblyLine): n
         index += 1;
     }
     return output;
+}
+
+AppDataLineList.prototype.convertExpressionToConstant = function(expression: Expression): Constant {
+    return expression.evaluateToConstant();
 }
 
 

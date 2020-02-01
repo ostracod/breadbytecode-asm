@@ -310,9 +310,14 @@ Assembler.prototype.generateAppFileRegion = function(): void {
         funcRegionList.push(tempRegion);
     });
     let appFuncsRegion = new CompositeRegion(REGION_TYPE.appFuncs, funcRegionList);
+    let appDataRegion = new AtomicRegion(
+        REGION_TYPE.appData,
+        this.appDataLineList.createBuffer()
+    );
     this.appFileRegion = new CompositeRegion(REGION_TYPE.appFile, [
         globalFrameLengthRegion,
-        appFuncsRegion
+        appFuncsRegion,
+        appDataRegion
         // TODO: Add more regions.
         
     ]);

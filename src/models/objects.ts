@@ -265,11 +265,11 @@ export interface LabeledLineList {
     
     processLines(processLine: LineProcessor): void;
     getLineElementIndexMap(): {[lineIndex: number]: number};
-    extractLabelDefinitions(): void;
     getDisplayString(title: string, indentationLevel?: number): string;
     
     // Concrete subclasses may override these methods:
     getLabelDefinitionClass(): LabelDefinitionClass;
+    extractLabelDefinitions(): void;
     
     // Concrete subclasses must implement these methods:
     getLineElementLength(line: AssemblyLine): number;
@@ -277,6 +277,13 @@ export interface LabeledLineList {
 
 export interface InstructionLineList extends LabeledLineList {
     assembleInstructions(): Instruction[];
+}
+
+export interface DataLineList extends LabeledLineList {
+    createBuffer(): Buffer;
+    
+    // Concrete subclasses must implement these methods:
+    convertExpressionToConstant(expression: Expression): Constant;
 }
 
 export interface Instruction extends Displayable {

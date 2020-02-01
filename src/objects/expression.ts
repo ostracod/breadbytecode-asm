@@ -78,6 +78,10 @@ Expression.prototype.evaluateToConstant = function(): Constant {
     if (output === null) {
         throw new AssemblyError("Expected constant.");
     }
+    if (this.constantDataType !== null
+            && !this.constantDataType.equals(output.getDataType())) {
+        throw new AssemblyError("Constant has inconsistent data type.");
+    }
     return output;
 }
 

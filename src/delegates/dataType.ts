@@ -34,6 +34,10 @@ PointerType.prototype.getName = function(): string {
     return "p";
 }
 
+PointerType.prototype.equals = function(dataType: DataType) {
+    return (dataType instanceof PointerType);
+}
+
 export interface BetaType extends BetaTypeInterface {}
 
 export abstract class BetaType extends DataType {
@@ -42,6 +46,14 @@ export abstract class BetaType extends DataType {
         this.byteAmount = byteAmount;
         this.bitAmount = this.byteAmount * 8;
     }
+}
+
+BetaType.prototype.equals = function(dataType: DataType) {
+    if (!(dataType instanceof BetaType)) {
+        return false;
+    }
+    let betaType = dataType as BetaType;
+    return (this.byteAmount === betaType.byteAmount);
 }
 
 export interface NumberType extends NumberTypeInterface {}
@@ -114,6 +126,13 @@ UnsignedIntegerType.prototype.restrictNumber = function(value: MixedNumber): Mix
     return mathUtils.convertMixedNumberToBigInt(value) & ((1n << BigInt(this.bitAmount)) - 1n);
 }
 
+UnsignedIntegerType.prototype.equals = function(dataType: DataType) {
+    if (!BetaType.prototype.equals.call(this, dataType)) {
+        return false;
+    }
+    return (dataType instanceof UnsignedIntegerType);
+}
+
 export class SignedIntegerType extends IntegerType {
     constructor(argPrefix: number, byteAmount: number) {
         super(argPrefix, byteAmount);
@@ -157,6 +176,13 @@ SignedIntegerType.prototype.restrictNumber = function(value: MixedNumber): Mixed
     return value;
 }
 
+SignedIntegerType.prototype.equals = function(dataType: DataType) {
+    if (!BetaType.prototype.equals.call(this, dataType)) {
+        return false;
+    }
+    return (dataType instanceof SignedIntegerType);
+}
+
 export class FloatType extends NumberType {
     constructor(argPrefix: number, byteAmount: number) {
         super(argPrefix, byteAmount);
@@ -188,6 +214,13 @@ FloatType.prototype.convertNumberToBuffer = function(value: MixedNumber): Buffer
     return output;
 }
 
+FloatType.prototype.equals = function(dataType: DataType) {
+    if (!BetaType.prototype.equals.call(this, dataType)) {
+        return false;
+    }
+    return (dataType instanceof FloatType);
+}
+
 export class StringType extends BetaType {
     constructor(byteAmount: number) {
         super(null, byteAmount);
@@ -196,6 +229,13 @@ export class StringType extends BetaType {
 
 StringType.prototype.getName = function(): string {
     return "b" + this.byteAmount;
+}
+
+StringType.prototype.equals = function(dataType: DataType) {
+    if (!BetaType.prototype.equals.call(this, dataType)) {
+        return false;
+    }
+    return (dataType instanceof StringType);
 }
 
 export var pointerType = new PointerType();
