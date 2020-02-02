@@ -6,6 +6,7 @@ import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Ident
 
 import {AssemblyError} from "objects/assemblyError";
 import {IdentifierMap} from "objects/identifier";
+import {Scope} from "objects/scope";
 import {MacroDefinition} from "objects/macroDefinition";
 import {AliasDefinition} from "objects/aliasDefinition";
 import {
@@ -32,7 +33,7 @@ export class Assembler {
         this.globalVariableDefinitionMap = new IdentifierMap();
         this.nextMacroInvocationId = 0;
         this.nextFunctionDefinitionIndex = 0;
-        this.indexDefinitionMapList = null;
+        this.scope = new Scope();
         this.globalFrameLength = null;
         this.appFileRegion = null;
     }
@@ -181,7 +182,8 @@ Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyL
 Assembler.prototype.addFunctionDefinition = function(functionDefinition: FunctionDefinition): void {
     functionDefinition.index = this.nextFunctionDefinitionIndex;
     this.nextFunctionDefinitionIndex += 1;
-    functionDefinition.assembler = this;
+    functionDefinition.populateScope(this.scope);
+    functionDefinition.extractDefinitions();
     this.functionDefinitionMap.setIndexDefinition(functionDefinition);
 }
 
@@ -256,7 +258,7 @@ Assembler.prototype.extractAppDataDefinitions = function(): void {
         }
         return null
     });
-    self.appDataLineList = new AppDataLineList(tempLineList, this);
+    self.appDataLineList = new AppDataLineList(tempLineList, this.scope);
     self.appDataLineList.extractLabelDefinitions();
 }
 
@@ -274,24 +276,13 @@ Assembler.prototype.extractGlobalVariableDefinitions = function(): void {
     );
 }
 
-Assembler.prototype.getIndexDefinitionByIdentifier = function(identifier: Identifier): IndexDefinition {
-    for (let identifierMap of this.indexDefinitionMapList) {
-        let tempDefinition = identifierMap.get(identifier);
-        if (tempDefinition !== null) {
-            return tempDefinition;
-        }
-    }
-    return null;
-}
-
-Assembler.prototype.determineIndexDefinitionMapList = function(): void {
-    this.indexDefinitionMapList = [
+Assembler.prototype.populateScopeDefinitions = function(): void {
+    this.scope.indexDefinitionMapList = [
         this.globalVariableDefinitionMap,
         this.appDataLineList.labelDefinitionMap,
         this.functionDefinitionMap
     ];
 }
-
 
 Assembler.prototype.assembleInstructions = function(): void {
     this.functionDefinitionMap.iterate(functionDefinition => {
@@ -362,7 +353,7 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
         this.extractFunctionDefinitions();
         this.extractAppDataDefinitions();
         this.extractGlobalVariableDefinitions();
-        this.determineIndexDefinitionMapList();
+        this.populateScopeDefinitions();
         this.assembleInstructions();
         this.generateAppFileRegion();
     } catch(error) {

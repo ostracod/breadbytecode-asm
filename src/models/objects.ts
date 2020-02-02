@@ -37,11 +37,13 @@ export interface ArgPerm {
 }
 
 export interface Scope {
-    // Concrete subclasses must implement these methods:
+    indexDefinitionMapList: IdentifierMap<IndexDefinition>[];
+    parentScope: Scope;
+    
     getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
 }
 
-export interface Assembler extends Scope {
+export interface Assembler {
     rootLineList: AssemblyLine[];
     aliasDefinitionMap: IdentifierMap<AliasDefinition>;
     macroDefinitionMap: {[name: string]: MacroDefinition};
@@ -50,7 +52,7 @@ export interface Assembler extends Scope {
     globalVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     nextMacroInvocationId: number;
     nextFunctionDefinitionIndex: number;
-    indexDefinitionMapList: IdentifierMap<IndexDefinition>[];
+    scope: Scope;
     globalFrameLength: FrameLength;
     appFileRegion: Region;
     
@@ -72,7 +74,7 @@ export interface Assembler extends Scope {
     extractFunctionDefinitions(): void;
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
-    determineIndexDefinitionMapList(): void;
+    populateScopeDefinitions(): void;
     assembleInstructions(): void;
     generateAppFileRegion(): void;
 }
@@ -189,23 +191,25 @@ export interface SubscriptExpression extends Expression {
     dataTypeExpression: Expression;
 }
 
-export interface FunctionDefinition extends Displayable, IndexDefinition, Scope {
+export interface FunctionDefinition extends Displayable, IndexDefinition {
     lineList: LabeledLineList;
     regionType: number;
-    assembler: Assembler;
     jumpTableLineList: LabeledLineList;
     argVariableDefinitionMap: IdentifierMap<ArgVariableDefinition>;
     localVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     instructionList: Instruction[];
-    indexDefinitionMapList: IdentifierMap<IndexDefinition>[]
+    scope: Scope;
     localFrameLength: FrameLength;
     argFrameLength: FrameLength;
     
+    populateScope(parentScope: Scope): void;
+    extractDefinitions(): void;
     processLines(processLine: LineProcessor): void;
     processJumpTableLines(processLine: LineProcessor): void;
     extractJumpTables(): void;
     extractVariableDefinitions(): void;
     extractLabelDefinitions(): void;
+    populateScopeDefinitions(): void;
     assembleInstructions(): void;
     createRegion(): Region;
     
@@ -279,6 +283,7 @@ export interface LabeledLineList {
     lineList: AssemblyLine[];
     labelDefinitionMap: IdentifierMap<LabelDefinition>;
     
+    populateScope(scope: Scope): void;
     processLines(processLine: LineProcessor): void;
     getLineElementIndexMap(): {[lineIndex: number]: number};
     getDisplayString(title: string, indentationLevel?: number): string;

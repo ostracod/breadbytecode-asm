@@ -3,7 +3,6 @@ import {
     FrameLength as FrameLengthInterface,
 } from "models/objects";
 
-
 export interface FrameLength extends FrameLengthInterface {}
 
 export class FrameLength {

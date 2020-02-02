@@ -19,14 +19,17 @@ import {lineUtils} from "utils/lineUtils";
 export interface LabeledLineList extends LabeledLineListInterface {}
 
 export class LabeledLineList {
-    constructor(lineList: AssemblyLine[], scope: Scope) {
+    constructor(lineList: AssemblyLine[]) {
         this.lineList = lineList;
         this.labelDefinitionMap = null;
-        lineUtils.processExpressionsInLines(this.lineList, expression => {
-            expression.scope = scope;
-            return null;
-        });
     }
+}
+
+LabeledLineList.prototype.populateScope = function(scope: Scope) {
+    lineUtils.processExpressionsInLines(this.lineList, expression => {
+        expression.scope = scope;
+        return null;
+    });
 }
 
 LabeledLineList.prototype.processLines = function(processLine: LineProcessor): void {
@@ -124,7 +127,10 @@ InstructionLineList.prototype.assembleInstructions = function(): Instruction[] {
 export interface DataLineList extends DataLineListInterface {}
 
 export class DataLineList extends LabeledLineList {
-    
+    constructor(lineList: AssemblyLine[], scope: Scope) {
+        super(lineList);
+        this.populateScope(scope);
+    }
 }
 
 DataLineList.prototype.extractLabelDefinitions = function(): void {

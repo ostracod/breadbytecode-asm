@@ -12,8 +12,9 @@ import {variableUtils} from "utils/variableUtils";
 
 import {PointerType} from "delegates/dataType";
 
-import {IndexDefinition, indexConstantConverter} from "objects/indexDefinition";
 import {AssemblyError} from "objects/assemblyError";
+import {IndexDefinition, indexConstantConverter} from "objects/indexDefinition";
+import {Scope} from "objects/scope";
 import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
 import {IdentifierMap} from "objects/identifier";
 import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
@@ -23,27 +24,28 @@ export interface FunctionDefinition extends FunctionDefinitionInterface {}
 export abstract class FunctionDefinition extends IndexDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[], regionType: number) {
         super(identifier, indexConstantConverter);
-        this.lineList = new InstructionLineList(lineList, this);
+        this.lineList = new InstructionLineList(lineList);
         this.regionType = regionType;
-        this.assembler = null;
         this.jumpTableLineList = null;
         this.argVariableDefinitionMap = new IdentifierMap();
         this.localVariableDefinitionMap = new IdentifierMap();
         this.instructionList = [];
+        this.scope = null;
         this.localFrameLength = null;
         this.argFrameLength = null;
-        
-        this.extractJumpTables();
-        this.extractVariableDefinitions();
-        this.extractLabelDefinitions();
-        
-        this.indexDefinitionMapList = [
-            this.localVariableDefinitionMap,
-            this.argVariableDefinitionMap,
-            this.lineList.labelDefinitionMap,
-            this.jumpTableLineList.labelDefinitionMap
-        ];
     }
+}
+
+FunctionDefinition.prototype.populateScope = function(parentScope: Scope): void {
+    this.scope = new Scope(parentScope);
+    this.lineList.populateScope(this.scope);
+}
+
+FunctionDefinition.prototype.extractDefinitions = function(): void {
+    this.extractJumpTables();
+    this.extractVariableDefinitions();
+    this.extractLabelDefinitions();
+    this.populateScopeDefinitions();
 }
 
 FunctionDefinition.prototype.processLines = function(processLine: LineProcessor): void {
@@ -72,7 +74,7 @@ FunctionDefinition.prototype.extractJumpTables = function(): void {
         }
         return null;
     });
-    self.jumpTableLineList = new JumpTableLineList(tempLineList, this);
+    self.jumpTableLineList = new JumpTableLineList(tempLineList, this.scope);
 }
 
 FunctionDefinition.prototype.getDisplayString = function(): string {
@@ -124,14 +126,13 @@ FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
     this.jumpTableLineList.extractLabelDefinitions();
 }
 
-FunctionDefinition.prototype.getIndexDefinitionByIdentifier = function(identifier: Identifier): IndexDefinition {
-    for (let identifierMap of this.indexDefinitionMapList) {
-        let tempDefinition = identifierMap.get(identifier);
-        if (tempDefinition !== null) {
-            return tempDefinition;
-        }
-    }
-    return this.assembler.getIndexDefinitionByIdentifier(identifier);
+FunctionDefinition.prototype.populateScopeDefinitions = function(): void {
+    this.scope.indexDefinitionMapList = [
+        this.localVariableDefinitionMap,
+        this.argVariableDefinitionMap,
+        this.lineList.labelDefinitionMap,
+        this.jumpTableLineList.labelDefinitionMap
+    ];
 }
 
 FunctionDefinition.prototype.assembleInstructions = function(): void {
