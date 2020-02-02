@@ -1,19 +1,13 @@
 
-import {LabelDefinition as LabelDefinitionInterface, Identifier, InstructionArg} from "models/objects";
-
-import {instructionUtils} from "utils/instructionUtils";
-
-import {unsignedInteger64Type} from "delegates/dataType";
-
-import {INSTRUCTION_REF_PREFIX} from "objects/instruction";
-import {IndexDefinition} from "objects/indexDefinition";
+import {LabelDefinition as LabelDefinitionInterface, Identifier, InstructionArg, IndexConverter} from "models/objects";
+import {IndexDefinition, indexConstantConverter, appDataIndexConverter} from "objects/indexDefinition";
 
 export interface LabelDefinition extends LabelDefinitionInterface {}
 
-export class LabelDefinition extends IndexDefinition {
-    constructor(identifier: Identifier, index: number) {
-        super(identifier);
-        this.lineIndex = index;
+export abstract class LabelDefinition extends IndexDefinition {
+    constructor(identifier: Identifier, indexConverter: IndexConverter, lineIndex: number) {
+        super(identifier, indexConverter);
+        this.lineIndex = lineIndex;
     }
 }
 
@@ -21,16 +15,22 @@ LabelDefinition.prototype.getDisplayString = function(): string {
     return this.identifier.getDisplayString() + " = " + this.index;
 }
 
-export class AppDataLabelDefinition extends LabelDefinition {
-    
+export class InstructionLabelDefinition extends LabelDefinition {
+    constructor(identifier: Identifier, lineIndex: number) {
+        super(identifier, indexConstantConverter, lineIndex);
+    }
 }
 
-AppDataLabelDefinition.prototype.createInstructionArg = function(): InstructionArg {
-    return instructionUtils.createInstructionArgWithIndex(
-        INSTRUCTION_REF_PREFIX.appData,
-        unsignedInteger64Type,
-        this.index
-    );
+export class JumpTableLabelDefinition extends LabelDefinition {
+    constructor(identifier: Identifier, lineIndex: number) {
+        super(identifier, indexConstantConverter, lineIndex);
+    }
+}
+
+export class AppDataLabelDefinition extends LabelDefinition {
+    constructor(identifier: Identifier, lineIndex: number) {
+        super(identifier, appDataIndexConverter, lineIndex);
+    }
 }
 
 

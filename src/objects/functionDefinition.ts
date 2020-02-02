@@ -7,7 +7,7 @@ import {
     Identifier, AssemblyLine, Expression, Region
 } from "models/objects";
 
-import {IndexDefinition} from "objects/indexDefinition";
+import {IndexDefinition, indexConstantConverter} from "objects/indexDefinition";
 import {AssemblyError} from "objects/assemblyError";
 import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
 import {IdentifierMap} from "objects/identifier";
@@ -20,7 +20,7 @@ export interface FunctionDefinition extends FunctionDefinitionInterface {}
 
 export abstract class FunctionDefinition extends IndexDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[], regionType: number) {
-        super(identifier);
+        super(identifier, indexConstantConverter);
         this.lineList = new InstructionLineList(lineList, this);
         this.regionType = regionType;
         this.assembler = null;

@@ -10,7 +10,7 @@ import {
 import {BetaType, unsignedInteger64Type} from "delegates/dataType";
 
 import {AssemblyError} from "objects/assemblyError";
-import {LabelDefinition, AppDataLabelDefinition} from "objects/labelDefinition";
+import {InstructionLabelDefinition, JumpTableLabelDefinition, AppDataLabelDefinition} from "objects/labelDefinition";
 import {IdentifierMap} from "objects/identifier";
 
 import {niceUtils} from "utils/niceUtils";
@@ -98,14 +98,14 @@ LabeledLineList.prototype.getDisplayString = function(title: string, indentation
     return niceUtils.joinTextList(tempTextList);
 }
 
-LabeledLineList.prototype.getLabelDefinitionClass = function(): LabelDefinitionClass {
-    return LabelDefinition;
-}
-
 export interface InstructionLineList extends InstructionLineListInterface {}
 
 export class InstructionLineList extends LabeledLineList {
     
+}
+
+InstructionLineList.prototype.getLabelDefinitionClass = function(): LabelDefinitionClass {
+    return InstructionLabelDefinition;
 }
 
 InstructionLineList.prototype.getLineElementLength = function(line: AssemblyLine): number {
@@ -155,6 +155,10 @@ DataLineList.prototype.createBuffer = function(): Buffer {
 
 export class JumpTableLineList extends DataLineList {
     
+}
+
+JumpTableLineList.prototype.getLabelDefinitionClass = function(): LabelDefinitionClass {
+    return JumpTableLabelDefinition;
 }
 
 JumpTableLineList.prototype.getLineElementLength = function(line: AssemblyLine): number {

@@ -12,7 +12,7 @@ import {
     MacroIdentifierExpression as MacroIdentifierExpressionInterface,
     BinaryExpression as BinaryExpressionInterface,
     SubscriptExpression as SubscriptExpressionInterface,
-    IdentifierMap, FunctionDefinition, Constant, NumberConstant, InstructionArg
+    IdentifierMap, FunctionDefinition, Constant, NumberConstant, InstructionArg, IndexDefinition
 } from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
@@ -73,6 +73,14 @@ Expression.prototype.evaluateToIdentifier = function(): Identifier {
     return output;
 }
 
+Expression.prototype.evaluateToIndexDefinitionOrNull = function(): IndexDefinition {
+    let tempIdentifier = this.evaluateToIdentifierOrNull();
+    if (tempIdentifier === null) {
+        return null;
+    }
+    return this.scope.getIndexDefinitionByIdentifier(tempIdentifier);
+}
+
 Expression.prototype.evaluateToConstant = function(): Constant {
     var output = this.evaluateToConstantOrNull();
     if (output === null) {
@@ -109,6 +117,10 @@ Expression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
 }
 
 Expression.prototype.evaluateToConstantOrNull = function(): Constant {
+    let tempDefinition = this.evaluateToIndexDefinitionOrNull();
+    if (tempDefinition !== null) {
+        return tempDefinition.createConstantOrNull();
+    }
     return null;
 }
 
@@ -125,18 +137,20 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
 }
 
 Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
+    let tempDefinition = this.evaluateToIndexDefinitionOrNull();
+    if (tempDefinition !== null) {
+        let tempResult = tempDefinition.createInstructionArgOrNull();
+        if (tempResult !== null) {
+            return tempResult;
+        }
+    }
     let tempConstant = this.evaluateToConstantOrNull();
     if (tempConstant !== null) {
         tempConstant.compress();
         return new ConstantInstructionArg(tempConstant);
     }
-    let tempIdentifier = this.evaluateToIdentifierOrNull();
-    if (tempIdentifier !== null) {
-        let tempDefinition = this.scope.getIndexDefinitionByIdentifier(
-            tempIdentifier
-        );
-        return tempDefinition.createInstructionArg();
-    }
+    // TODO: Throw a more informative error when the
+    // expression contains an unknown identifier.
     throw new AssemblyError("Expected number or pointer.");
 }
 

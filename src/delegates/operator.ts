@@ -124,6 +124,9 @@ IndexOperator.prototype.createConstantOrNull = function(operand: Expression): Co
     let tempDefinition = operand.scope.getIndexDefinitionByIdentifier(
         tempIdentifier
     );
+    if (tempDefinition === null) {
+        throw new AssemblyError("Expected index definition.");
+    }
     let output = new NumberConstant(tempDefinition.index, unsignedInteger64Type);
     output.compress();
     return output;

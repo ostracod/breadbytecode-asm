@@ -7,12 +7,24 @@ export interface Displayable {
     getDisplayString(): string;
 }
 
+export interface IndexConverter {
+    // Concrete subclasses must implement these methods:
+    createConstantOrNull(index: number): Constant;
+    createInstructionArgOrNull(index: number): InstructionArg;
+}
+
+export interface IndexRefConverter {
+    instructionRefPrefix: number;
+    dataType: DataType;
+}
+
 export interface IndexDefinition {
     identifier: Identifier;
     index: number;
+    indexConverter: IndexConverter;
     
-    // Concrete subclasses may override these methods:
-    createInstructionArg(): InstructionArg;
+    createConstantOrNull(): Constant;
+    createInstructionArgOrNull(): InstructionArg;
 }
 
 export interface ArgPerm {
@@ -111,6 +123,7 @@ export interface Expression {
     
     processExpressions(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression;
     evaluateToIdentifier(): Identifier;
+    evaluateToIndexDefinitionOrNull(): IndexDefinition;
     evaluateToConstant(): Constant;
     substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression;
     getConstantDataType(): DataType;
@@ -252,7 +265,6 @@ export interface MacroDefinition extends Displayable {
 
 export interface VariableDefinition extends Displayable, IndexDefinition {
     dataType: DataType;
-    instructionRefPrefix: number;
 }
 
 export interface ArgVariableDefinition extends VariableDefinition {
@@ -268,10 +280,10 @@ export interface LabeledLineList {
     getDisplayString(title: string, indentationLevel?: number): string;
     
     // Concrete subclasses may override these methods:
-    getLabelDefinitionClass(): LabelDefinitionClass;
     extractLabelDefinitions(): void;
     
     // Concrete subclasses must implement these methods:
+    getLabelDefinitionClass(): LabelDefinitionClass;
     getLineElementLength(line: AssemblyLine): number;
 }
 

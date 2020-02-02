@@ -49,7 +49,7 @@ const regionTypeNameMap = niceUtils.getReverseMap(REGION_TYPE);
 
 export interface Region extends RegionInterface {}
 
-export class Region {
+export abstract class Region {
     constructor(regionType: number) {
         this.regionType = regionType;
     }

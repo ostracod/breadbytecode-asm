@@ -281,7 +281,7 @@ Assembler.prototype.getIndexDefinitionByIdentifier = function(identifier: Identi
             return tempDefinition;
         }
     }
-    throw new AssemblyError(`Unknown identifier ${identifier.name}.`);
+    return null;
 }
 
 Assembler.prototype.determineIndexDefinitionMapList = function(): void {

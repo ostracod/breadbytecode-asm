@@ -2,9 +2,7 @@
 import {DataType} from "models/delegates";
 import {VariableDefinition as VariableDefinitionInterface, ArgVariableDefinition as ArgVariableDefinitionInterface, Identifier, ArgPerm, InstructionArg} from "models/objects";
 
-import {instructionUtils} from "utils/instructionUtils";
-
-import {IndexDefinition} from "objects/indexDefinition";
+import {IndexRefConverter, IndexDefinition} from "objects/indexDefinition";
 import {INSTRUCTION_REF_PREFIX} from "objects/instruction";
 import {NumberConstant} from "objects/constant";
 
@@ -12,22 +10,13 @@ export interface VariableDefinition extends VariableDefinitionInterface {}
 
 export class VariableDefinition extends IndexDefinition {
     constructor(identifier: Identifier, dataType: DataType, instructionRefPrefix: number) {
-        super(identifier);
+        super(identifier, new IndexRefConverter(instructionRefPrefix, dataType));
         this.dataType = dataType;
-        this.instructionRefPrefix = instructionRefPrefix;
     }
 }
 
 VariableDefinition.prototype.getDisplayString = function(): string {
     return "VAR " + this.identifier.getDisplayString() + ", " + this.dataType.getName();
-}
-
-VariableDefinition.prototype.createInstructionArg = function(): InstructionArg {
-    return instructionUtils.createInstructionArgWithIndex(
-        this.instructionRefPrefix,
-        this.dataType,
-        this.index
-    );
 }
 
 export class GlobalVariableDefinition extends VariableDefinition {
