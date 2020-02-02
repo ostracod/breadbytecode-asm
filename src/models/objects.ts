@@ -82,6 +82,7 @@ export interface Assembler {
 export interface AssemblyError {
     message: string;
     lineNumber: number;
+    filePath: string;
 }
 
 export interface AssemblyLine {
@@ -89,6 +90,7 @@ export interface AssemblyLine {
     argList: Expression[];
     lineNumber: number;
     codeBlock: AssemblyLine[];
+    filePath: string;
     
     copy(): AssemblyLine;
     getDisplayString(indentationLevel: number): string;

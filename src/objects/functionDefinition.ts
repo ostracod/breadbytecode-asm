@@ -152,16 +152,15 @@ FunctionDefinition.prototype.createRegion = function(): Region {
         this.instructionList.map(instruction => instruction.createBuffer())
     );
     let instructionsRegion = new AtomicRegion(REGION_TYPE.instrs, tempBuffer);
-    let jumpTableRegion = new AtomicRegion(
-        REGION_TYPE.jmpTable,
-        this.jumpTableLineList.createBuffer()
-    );
     let tempRegionList = [
         argFrameLengthRegion,
         localFrameLengthRegion,
-        instructionsRegion,
-        jumpTableRegion
+        instructionsRegion
     ].concat(this.createRegionHelper());
+    tempBuffer = this.jumpTableLineList.createBuffer();
+    if (tempBuffer.length > 0) {
+        tempRegionList.push(new AtomicRegion(REGION_TYPE.jmpTable, tempBuffer));
+    }
     return new CompositeRegion(this.regionType, tempRegionList);
 }
 

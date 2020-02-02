@@ -42,19 +42,12 @@ LabeledLineList.prototype.getLineElementIndexMap = function(): {[lineIndex: numb
     var elementIndex = 0;
     var lineIndex = 0;
     output[lineIndex] = elementIndex;
-    while (lineIndex < this.lineList.length) {
-        var tempLine = this.lineList[lineIndex];
+    this.processLines(line => {
         lineIndex += 1;
-        try {
-            elementIndex += this.getLineElementLength(tempLine);
-            output[lineIndex] = elementIndex;
-        } catch (error) {
-            if (error instanceof AssemblyError) {
-                error.lineNumber = tempLine.lineNumber;
-            }
-            throw error;
-        }
-    }
+        elementIndex += this.getLineElementLength(line);
+        output[lineIndex] = elementIndex;
+        return null;
+    });
     return output;
 }
 

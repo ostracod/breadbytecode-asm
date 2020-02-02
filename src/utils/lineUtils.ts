@@ -82,8 +82,13 @@ LineUtils.prototype.processLines = function(
         try {
             var tempResult1 = processLine(tempLine);
         } catch(error) {
-            if (error instanceof AssemblyError && error.lineNumber === null) {
-                error.lineNumber = tempLine.lineNumber;
+            if (error instanceof AssemblyError) {
+                if (error.lineNumber === null) {
+                    error.lineNumber = tempLine.lineNumber;
+                }
+                if (error.filePath === null) {
+                    error.filePath = tempLine.filePath;
+                }
             }
             throw error;
         }

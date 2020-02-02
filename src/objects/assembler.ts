@@ -158,9 +158,20 @@ Assembler.prototype.processIncludeDirectives = function(lineList: AssemblyLine[]
 }
 
 Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyLine[] {
-    var tempLineTextList = parseUtils.loadAssemblyFileContent(path);
-    var tempLineList = parseUtils.parseAssemblyLines(tempLineTextList);
-    tempLineList = parseUtils.collapseCodeBlocks(tempLineList);
+    let tempLineTextList = parseUtils.loadAssemblyFileContent(path);
+    let tempLineList;
+    try {
+        tempLineList = parseUtils.parseAssemblyLines(tempLineTextList);
+        for (let line of tempLineList) {
+            line.filePath = path;
+        }
+        tempLineList = parseUtils.collapseCodeBlocks(tempLineList);
+    } catch(error) {
+        if (error instanceof AssemblyError) {
+            error.filePath = path;
+        }
+        throw error;
+    }
     tempLineList = this.extractMacroDefinitions(tempLineList);
     // We do all of this in a loop because included files may define
     // macros, and macros may define INCLUDE directives.
@@ -358,10 +369,10 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
         this.generateAppFileRegion();
     } catch(error) {
         if (error instanceof AssemblyError) {
-            if (error.lineNumber === null) {
+            if (error.lineNumber === null || error.filePath === null) {
                 console.log("Error: " + error.message);
             } else {
-                console.log("Error on line " + error.lineNumber + ": " + error.message);
+                console.log(`Error in "${error.filePath}" on line ${error.lineNumber}: ${error.message}`);
             }
             return;
         } else {

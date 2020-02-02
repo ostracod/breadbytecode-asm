@@ -18,6 +18,7 @@ export class AssemblyLine {
         this.directiveName = directiveName;
         this.argList = argList;
         this.lineNumber = null;
+        this.filePath = null;
         // List of AssemblyLine or null.
         this.codeBlock = null;
     }
@@ -27,6 +28,7 @@ AssemblyLine.prototype.copy = function(): AssemblyLine {
     var tempArgList = expressionUtils.copyExpressions(this.argList);
     var output = new AssemblyLine(this.directiveName, tempArgList);
     output.lineNumber = this.lineNumber;
+    output.filePath = this.filePath;
     if (this.codeBlock === null) {
         output.codeBlock = null;
     } else {
