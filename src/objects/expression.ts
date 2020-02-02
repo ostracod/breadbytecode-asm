@@ -12,7 +12,7 @@ import {
     MacroIdentifierExpression as MacroIdentifierExpressionInterface,
     BinaryExpression as BinaryExpressionInterface,
     SubscriptExpression as SubscriptExpressionInterface,
-    IdentifierMap, FunctionDefinition, Constant, NumberConstant, InstructionArg, IndexDefinition
+    IdentifierMap, FunctionDefinition, Constant, NumberConstant, InstructionArg, IndexDefinition, VersionNumber
 } from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
@@ -20,6 +20,7 @@ import {Identifier, MacroIdentifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
 import {InstructionRef, PointerInstructionRef, ConstantInstructionArg, RefInstructionArg, nameInstructionRefMap} from "objects/instruction";
 import {builtInConstantSet} from "objects/constant";
+import {DEPENDENCY_MODIFIER} from "objects/dependencyDefinition";
 
 import {PointerType, pointerType, signedInteger64Type, StringType} from "delegates/dataType";
 import {macroIdentifierOperator} from "delegates/operator";
@@ -128,6 +129,14 @@ Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
     throw new AssemblyError("Expected arg perm.");
 }
 
+Expression.prototype.evaluateToVersionNumber = function(): VersionNumber {
+    throw new AssemblyError("Expected version number.");
+}
+
+Expression.prototype.evaluateToDependencyModifier = function(): number {
+    throw new AssemblyError("Expected dependency modifier.");
+}
+
 Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
     let tempDefinition = this.evaluateToIndexDefinitionOrNull();
     if (tempDefinition !== null) {
@@ -215,6 +224,13 @@ ArgWord.prototype.evaluateToArgPerm = function(): ArgPerm {
     return new ArgPerm(this.text);
 }
 
+ArgWord.prototype.evaluateToDependencyModifier = function(): number {
+    if (this.text in DEPENDENCY_MODIFIER) {
+        return DEPENDENCY_MODIFIER[this.text];
+    }
+    return ArgTerm.prototype.evaluateToDependencyModifier.call(this);
+}
+
 ArgWord.prototype.evaluateToInstructionRef = function(): InstructionRef {
     if (this.text in nameInstructionRefMap) {
         return nameInstructionRefMap[this.text];
@@ -254,20 +270,22 @@ ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
 export interface ArgVersionNumber extends ArgVersionNumberInterface {}
 
 export class ArgVersionNumber extends ArgTerm {
-    constructor(majorNumber: number, minorNumber: number, patchNumber: number) {
+    constructor(versionNumber: VersionNumber) {
         super();
-        this.majorNumber = majorNumber;
-        this.minorNumber = minorNumber;
-        this.patchNumber = patchNumber;
+        this.versionNumber = versionNumber;
     }
 }
 
 ArgVersionNumber.prototype.copy = function(): Expression {
-    return new ArgVersionNumber(this.majorNumber, this.minorNumber, this.patchNumber);
+    return new ArgVersionNumber(this.versionNumber.copy());
 }
 
 ArgVersionNumber.prototype.getDisplayString = function(): string {
-    return this.majorNumber + "." + this.minorNumber + "." + this.patchNumber;
+    return this.versionNumber.getDisplayString();
+}
+
+ArgVersionNumber.prototype.evaluateToVersionNumber = function(): VersionNumber {
+    return this.versionNumber.copy();
 }
 
 export interface ArgString extends ArgStringInterface {}

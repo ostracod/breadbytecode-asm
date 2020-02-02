@@ -10,6 +10,7 @@ import {AssemblyError} from "objects/assemblyError";
 import {AssemblyLine} from "objects/assemblyLine";
 import {SubscriptExpression, ArgWord, ArgNumber, ArgVersionNumber, ArgString} from "objects/expression";
 import {NumberConstant} from "objects/constant";
+import {VersionNumber} from "objects/versionNumber";
 
 import {unaryOperatorList, binaryOperatorList} from "delegates/operator";
 import {signedInteger64Type, float64Type, signedIntegerTypeList} from "delegates/dataType";
@@ -166,11 +167,12 @@ ParseUtils.prototype.parseArgNumeric = function(text: string, index: number): {a
         let tempConstant = new NumberConstant(parseFloat(tempText), float64Type);
         tempArgNumeric = new ArgNumber(tempConstant);
     } else if (tempComponentList.length == 3) {
-        tempArgNumeric = new ArgVersionNumber(
+        let tempVersionNumber = new VersionNumber(
             parseInt(tempComponentList[0]),
             parseInt(tempComponentList[1]),
             parseInt(tempComponentList[2])
         );
+        tempArgNumeric = new ArgVersionNumber(tempVersionNumber);
     } else {
         throw new AssemblyError("Malformed numeric argument.");
     }

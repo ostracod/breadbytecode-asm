@@ -18,7 +18,7 @@ export interface IndexRefConverter {
     dataType: DataType;
 }
 
-export interface IndexDefinition {
+export interface IndexDefinition extends Displayable {
     identifier: Identifier;
     index: number;
     indexConverter: IndexConverter;
@@ -30,7 +30,7 @@ export interface IndexDefinition {
 export interface ArgPerm {
     access: number;
     recipient: number;
-    attributeMap: {[attribute: string]: boolean};
+    hasAttributeMap: {[attribute: string]: boolean};
     
     getDisplayString(): string;
     createBuffer(index: number): Buffer;
@@ -50,8 +50,10 @@ export interface Assembler {
     functionDefinitionMap: IdentifierMap<FunctionDefinition>;
     appDataLineList: LabeledLineList;
     globalVariableDefinitionMap: IdentifierMap<VariableDefinition>;
+    dependencyDefinitionMap: IdentifierMap<DependencyDefinition>;
     nextMacroInvocationId: number;
     nextFunctionDefinitionIndex: number;
+    nextDependencyDefinitionIndex: number;
     scope: Scope;
     globalFrameLength: FrameLength;
     appFileRegion: Region;
@@ -71,9 +73,11 @@ export interface Assembler {
     extractAliasDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
     expandAliasInvocations(): void;
     addFunctionDefinition(functionDefinition: FunctionDefinition): void;
+    addDependencyDefinition(dependencyDefinition: DependencyDefinition): void;
     extractFunctionDefinitions(): void;
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
+    extractDependencyDefinitions(): void;
     populateScopeDefinitions(): void;
     assembleInstructions(): void;
     generateAppFileRegion(): void;
@@ -139,6 +143,8 @@ export interface Expression {
     evaluateToString(): string;
     evaluateToDataType(): DataType;
     evaluateToArgPerm(): ArgPerm;
+    evaluateToVersionNumber(): VersionNumber;
+    evaluateToDependencyModifier(): number;
     evaluateToInstructionArg(): InstructionArg;
     evaluateToInstructionRef(): InstructionRef;
     populateMacroInvocationId(macroInvocationId: number): void;
@@ -163,9 +169,7 @@ export interface ArgNumber extends ArgTerm {
 }
 
 export interface ArgVersionNumber extends ArgTerm {
-    majorNumber: number;
-    minorNumber: number;
-    patchNumber: number;
+    versionNumber: VersionNumber;
 }
 
 export interface ArgString extends ArgTerm {
@@ -193,7 +197,7 @@ export interface SubscriptExpression extends Expression {
     dataTypeExpression: Expression;
 }
 
-export interface FunctionDefinition extends Displayable, IndexDefinition {
+export interface FunctionDefinition extends IndexDefinition {
     lineList: LabeledLineList;
     regionType: number;
     jumpTableLineList: LabeledLineList;
@@ -261,7 +265,7 @@ export interface IdentifierMap<T> {
     getValueList(): T[];
 }
 
-export interface LabelDefinition extends Displayable, IndexDefinition {
+export interface LabelDefinition extends IndexDefinition {
     lineIndex: number;
 }
 
@@ -273,7 +277,7 @@ export interface MacroDefinition extends Displayable {
     invoke(argList: Expression[], macroInvocationId: number): AssemblyLine[];
 }
 
-export interface VariableDefinition extends Displayable, IndexDefinition {
+export interface VariableDefinition extends IndexDefinition {
     dataType: DataType;
 }
 
@@ -370,6 +374,30 @@ export interface FrameLength {
     betaLength: number;
     
     createBuffer(): Buffer;
+}
+
+export interface VersionNumber {
+    majorNumber: number;
+    minorNumber: number;
+    patchNumber: number;
+    
+    copy(): VersionNumber;
+    getDisplayString(): string;
+}
+
+export interface DependencyDefinition extends IndexDefinition {
+    path: string;
+    dependencyModifierList: number[];
+    
+    createRegion(): Region;
+}
+
+export interface VersionDependencyDefinition extends DependencyDefinition {
+    version: VersionNumber;
+}
+
+export interface InterfaceDependencyDefinition extends DependencyDefinition {
+    dependencyIndexList: number[];
 }
 
 

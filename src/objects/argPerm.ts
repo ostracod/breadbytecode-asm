@@ -17,9 +17,9 @@ var PERM_RECIPIENT = {
 };
 
 var PERM_ATTRIBUTE = {
-    isRecursive: 0,
-    propagationCountIsInfinite: 1,
-    isTemporary: 2
+    isRecursive: 4,
+    propagationCountIsInfinite: 2,
+    isTemporary: 1
 };
 
 var characterPairAccessMap = {
@@ -64,18 +64,18 @@ export class ArgPerm {
         }
         this.recipient = characterRecipientMap[tempCharacter];
         // Map from attribute enumeration value to boolean.
-        this.attributeMap = {};
+        this.hasAttributeMap = {};
         var attributeName;
         for (attributeName in PERM_ATTRIBUTE) {
             var tempAttribute = PERM_ATTRIBUTE[attributeName];
-            this.attributeMap[tempAttribute] = false;
+            this.hasAttributeMap[tempAttribute] = false;
         }
         var index = 3;
         while (index < name.length) {
             var tempCharacter = name.charAt(index);
             if (tempCharacter in characterAttributeMap) {
                 var tempAttribute = characterAttributeMap[tempCharacter];
-                this.attributeMap[tempAttribute] = true;
+                this.hasAttributeMap[tempAttribute] = true;
             } else {
                 throw new AssemblyError("Invalid arg perm.");
             }
@@ -87,8 +87,8 @@ export class ArgPerm {
 ArgPerm.prototype.getDisplayString = function(): string {
     var output = accessCharacterPairMap[this.access] + recipientCharacterMap[this.recipient];
     var attribute;
-    for (attribute in this.attributeMap) {
-        if (this.attributeMap[attribute]) {
+    for (attribute in this.hasAttributeMap) {
+        if (this.hasAttributeMap[attribute]) {
             output = output + attributeCharacterMap[attribute];
         }
     }
@@ -97,14 +97,10 @@ ArgPerm.prototype.getDisplayString = function(): string {
 
 ArgPerm.prototype.createBuffer = function(index: number): Buffer {
     let tempBitfield = (this.access << 6) | (this.recipient << 4);
-    if (this.attributeMap[PERM_ATTRIBUTE.isRecursive]) {
-        tempBitfield |= 0x04;
-    }
-    if (this.attributeMap[PERM_ATTRIBUTE.propagationCountIsInfinite]) {
-        tempBitfield |= 0x02;
-    }
-    if (this.attributeMap[PERM_ATTRIBUTE.isTemporary]) {
-        tempBitfield |= 0x01;
+    for (let attribute in this.hasAttributeMap) {
+        if (this.hasAttributeMap[attribute]) {
+            tempBitfield |= parseInt(attribute);
+        }
     }
     let output = Buffer.alloc(3);
     output.writeUInt16LE(index, 0);

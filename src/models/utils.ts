@@ -1,7 +1,7 @@
 
 import {ExpressionProcessor, LineProcessor, NumberTypeClass, VariableDefinitionClass, ArgNumeric, MixedNumber} from "models/items";
 import {Operator, DataType, NumberType} from "models/delegates";
-import {Expression, AssemblyLine, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition, InstructionArg, FrameLength} from "models/objects";
+import {Expression, AssemblyLine, Identifier, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition, InstructionArg, FrameLength} from "models/objects";
 
 export interface DataTypeUtils {
     getDataTypeByName(name: string): DataType;
@@ -105,6 +105,13 @@ export interface MathUtils {
     convertMixedNumberToBigInt(value: MixedNumber): bigint;
     convertNumberToHexadecimal(value: number, length: number): string;
     convertBufferToHexadecimal(buffer: Buffer): string;
+}
+
+export interface DependencyUtils {
+    evaluateDependencyArgs(
+        argList: Expression[],
+        modifiersStartIndex: number
+    ): {identifier: Identifier, path: string, dependencyModifierList: number[]};
 }
 
 
