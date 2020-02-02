@@ -48,7 +48,7 @@ Data types:
 * `s8`, `s16`, `s32`, and `s64` = Signed integer
 * `f32` and `f64` = Floating point number
 
-Expression keywords:
+Built-in identifiers:
 
 * `localFrame` refers to the current local frame
 * `globalFrame` refers to the global frame

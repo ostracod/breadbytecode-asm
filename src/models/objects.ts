@@ -234,6 +234,7 @@ export interface Identifier {
     
     getDisplayString(): string;
     getMapKey(): string;
+    getIsBuiltIn(): boolean;
 }
 
 export interface MacroIdentifier extends Identifier {

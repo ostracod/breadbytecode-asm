@@ -5,6 +5,16 @@ import {
     IdentifierMap as IdentifierMapInterface,
     IndexDefinition
 } from "models/objects";
+import {nameInstructionRefMap} from "objects/instruction";
+import {builtInConstantSet} from "objects/constant";
+
+const builtInIdentifierNameSet = {};
+for (let name in nameInstructionRefMap) {
+    builtInIdentifierNameSet[name] = true;
+}
+for (let name in builtInConstantSet) {
+    builtInIdentifierNameSet[name] = true;
+}
 
 export interface Identifier extends IdentifierInterface {}
 
@@ -23,6 +33,10 @@ Identifier.prototype.getMapKey = function(): string {
     return this.name;
 }
 
+Identifier.prototype.getIsBuiltIn = function(): boolean {
+    return (this.name in builtInIdentifierNameSet);
+}
+
 export interface MacroIdentifier extends MacroIdentifierInterface {}
 
 export class MacroIdentifier extends Identifier {
@@ -38,6 +52,10 @@ MacroIdentifier.prototype.getDisplayString = function(): string {
 
 MacroIdentifier.prototype.getMapKey = function(): string {
     return this.name + " " + this.macroInvocationId;
+}
+
+MacroIdentifier.prototype.getIsBuiltIn = function(): boolean {
+    return false;
 }
 
 export interface IdentifierMap<T> extends IdentifierMapInterface<T> {}

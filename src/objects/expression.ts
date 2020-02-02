@@ -18,21 +18,13 @@ import {
 import {AssemblyError} from "objects/assemblyError";
 import {Identifier, MacroIdentifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
-import {InstructionRef, PointerInstructionRef, ConstantInstructionArg, RefInstructionArg, INSTRUCTION_REF_PREFIX} from "objects/instruction";
-import {NullConstant} from "objects/constant";
+import {InstructionRef, PointerInstructionRef, ConstantInstructionArg, RefInstructionArg, nameInstructionRefMap} from "objects/instruction";
+import {builtInConstantSet} from "objects/constant";
 
 import {PointerType, pointerType, signedInteger64Type, StringType} from "delegates/dataType";
 import {macroIdentifierOperator} from "delegates/operator";
 
 import {dataTypeUtils} from "utils/dataTypeUtils";
-
-const keywordInstructionRefMap = {
-    globalFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.globalFrame),
-    localFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.localFrame),
-    prevArgFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.prevArgFrame),
-    nextArgFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.nextArgFrame),
-    appData: new InstructionRef(INSTRUCTION_REF_PREFIX.appData)
-};
 
 export interface Expression extends ExpressionInterface {}
 
@@ -149,9 +141,12 @@ Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
         tempConstant.compress();
         return new ConstantInstructionArg(tempConstant);
     }
-    // TODO: Throw a more informative error when the
-    // expression contains an unknown identifier.
-    throw new AssemblyError("Expected number or pointer.");
+    let tempIdentifier = this.evaluateToIdentifierOrNull();
+    if (tempIdentifier !== null && !tempIdentifier.getIsBuiltIn()) {
+        throw new AssemblyError(`Unknown identifier "${tempIdentifier.name}".`);
+    } else {
+        throw new AssemblyError("Expected number or pointer.");
+    }
 }
 
 Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
@@ -206,8 +201,8 @@ ArgWord.prototype.evaluateToIdentifierOrNull = function(): Identifier {
 }
 
 ArgWord.prototype.evaluateToConstantOrNull = function(): Constant {
-    if (this.text === "null") {
-        return new NullConstant();
+    if (this.text in builtInConstantSet) {
+        return builtInConstantSet[this.text].copy();
     }
     return ArgTerm.prototype.evaluateToConstantOrNull.call(this);
 }
@@ -221,8 +216,8 @@ ArgWord.prototype.evaluateToArgPerm = function(): ArgPerm {
 }
 
 ArgWord.prototype.evaluateToInstructionRef = function(): InstructionRef {
-    if (this.text in keywordInstructionRefMap) {
-        return keywordInstructionRefMap[this.text];
+    if (this.text in nameInstructionRefMap) {
+        return nameInstructionRefMap[this.text];
     }
     return ArgTerm.prototype.evaluateToInstructionRef.call(this);
 }

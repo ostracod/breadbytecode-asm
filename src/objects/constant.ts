@@ -97,4 +97,8 @@ NullConstant.prototype.createBuffer = function(): Buffer {
     return Buffer.alloc(0);
 }
 
+export const builtInConstantSet = {
+    null: new NullConstant()
+};
+
 

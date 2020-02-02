@@ -152,4 +152,12 @@ RefInstructionArg.prototype.createBuffer = function(): Buffer {
     return this.instructionRef.createBuffer(this.dataType, this.indexArg);
 }
 
+export const nameInstructionRefMap = {
+    globalFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.globalFrame),
+    localFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.localFrame),
+    prevArgFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.prevArgFrame),
+    nextArgFrame: new InstructionRef(INSTRUCTION_REF_PREFIX.nextArgFrame),
+    appData: new InstructionRef(INSTRUCTION_REF_PREFIX.appData)
+};
+
 
