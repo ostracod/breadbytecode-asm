@@ -2,6 +2,9 @@
 import {DataType} from "models/delegates";
 import {VariableDefinition as VariableDefinitionInterface, ArgVariableDefinition as ArgVariableDefinitionInterface, Identifier, ArgPerm, InstructionArg} from "models/objects";
 
+import {PointerType} from "delegates/dataType";
+
+import {AssemblyError} from "objects/assemblyError";
 import {IndexRefConverter, IndexDefinition} from "objects/indexDefinition";
 import {INSTRUCTION_REF_PREFIX} from "objects/instruction";
 import {NumberConstant} from "objects/constant";
@@ -36,6 +39,9 @@ export interface ArgVariableDefinition extends ArgVariableDefinitionInterface {}
 export class ArgVariableDefinition extends VariableDefinition {
     constructor(identifier: Identifier, dataType: DataType, permList: ArgPerm[]) {
         super(identifier, dataType, INSTRUCTION_REF_PREFIX.prevArgFrame);
+        if (!(this.dataType instanceof PointerType) && permList.length > 0) {
+            throw new AssemblyError("Beta argument cannot be associated with permissions.");
+        }
         this.permList = permList;
     }
 }

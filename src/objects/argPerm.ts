@@ -95,4 +95,21 @@ ArgPerm.prototype.getDisplayString = function(): string {
     return output;
 }
 
+ArgPerm.prototype.createBuffer = function(index: number): Buffer {
+    let tempBitfield = (this.access << 6) | (this.recipient << 4);
+    if (this.attributeMap[PERM_ATTRIBUTE.isRecursive]) {
+        tempBitfield |= 0x04;
+    }
+    if (this.attributeMap[PERM_ATTRIBUTE.propagationCountIsInfinite]) {
+        tempBitfield |= 0x02;
+    }
+    if (this.attributeMap[PERM_ATTRIBUTE.isTemporary]) {
+        tempBitfield |= 0x01;
+    }
+    let output = Buffer.alloc(3);
+    output.writeUInt16LE(index, 0);
+    output.writeUInt8(tempBitfield, 2);
+    return output;
+}
+
 

@@ -7,14 +7,16 @@ import {
     Identifier, AssemblyLine, Expression, Region
 } from "models/objects";
 
+import {niceUtils} from "utils/niceUtils";
+import {variableUtils} from "utils/variableUtils";
+
+import {PointerType} from "delegates/dataType";
+
 import {IndexDefinition, indexConstantConverter} from "objects/indexDefinition";
 import {AssemblyError} from "objects/assemblyError";
 import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
 import {IdentifierMap} from "objects/identifier";
 import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
-
-import {niceUtils} from "utils/niceUtils";
-import {variableUtils} from "utils/variableUtils";
 
 export interface FunctionDefinition extends FunctionDefinitionInterface {}
 
@@ -191,6 +193,32 @@ InterfaceFunctionDefinition.prototype.getTitle = function(): string {
 
 InterfaceFunctionDefinition.prototype.getTitleSuffix = function(): string {
     return this.interfaceIndexExpression.getDisplayString()
+}
+
+InterfaceFunctionDefinition.prototype.createRegionHelper = function(): Region[] {
+    let nameRegion = new AtomicRegion(REGION_TYPE.name, Buffer.from(this.identifier.name));
+    let argPermsRegion = this.getArgPermsRegion();
+    let output = [nameRegion];
+    if (argPermsRegion !== null) {
+        output.push(argPermsRegion);
+    }
+    return output;
+}
+
+InterfaceFunctionDefinition.prototype.getArgPermsRegion = function(): Region {
+    let bufferList = [];
+    this.argVariableDefinitionMap.iterate(definition => {
+        if (!(definition.dataType instanceof PointerType)) {
+            return;
+        }
+        for (let argPerm of definition.permList) {
+            bufferList.push(argPerm.createBuffer(definition.index));
+        }
+    });
+    if (bufferList.length <= 0) {
+        return null;
+    }
+    return new AtomicRegion(REGION_TYPE.argPerms, Buffer.concat(bufferList));
 }
 
 export interface PublicFunctionDefinition extends PublicFunctionDefinitionInterface {}

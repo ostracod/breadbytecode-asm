@@ -33,6 +33,7 @@ export interface ArgPerm {
     attributeMap: {[attribute: string]: boolean};
     
     getDisplayString(): string;
+    createBuffer(index: number): Buffer;
 }
 
 export interface Scope {
@@ -217,6 +218,8 @@ export interface FunctionDefinition extends Displayable, IndexDefinition, Scope 
 
 export interface InterfaceFunctionDefinition extends FunctionDefinition {
     interfaceIndexExpression: Expression;
+    
+    getArgPermsRegion(): Region;
     
     // Concrete subclasses may override these methods:
     getTitleSuffix(): string;
