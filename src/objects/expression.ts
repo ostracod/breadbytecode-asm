@@ -86,6 +86,14 @@ Expression.prototype.evaluateToConstant = function(): Constant {
     return output;
 }
 
+Expression.prototype.evaluateToDependencyModifier = function(): number {
+    let output = this.evaluateToDependencyModifierOrNull();
+    if (output === null) {
+        throw new AssemblyError("Expected dependency modifier.");
+    }
+    return output;
+}
+
 Expression.prototype.substituteIdentifiers = function(identifierExpressionMap: IdentifierMap<Expression>): Expression {
     var tempIdentifier = this.evaluateToIdentifierOrNull();
     if (tempIdentifier === null) {
@@ -133,8 +141,8 @@ Expression.prototype.evaluateToVersionNumber = function(): VersionNumber {
     throw new AssemblyError("Expected version number.");
 }
 
-Expression.prototype.evaluateToDependencyModifier = function(): number {
-    throw new AssemblyError("Expected dependency modifier.");
+Expression.prototype.evaluateToDependencyModifierOrNull = function(): number {
+    return null;
 }
 
 Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
@@ -224,11 +232,11 @@ ArgWord.prototype.evaluateToArgPerm = function(): ArgPerm {
     return new ArgPerm(this.text);
 }
 
-ArgWord.prototype.evaluateToDependencyModifier = function(): number {
+ArgWord.prototype.evaluateToDependencyModifierOrNull = function(): number {
     if (this.text in DEPENDENCY_MODIFIER) {
         return DEPENDENCY_MODIFIER[this.text];
     }
-    return ArgTerm.prototype.evaluateToDependencyModifier.call(this);
+    return ArgTerm.prototype.evaluateToDependencyModifierOrNull.call(this);
 }
 
 ArgWord.prototype.evaluateToInstructionRef = function(): InstructionRef {

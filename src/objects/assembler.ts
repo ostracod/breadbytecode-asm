@@ -16,7 +16,7 @@ import {
 } from "objects/functionDefinition";
 import {AppDataLineList} from "objects/labeledLineList";
 import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
-import {DependencyDefinition} from "objects/dependencyDefinition";
+import {DependencyDefinition, VersionDependencyDefinition, InterfaceDependencyDefinition} from "objects/dependencyDefinition";
 
 import {parseUtils} from "utils/parseUtils";
 import {lineUtils} from "utils/lineUtils";
@@ -307,6 +307,40 @@ Assembler.prototype.extractDependencyDefinitions = function(): void {
             let tempDefinition = new DependencyDefinition(
                 tempResult.identifier,
                 tempResult.path,
+                tempResult.dependencyModifierList
+            );
+            this.addDependencyDefinition(tempDefinition);
+            return [];
+        }
+        if (tempDirectiveName == "VER_DEP") {
+            let tempResult = dependencyUtils.evaluateDependencyArgs(tempArgList, 3);
+            let tempVersionNumber = tempArgList[2].evaluateToVersionNumber();
+            let tempDefinition = new VersionDependencyDefinition(
+                tempResult.identifier,
+                tempResult.path,
+                tempVersionNumber,
+                tempResult.dependencyModifierList
+            );
+            this.addDependencyDefinition(tempDefinition);
+            return [];
+        }
+        if (tempDirectiveName == "IFACE_DEP") {
+            let tempDependencyExpressionList = [];
+            let index = 2;
+            while (index < tempArgList.length) {
+                let tempExpression = tempArgList[index];
+                let tempResult = tempExpression.evaluateToDependencyModifierOrNull();
+                if (tempResult !== null) {
+                    break;
+                }
+                tempDependencyExpressionList.push(tempExpression);
+                index += 1;
+            }
+            let tempResult = dependencyUtils.evaluateDependencyArgs(tempArgList, index);
+            let tempDefinition = new InterfaceDependencyDefinition(
+                tempResult.identifier,
+                tempResult.path,
+                tempDependencyExpressionList,
                 tempResult.dependencyModifierList
             );
             this.addDependencyDefinition(tempDefinition);

@@ -134,6 +134,7 @@ export interface Expression {
     evaluateToIdentifier(): Identifier;
     evaluateToIndexDefinitionOrNull(): IndexDefinition;
     evaluateToConstant(): Constant;
+    evaluateToDependencyModifier(): number;
     substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression;
     getConstantDataType(): DataType;
     
@@ -144,7 +145,7 @@ export interface Expression {
     evaluateToDataType(): DataType;
     evaluateToArgPerm(): ArgPerm;
     evaluateToVersionNumber(): VersionNumber;
-    evaluateToDependencyModifier(): number;
+    evaluateToDependencyModifierOrNull(): number;
     evaluateToInstructionArg(): InstructionArg;
     evaluateToInstructionRef(): InstructionRef;
     populateMacroInvocationId(macroInvocationId: number): void;
@@ -390,14 +391,17 @@ export interface DependencyDefinition extends IndexDefinition {
     dependencyModifierList: number[];
     
     createRegion(): Region;
+    
+    // Concrete subclasses may override these methods:
+    getDisplayStringHelper(): string;
 }
 
 export interface VersionDependencyDefinition extends DependencyDefinition {
-    version: VersionNumber;
+    versionNumber: VersionNumber;
 }
 
 export interface InterfaceDependencyDefinition extends DependencyDefinition {
-    dependencyIndexList: number[];
+    dependencyExpressionList: Expression[];
 }
 
 
