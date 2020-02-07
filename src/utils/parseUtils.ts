@@ -376,7 +376,12 @@ ParseUtils.prototype.parseLineText = function(text: string): AssemblyLine {
         }
         index += 1;
     }
-    return new AssemblyLine(tempDirectiveName, tempArgList);
+    let output = new AssemblyLine(tempDirectiveName, tempArgList);
+    output.processExpressions(expression => {
+        expression.line = output;
+        return null;
+    });
+    return output;
 }
 
 ParseUtils.prototype.loadAssemblyFileContent = function(path: string): string[] {

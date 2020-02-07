@@ -31,12 +31,28 @@ export interface Expression extends ExpressionInterface {}
 
 export abstract class Expression {
     constructor() {
+        this.line = null;
         this.scope = null;
         // We cache this value so that we can verify
         // the output of evaluateToConstant.
         // Use Expression.getConstantDataType to cache
         // and retrieve this value.
         this.constantDataType = null;
+    }
+}
+
+Expression.prototype.createError = function(message: string): AssemblyError {
+    throw new AssemblyError(message, this.line.lineNumber, this.line.filePath);
+}
+
+Expression.prototype.handleError = function(error: Error): void {
+    if (error instanceof AssemblyError) {
+        if (error.lineNumber === null) {
+            error.lineNumber = this.line.lineNumber;
+        }
+        if (error.filePath === null) {
+            error.filePath = this.line.filePath;
+        }
     }
 }
 
@@ -61,7 +77,7 @@ Expression.prototype.processExpressions = function(processExpression: Expression
 Expression.prototype.evaluateToIdentifier = function(): Identifier {
     var output = this.evaluateToIdentifierOrNull();
     if (output === null) {
-        throw new AssemblyError("Expected identifier.");
+        throw this.createError("Expected identifier.");
     }
     return output;
 }
@@ -77,11 +93,11 @@ Expression.prototype.evaluateToIndexDefinitionOrNull = function(): IndexDefiniti
 Expression.prototype.evaluateToConstant = function(): Constant {
     var output = this.evaluateToConstantOrNull();
     if (output === null) {
-        throw new AssemblyError("Expected constant.");
+        throw this.createError("Expected constant.");
     }
     if (this.constantDataType !== null
             && !this.constantDataType.equals(output.getDataType())) {
-        throw new AssemblyError("Constant has inconsistent data type.");
+        throw this.createError("Constant has inconsistent data type.");
     }
     return output;
 }
@@ -89,7 +105,7 @@ Expression.prototype.evaluateToConstant = function(): Constant {
 Expression.prototype.evaluateToNumber = function(): number {
     let tempConstant = this.evaluateToConstantOrNull();
     if (tempConstant === null || !(tempConstant instanceof NumberConstant)) {
-        throw new AssemblyError("Expected number constant.");
+        throw this.createError("Expected number constant.");
     }
     let tempNumberConstant = tempConstant as NumberConstant;
     return Number(tempNumberConstant.value);
@@ -98,7 +114,7 @@ Expression.prototype.evaluateToNumber = function(): number {
 Expression.prototype.evaluateToDependencyModifier = function(): number {
     let output = this.evaluateToDependencyModifierOrNull();
     if (output === null) {
-        throw new AssemblyError("Expected dependency modifier.");
+        throw this.createError("Expected dependency modifier.");
     }
     return output;
 }
@@ -135,19 +151,19 @@ Expression.prototype.evaluateToConstantOrNull = function(): Constant {
 }
 
 Expression.prototype.evaluateToString = function(): string {
-    throw new AssemblyError("Expected string.");
+    throw this.createError("Expected string.");
 }
 
 Expression.prototype.evaluateToDataType = function(): DataType {
-    throw new AssemblyError("Expected data type.");
+    throw this.createError("Expected data type.");
 }
 
 Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
-    throw new AssemblyError("Expected arg perm.");
+    throw this.createError("Expected arg perm.");
 }
 
 Expression.prototype.evaluateToVersionNumber = function(): VersionNumber {
-    throw new AssemblyError("Expected version number.");
+    throw this.createError("Expected version number.");
 }
 
 Expression.prototype.evaluateToDependencyModifierOrNull = function(): number {
@@ -169,16 +185,16 @@ Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
     }
     let tempIdentifier = this.evaluateToIdentifierOrNull();
     if (tempIdentifier !== null && !tempIdentifier.getIsBuiltIn()) {
-        throw new AssemblyError(`Unknown identifier "${tempIdentifier.name}".`);
+        throw this.createError(`Unknown identifier "${tempIdentifier.name}".`);
     } else {
-        throw new AssemblyError("Expected number or pointer.");
+        throw this.createError("Expected number or pointer.");
     }
 }
 
 Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
     let tempArg = this.evaluateToInstructionArg();
     if (!(tempArg.getDataType() instanceof PointerType)) {
-        throw new AssemblyError("Expected pointer for instruction ref.");
+        throw this.createError("Expected pointer for instruction ref.");
     }
     return new PointerInstructionRef(tempArg);
 }
@@ -188,7 +204,7 @@ Expression.prototype.populateMacroInvocationId = function(macroInvocationId: num
 }
 
 Expression.prototype.getConstantDataTypeHelper = function(): DataType {
-    throw new AssemblyError("Expected constant value.");
+    throw this.createError("Expected constant value.");
 }
 
 export interface ArgTerm extends ArgTermInterface {}
@@ -358,11 +374,21 @@ UnaryExpression.prototype.processExpressionsHelper = function(processExpression:
 }
 
 UnaryExpression.prototype.evaluateToConstantOrNull = function(): Constant {
-    return this.operator.createConstantOrNull(this.operand);
+    try {
+        return this.operator.createConstantOrNull(this.operand);
+    } catch(error) {
+        this.handleError(error);
+        throw error;
+    }
 }
 
 UnaryExpression.prototype.getConstantDataTypeHelper = function(): DataType {
-    return this.operator.getConstantDataType(this.operand);
+    try {
+        return this.operator.getConstantDataType(this.operand);
+    } catch(error) {
+        this.handleError(error);
+        throw error;
+    }
 }
 
 export interface MacroIdentifierExpression extends MacroIdentifierExpressionInterface {}
@@ -435,15 +461,26 @@ BinaryExpression.prototype.processExpressionsHelper = function(processExpression
 
 BinaryExpression.prototype.evaluateToString = function(): string {
     // TODO: Accommodate string concatenation.
-    throw new AssemblyError("Not yet implemented.");
+    throw this.createError("Not yet implemented.");
 }
 
 BinaryExpression.prototype.evaluateToConstantOrNull = function(): Constant {
-    return this.operator.createConstantOrNull(this.operand1, this.operand2);
+    try {
+        return this.operator.createConstantOrNull(this.operand1, this.operand2);
+    } catch(error) {
+        this.handleError(error);
+        throw error;
+    }
 }
 
 BinaryExpression.prototype.evaluateToInstructionArg = function(): InstructionArg {
-    let tempResult = this.operator.createInstructionArgOrNull(this.operand1, this.operand2);
+    let tempResult;
+    try {
+        tempResult = this.operator.createInstructionArgOrNull(this.operand1, this.operand2);
+    } catch(error) {
+        this.handleError(error);
+        throw error;
+    }
     if (tempResult !== null) {
         return tempResult;
     }
@@ -451,7 +488,12 @@ BinaryExpression.prototype.evaluateToInstructionArg = function(): InstructionArg
 }
 
 BinaryExpression.prototype.getConstantDataTypeHelper = function(): DataType {
-    return this.operator.getConstantDataType(this.operand1, this.operand2);
+    try {
+        return this.operator.getConstantDataType(this.operand1, this.operand2);
+    } catch(error) {
+        this.handleError(error);
+        throw error;
+    }
 }
 
 export interface SubscriptExpression extends SubscriptExpressionInterface {}

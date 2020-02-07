@@ -128,9 +128,12 @@ export interface AliasDefinition extends Displayable {
 }
 
 export interface Expression {
+    line: AssemblyLine;
     scope: Scope;
     constantDataType: DataType;
     
+    createError(message: string): AssemblyError;
+    handleError(error: Error): void;
     processExpressions(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression;
     evaluateToIdentifier(): Identifier;
     evaluateToIndexDefinitionOrNull(): IndexDefinition;
