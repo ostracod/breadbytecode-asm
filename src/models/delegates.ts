@@ -34,6 +34,10 @@ export interface IntegerType extends NumberType {
     getMaximumNumber(): bigint;
 }
 
+export interface StringType extends BetaType {
+    
+}
+
 export interface Operator {
     text: string;
 }

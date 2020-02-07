@@ -4,7 +4,8 @@ import {
     DataType as DataTypeInterface,
     BetaType as BetaTypeInterface,
     NumberType as NumberTypeInterface,
-    IntegerType as IntegerTypeInterface
+    IntegerType as IntegerTypeInterface,
+    StringType as StringTypeInterface
 } from "models/delegates";
 import {mathUtils} from "utils/mathUtils";
 
@@ -220,6 +221,8 @@ FloatType.prototype.equals = function(dataType: DataType) {
     }
     return (dataType instanceof FloatType);
 }
+
+export interface StringType extends StringTypeInterface {}
 
 export class StringType extends BetaType {
     constructor(byteAmount: number) {

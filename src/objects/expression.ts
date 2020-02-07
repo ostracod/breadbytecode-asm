@@ -19,7 +19,7 @@ import {AssemblyError} from "objects/assemblyError";
 import {Identifier, MacroIdentifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
 import {InstructionRef, PointerInstructionRef, ConstantInstructionArg, RefInstructionArg, nameInstructionRefMap} from "objects/instruction";
-import {builtInConstantSet, NumberConstant} from "objects/constant";
+import {builtInConstantSet, NumberConstant, StringConstant} from "objects/constant";
 import {DEPENDENCY_MODIFIER} from "objects/dependencyDefinition";
 
 import {PointerType, pointerType, signedInteger64Type, StringType} from "delegates/dataType";
@@ -326,24 +326,28 @@ export interface ArgString extends ArgStringInterface {}
 export class ArgString extends ArgTerm {
     constructor(value: string) {
         super();
-        this.value = value;
+        this.constant = new StringConstant(value);
     }
 }
 
 ArgString.prototype.copy = function(): Expression {
-    return new ArgString(this.value);
+    return new ArgString(this.constant.value);
 }
 
 ArgString.prototype.getDisplayString = function(): string {
-    return "\"" + this.value + "\"";
+    return "\"" + this.constant.value + "\"";
 }
 
 ArgString.prototype.evaluateToString = function(): string {
-    return this.value;
+    return this.constant.value;
+}
+
+ArgString.prototype.evaluateToConstantOrNull = function(): Constant {
+    return this.constant;
 }
 
 ArgString.prototype.getConstantDataTypeHelper = function(): DataType {
-    return new StringType(this.value.length);
+    return this.constant.getDataType();
 }
 
 export interface UnaryExpression extends UnaryExpressionInterface {}

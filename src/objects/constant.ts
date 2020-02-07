@@ -2,11 +2,12 @@
 import {MixedNumber} from "models/items";
 import {
     Constant as ConstantInterface,
-    NumberConstant as NumberConstantInterface
+    NumberConstant as NumberConstantInterface,
+    StringConstant as StringConstantInterface
 } from "models/objects";
 import {DataType, IntegerType} from "models/delegates";
 
-import {UnsignedIntegerType, SignedIntegerType, unsignedIntegerTypeList, signedIntegerTypeList, PointerType, pointerType, BetaType, NumberType} from "delegates/dataType";
+import {UnsignedIntegerType, SignedIntegerType, unsignedIntegerTypeList, signedIntegerTypeList, PointerType, pointerType, BetaType, NumberType, StringType} from "delegates/dataType";
 
 import {AssemblyError} from "objects/assemblyError";
 
@@ -73,6 +74,34 @@ NumberConstant.prototype.compress = function(): void {
         }
     }
     throw new AssemblyError("Integer is out of range.");
+}
+
+export interface StringConstant extends StringConstantInterface {}
+
+export class StringConstant extends Constant {
+    constructor(value: string) {
+        super();
+        this.value = value;
+        this.stringType = new StringType(value.length);
+    }
+}
+
+StringConstant.prototype.getDataType = function(): DataType {
+    return this.stringType;
+}
+
+StringConstant.prototype.setDataType = function(dataType: DataType): void {
+    if (!this.stringType.equals(dataType)) {
+        throw new AssemblyError("Cannot change data type of string.");
+    }
+}
+
+StringConstant.prototype.copy = function(): Constant {
+    return new StringConstant(this.value);
+}
+
+StringConstant.prototype.createBuffer = function(): Buffer {
+    return Buffer.from(this.value, "utf8");
 }
 
 export class NullConstant extends Constant {

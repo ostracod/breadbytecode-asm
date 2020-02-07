@@ -35,7 +35,7 @@ PUB_FUNC init, initableIface
     VAR getProtabName, p
     depPath termArbiterIfacePath, termArbiterIface
     newTextAlloc getProtabName, getProtabNameStart, getProtabNameEnd
-    publicFuncHandle getProtabHandle, arbiter, termArbiterIfacePath, getProtabName
+    pubFuncHandle getProtabHandle, arbiter, termArbiterIfacePath, getProtabName
     
     # Get termProducerProtab on this agent.
     VAR termProducerProtab, p
@@ -86,8 +86,8 @@ PUB_FUNC setDriver, termProducerIface, termArbiterIface
     depPath termDriverIfacePath, termDriverIface
     newTextAlloc setProducerName, setProducerNameStart, setProducerNameEnd
     newTextAlloc writeTextName, writeTextNameStart, writeTextNameEnd
-    publicFuncHandle setProducerHandle, driver, termDriverIfacePath, setProducerName
-    publicFuncHandle writeTextHandle, driver, termDriverIfacePath, writeTextName
+    pubFuncHandle setProducerHandle, driver, termDriverIfacePath, setProducerName
+    pubFuncHandle writeTextHandle, driver, termDriverIfacePath, writeTextName
     
     # Invoke setProducer on the driver.
     newArgFrame 1, 0

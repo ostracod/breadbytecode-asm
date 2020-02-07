@@ -1,6 +1,6 @@
 
 import {LineProcessor, ExpressionProcessor, LabelDefinitionClass, MixedNumber} from "models/items";
-import {UnaryOperator, BinaryOperator, DataType, NumberType, InstructionType} from "models/delegates";
+import {UnaryOperator, BinaryOperator, DataType, NumberType, StringType, InstructionType} from "models/delegates";
 
 export interface Displayable {
     // Concrete subclasses must implement these methods:
@@ -122,6 +122,11 @@ export interface NumberConstant extends Constant {
     numberType: NumberType;
 }
 
+export interface StringConstant extends Constant {
+    value: string;
+    stringType: StringType;
+}
+
 export interface AliasDefinition extends Displayable {
     identifier: Identifier;
     expression: Expression;
@@ -179,7 +184,7 @@ export interface ArgVersionNumber extends ArgTerm {
 }
 
 export interface ArgString extends ArgTerm {
-    value: string;
+    constant: StringConstant;
 }
 
 export interface UnaryExpression extends Expression {
