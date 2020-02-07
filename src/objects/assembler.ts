@@ -2,7 +2,7 @@
 import * as fs from "fs";
 
 import {LineProcessor, ExpressionProcessor} from "models/items";
-import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Identifier, IndexDefinition, Region} from "models/objects";
+import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Identifier, IndexDefinition, Region, DependencyDefinition} from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
 import {IdentifierMap} from "objects/identifier";
@@ -16,7 +16,7 @@ import {
 } from "objects/functionDefinition";
 import {AppDataLineList} from "objects/labeledLineList";
 import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
-import {DependencyDefinition, VersionDependencyDefinition, InterfaceDependencyDefinition} from "objects/dependencyDefinition";
+import {PathDependencyDefinition, VersionDependencyDefinition, InterfaceDependencyDefinition} from "objects/dependencyDefinition";
 
 import {parseUtils} from "utils/parseUtils";
 import {lineUtils} from "utils/lineUtils";
@@ -194,6 +194,13 @@ Assembler.prototype.loadAndParseAssemblyFile = function(path: string): AssemblyL
     return tempLineList;
 }
 
+Assembler.prototype.populateScopeInRootLines = function(): void {
+    this.processExpressionsInLines(expression => {
+        expression.scope = this.scope;
+        return null;
+    });
+}
+
 Assembler.prototype.addFunctionDefinition = function(functionDefinition: FunctionDefinition): void {
     functionDefinition.index = this.nextFunctionDefinitionIndex;
     this.nextFunctionDefinitionIndex += 1;
@@ -304,7 +311,7 @@ Assembler.prototype.extractDependencyDefinitions = function(): void {
         let tempArgList = line.argList;
         if (tempDirectiveName == "PATH_DEP") {
             let tempResult = dependencyUtils.evaluateDependencyArgs(tempArgList, 2);
-            let tempDefinition = new DependencyDefinition(
+            let tempDefinition = new PathDependencyDefinition(
                 tempResult.identifier,
                 tempResult.path,
                 tempResult.dependencyModifierList
@@ -366,6 +373,11 @@ Assembler.prototype.assembleInstructions = function(): void {
 }
 
 Assembler.prototype.generateAppFileRegion = function(): void {
+    let dependencyRegionList = [];
+    this.dependencyDefinitionMap.iterate(dependencyDefinition => {
+        let tempRegion = dependencyDefinition.createRegion();
+        dependencyRegionList.push(tempRegion);
+    });
     let globalFrameLengthRegion = new AtomicRegion(
         REGION_TYPE.globalFrameLen,
         this.globalFrameLength.createBuffer()
@@ -380,13 +392,17 @@ Assembler.prototype.generateAppFileRegion = function(): void {
         REGION_TYPE.appData,
         this.appDataLineList.createBuffer()
     );
-    this.appFileRegion = new CompositeRegion(REGION_TYPE.appFile, [
+    let tempRegionList = [
         globalFrameLengthRegion,
         appFuncsRegion,
         appDataRegion
         // TODO: Add more regions.
         
-    ]);
+    ];
+    if (dependencyRegionList.length > 0) {
+        tempRegionList.push(new CompositeRegion(REGION_TYPE.deps, dependencyRegionList));
+    }
+    this.appFileRegion = new CompositeRegion(REGION_TYPE.appFile, tempRegionList);
 }
 
 Assembler.prototype.getDisplayString = function(): string {
@@ -429,6 +445,7 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
     try {
         this.rootLineList = this.loadAndParseAssemblyFile(sourcePath);
         this.expandAliasInvocations();
+        this.populateScopeInRootLines();
         this.extractFunctionDefinitions();
         this.extractAppDataDefinitions();
         this.extractGlobalVariableDefinitions();

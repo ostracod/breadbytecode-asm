@@ -5,8 +5,11 @@ import {
     InterfaceDependencyDefinition as InterfaceDependencyDefinitionInterface,
     Identifier, Region, VersionNumber, Expression
 } from "models/objects";
+
 import {niceUtils} from "utils/niceUtils";
+
 import {IndexDefinition, indexConstantConverter} from "objects/indexDefinition";
+import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
 
 export const DEPENDENCY_MODIFIER = {
     optional: 4,
@@ -18,9 +21,15 @@ var dependencyModifierNameMap = niceUtils.getReverseMap(DEPENDENCY_MODIFIER);
 
 export interface DependencyDefinition extends DependencyDefinitionInterface {}
 
-export class DependencyDefinition extends IndexDefinition {
-    constructor(identifier: Identifier, path: string, dependencyModifierList: number[]) {
+export abstract class DependencyDefinition extends IndexDefinition {
+    constructor(
+        regionType: number,
+        identifier: Identifier,
+        path: string,
+        dependencyModifierList: number[]
+    ) {
         super(identifier, indexConstantConverter);
+        this.regionType = regionType;
         this.identifier = identifier;
         this.path = path;
         this.dependencyModifierList = dependencyModifierList;
@@ -43,13 +52,34 @@ DependencyDefinition.prototype.getDisplayString = function(): string {
 }
 
 DependencyDefinition.prototype.createRegion = function(): Region {
-    // TODO: Implement.
-    
-    return null;
+    let tempAttributesBitfield = 0;
+    for (let modifier of this.dependencyModifierList) {
+        tempAttributesBitfield |= modifier;
+    }
+    let attributesRegion = new AtomicRegion(
+        REGION_TYPE.depAttrs,
+        Buffer.from([tempAttributesBitfield])
+    );
+    let pathRegion = new AtomicRegion(REGION_TYPE.path, Buffer.from(this.path));
+    let tempRegionList = [
+        attributesRegion,
+        pathRegion
+    ].concat(this.createRegionHelper());
+    return new CompositeRegion(this.regionType, tempRegionList);
 }
 
 DependencyDefinition.prototype.getDisplayStringHelper = function(): string {
     return null;
+}
+
+DependencyDefinition.prototype.createRegionHelper = function(): Region[] {
+    return [];
+}
+
+export class PathDependencyDefinition extends DependencyDefinition {
+    constructor(identifier: Identifier, path: string, dependencyModifierList: number[]) {
+        super(REGION_TYPE.pathDep, identifier, path, dependencyModifierList);
+    }
 }
 
 export interface VersionDependencyDefinition extends VersionDependencyDefinitionInterface {}
@@ -61,13 +91,21 @@ export class VersionDependencyDefinition extends DependencyDefinition {
         versionNumber: VersionNumber,
         dependencyModifierList: number[]
     ) {
-        super(identifier, path, dependencyModifierList);
+        super(REGION_TYPE.verDep, identifier, path, dependencyModifierList);
         this.versionNumber = versionNumber;
     }
 }
 
 VersionDependencyDefinition.prototype.getDisplayStringHelper = function(): string {
     return this.versionNumber.getDisplayString();
+}
+
+VersionDependencyDefinition.prototype.createRegionHelper = function(): Region[] {
+    let versionRegion = new AtomicRegion(
+        REGION_TYPE.depVer,
+        this.versionNumber.createBuffer()
+    );
+    return [versionRegion];
 }
 
 export interface InterfaceDependencyDefinition extends InterfaceDependencyDefinitionInterface {}
@@ -79,7 +117,7 @@ export class InterfaceDependencyDefinition extends DependencyDefinition {
         dependencyExpressionList: Expression[],
         dependencyModifierList: number[]
     ) {
-        super(identifier, path, dependencyModifierList);
+        super(REGION_TYPE.ifaceDep, identifier, path, dependencyModifierList);
         this.dependencyExpressionList = dependencyExpressionList;
     }
 }
@@ -91,6 +129,17 @@ InterfaceDependencyDefinition.prototype.getDisplayStringHelper = function(): str
     return this.dependencyExpressionList.map(expression => {
         return expression.getDisplayString()
     }).join(", ");
+}
+
+InterfaceDependencyDefinition.prototype.createRegionHelper = function(): Region[] {
+    let tempBuffer = Buffer.alloc(this.dependencyExpressionList.length * 4);
+    for (let index = 0; index < this.dependencyExpressionList.length; index++) {
+        let tempExpression = this.dependencyExpressionList[index];
+        let tempIndex = tempExpression.evaluateToNumber();
+        tempBuffer.writeUInt32LE(tempIndex, index * 4);
+    }
+    let indexesRegion = new AtomicRegion(REGION_TYPE.depIndexes, tempBuffer);
+    return [indexesRegion];
 }
 
 

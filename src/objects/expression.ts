@@ -12,14 +12,14 @@ import {
     MacroIdentifierExpression as MacroIdentifierExpressionInterface,
     BinaryExpression as BinaryExpressionInterface,
     SubscriptExpression as SubscriptExpressionInterface,
-    IdentifierMap, FunctionDefinition, Constant, NumberConstant, InstructionArg, IndexDefinition, VersionNumber
+    IdentifierMap, FunctionDefinition, Constant, InstructionArg, IndexDefinition, VersionNumber
 } from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
 import {Identifier, MacroIdentifier} from "objects/identifier";
 import {ArgPerm} from "objects/argPerm";
 import {InstructionRef, PointerInstructionRef, ConstantInstructionArg, RefInstructionArg, nameInstructionRefMap} from "objects/instruction";
-import {builtInConstantSet} from "objects/constant";
+import {builtInConstantSet, NumberConstant} from "objects/constant";
 import {DEPENDENCY_MODIFIER} from "objects/dependencyDefinition";
 
 import {PointerType, pointerType, signedInteger64Type, StringType} from "delegates/dataType";
@@ -84,6 +84,15 @@ Expression.prototype.evaluateToConstant = function(): Constant {
         throw new AssemblyError("Constant has inconsistent data type.");
     }
     return output;
+}
+
+Expression.prototype.evaluateToNumber = function(): number {
+    let tempConstant = this.evaluateToConstantOrNull();
+    if (tempConstant === null || !(tempConstant instanceof NumberConstant)) {
+        throw new AssemblyError("Expected number constant.");
+    }
+    let tempNumberConstant = tempConstant as NumberConstant;
+    return Number(tempNumberConstant.value);
 }
 
 Expression.prototype.evaluateToDependencyModifier = function(): number {

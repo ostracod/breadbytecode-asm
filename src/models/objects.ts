@@ -72,6 +72,7 @@ export interface Assembler {
     processIncludeDirectives(lineList: AssemblyLine[]): {lineList: AssemblyLine[], includeCount: number};
     extractAliasDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
     expandAliasInvocations(): void;
+    populateScopeInRootLines(): void;
     addFunctionDefinition(functionDefinition: FunctionDefinition): void;
     addDependencyDefinition(dependencyDefinition: DependencyDefinition): void;
     extractFunctionDefinitions(): void;
@@ -134,6 +135,7 @@ export interface Expression {
     evaluateToIdentifier(): Identifier;
     evaluateToIndexDefinitionOrNull(): IndexDefinition;
     evaluateToConstant(): Constant;
+    evaluateToNumber(): number;
     evaluateToDependencyModifier(): number;
     substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression;
     getConstantDataType(): DataType;
@@ -384,9 +386,11 @@ export interface VersionNumber {
     
     copy(): VersionNumber;
     getDisplayString(): string;
+    createBuffer(): Buffer;
 }
 
 export interface DependencyDefinition extends IndexDefinition {
+    regionType: number;
     path: string;
     dependencyModifierList: number[];
     
@@ -394,6 +398,7 @@ export interface DependencyDefinition extends IndexDefinition {
     
     // Concrete subclasses may override these methods:
     getDisplayStringHelper(): string;
+    createRegionHelper(): Region[];
 }
 
 export interface VersionDependencyDefinition extends DependencyDefinition {
