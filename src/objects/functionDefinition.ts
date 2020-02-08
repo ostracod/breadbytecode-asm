@@ -247,6 +247,21 @@ PublicFunctionDefinition.prototype.getTitleSuffix = function(): string {
     return output;
 }
 
+PublicFunctionDefinition.prototype.createRegionHelper = function(): Region[] {
+    let output = InterfaceFunctionDefinition.prototype.createRegionHelper.call(this);
+    let tempBuffer = Buffer.alloc(8);
+    tempBuffer.writeUInt32LE(this.interfaceIndexExpression.evaluateToNumber(), 0);
+    let tempNumber;
+    if (this.arbiterIndexExpression === null) {
+        tempNumber = -1;
+    } else {
+        tempNumber = this.arbiterIndexExpression.evaluateToNumber();
+    }
+    tempBuffer.writeInt32LE(tempNumber, 4);
+    output.push(new AtomicRegion(REGION_TYPE.pubFuncAttrs, tempBuffer));
+    return output;
+}
+
 export class GuardFunctionDefinition extends InterfaceFunctionDefinition {
     constructor(identifier: Identifier, interfaceIndexExpression: Expression, lineList: AssemblyLine[]) {
         super(identifier, interfaceIndexExpression, lineList, REGION_TYPE.guardFunc);
@@ -255,6 +270,14 @@ export class GuardFunctionDefinition extends InterfaceFunctionDefinition {
 
 GuardFunctionDefinition.prototype.getTitlePrefix = function(): string {
     return "Guard";
+}
+
+GuardFunctionDefinition.prototype.createRegionHelper = function(): Region[] {
+    let output = InterfaceFunctionDefinition.prototype.createRegionHelper.call(this);
+    let tempBuffer = Buffer.alloc(4);
+    tempBuffer.writeUInt32LE(this.interfaceIndexExpression.evaluateToNumber(), 0);
+    output.push(new AtomicRegion(REGION_TYPE.guardFuncAttrs, tempBuffer));
+    return output;
 }
 
 

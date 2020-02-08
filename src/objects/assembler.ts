@@ -39,6 +39,7 @@ export class Assembler {
         this.nextDependencyDefinitionIndex = 0;
         this.scope = new Scope();
         this.globalFrameLength = null;
+        this.fileFormatVersionNumber = null;
         this.appFileRegion = null;
     }
 }
@@ -357,6 +358,26 @@ Assembler.prototype.extractDependencyDefinitions = function(): void {
     });
 }
 
+Assembler.prototype.extractFileFormatVersionNumber = function(): void {
+    this.processLines(line => {
+        let tempArgList = line.argList;
+        if (line.directiveName == "BYTECODE_VER") {
+            if (tempArgList.length !== 1) {
+                throw new AssemblyError("Expected 1 argument.");
+            }
+            if (this.fileFormatVersionNumber !== null) {
+                throw new AssemblyError("Extra bytecode version directive.");
+            }
+            this.fileFormatVersionNumber = tempArgList[0].evaluateToVersionNumber();
+            return [];
+        }
+        return null;
+    });
+    if (this.fileFormatVersionNumber === null) {
+        throw new AssemblyError("Missing BYTECODE_VER directive.");
+    }
+}
+
 Assembler.prototype.populateScopeDefinitions = function(): void {
     this.scope.indexDefinitionMapList = [
         this.globalVariableDefinitionMap,
@@ -373,11 +394,10 @@ Assembler.prototype.assembleInstructions = function(): void {
 }
 
 Assembler.prototype.generateAppFileRegion = function(): void {
-    let dependencyRegionList = [];
-    this.dependencyDefinitionMap.iterate(dependencyDefinition => {
-        let tempRegion = dependencyDefinition.createRegion();
-        dependencyRegionList.push(tempRegion);
-    });
+    let formatVersionRegion = new AtomicRegion(
+        REGION_TYPE.fileFormatVer,
+        this.fileFormatVersionNumber.createBuffer()
+    );
     let globalFrameLengthRegion = new AtomicRegion(
         REGION_TYPE.globalFrameLen,
         this.globalFrameLength.createBuffer()
@@ -392,12 +412,16 @@ Assembler.prototype.generateAppFileRegion = function(): void {
         REGION_TYPE.appData,
         this.appDataLineList.createBuffer()
     );
+    let dependencyRegionList = [];
+    this.dependencyDefinitionMap.iterate(dependencyDefinition => {
+        let tempRegion = dependencyDefinition.createRegion();
+        dependencyRegionList.push(tempRegion);
+    });
     let tempRegionList = [
+        formatVersionRegion,
         globalFrameLengthRegion,
         appFuncsRegion,
         appDataRegion
-        // TODO: Add more regions.
-        
     ];
     if (dependencyRegionList.length > 0) {
         tempRegionList.push(new CompositeRegion(REGION_TYPE.deps, dependencyRegionList));
@@ -407,8 +431,8 @@ Assembler.prototype.generateAppFileRegion = function(): void {
 
 Assembler.prototype.getDisplayString = function(): string {
     var tempTextList = [];
-    tempTextList.push("\n= = = ROOT LINE LIST = = =\n");
-    tempTextList.push(lineUtils.getLineListDisplayString(this.rootLineList));
+    tempTextList.push("\n= = = FILE FORMAT VERSION = = =\n");
+    tempTextList.push(this.fileFormatVersionNumber.getDisplayString());
     tempTextList.push("\n= = = DEPENDENCY DEFINITIONS = = =\n");
     this.dependencyDefinitionMap.iterate(dependencyDefinition => {
         tempTextList.push(dependencyDefinition.getDisplayString());
@@ -450,6 +474,15 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
         this.extractAppDataDefinitions();
         this.extractGlobalVariableDefinitions();
         this.extractDependencyDefinitions();
+        this.extractFileFormatVersionNumber();
+        if (this.rootLineList.length > 0) {
+            let tempLine = this.rootLineList[0];
+            throw new AssemblyError(
+                "Unknown directive.",
+                tempLine.lineNumber,
+                tempLine.filePath
+            );
+        }
         this.populateScopeDefinitions();
         this.assembleInstructions();
         this.generateAppFileRegion();

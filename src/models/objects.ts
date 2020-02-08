@@ -56,6 +56,7 @@ export interface Assembler {
     nextDependencyDefinitionIndex: number;
     scope: Scope;
     globalFrameLength: FrameLength;
+    fileFormatVersionNumber: VersionNumber;
     appFileRegion: Region;
     
     processLines(processLine: LineProcessor): void;
@@ -79,6 +80,7 @@ export interface Assembler {
     extractAppDataDefinitions(): void;
     extractGlobalVariableDefinitions(): void;
     extractDependencyDefinitions(): void;
+    extractFileFormatVersionNumber(): void;
     populateScopeDefinitions(): void;
     assembleInstructions(): void;
     generateAppFileRegion(): void;
