@@ -2,8 +2,9 @@
 import {
     Identifier as IdentifierInterface,
     MacroIdentifier as MacroIdentifierInterface,
+    PublicFunctionIdentifier as PublicFunctionIdentifierInterface,
     IdentifierMap as IdentifierMapInterface,
-    IndexDefinition
+    IndexDefinition, Expression
 } from "models/objects";
 import {nameInstructionRefMap} from "objects/instruction";
 import {builtInConstantSet} from "objects/constant";
@@ -41,7 +42,7 @@ export interface MacroIdentifier extends MacroIdentifierInterface {}
 
 export class MacroIdentifier extends Identifier {
     constructor(name: string, macroInvocationId: number) {
-        super(name)
+        super(name);
         this.macroInvocationId = macroInvocationId;
     }
 }
@@ -51,10 +52,32 @@ MacroIdentifier.prototype.getDisplayString = function(): string {
 }
 
 MacroIdentifier.prototype.getMapKey = function(): string {
-    return this.name + " " + this.macroInvocationId;
+    return this.name + "@" + this.macroInvocationId;
 }
 
 MacroIdentifier.prototype.getIsBuiltIn = function(): boolean {
+    return false;
+}
+
+export interface PublicFunctionIdentifier extends PublicFunctionIdentifierInterface {}
+
+export class PublicFunctionIdentifier extends Identifier {
+    constructor(name: string, interfaceIndexExpression: Expression) {
+        super(name);
+        this.interfaceIndexExpression = interfaceIndexExpression;
+    }
+}
+
+PublicFunctionIdentifier.prototype.getDisplayString = function(): string {
+    return ".{" + this.interfaceIndexExpression.getDisplayString() + "}" + this.name;
+}
+
+PublicFunctionIdentifier.prototype.getMapKey = function(): string {
+    // TODO: Defer this expression evaluation to be as late as possible.
+    return this.name + "." + this.interfaceIndexExpression.evaluateToNumber();
+}
+
+PublicFunctionIdentifier.prototype.getIsBuiltIn = function(): boolean {
     return false;
 }
 

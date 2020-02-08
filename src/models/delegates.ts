@@ -1,6 +1,6 @@
 
 import {MixedNumber} from "models/items";
-import {Expression, Constant, NumberConstant, InstructionArg} from "models/objects";
+import {Expression, Constant, NumberConstant, InstructionArg, Identifier} from "models/objects";
 
 export interface DataType {
     argPrefix: number;
@@ -63,6 +63,7 @@ export interface BinaryOperator extends Operator {
     // Concrete subclasses may override these methods:
     createConstantOrNull(operand1: Expression, operand2: Expression): Constant;
     createInstructionArgOrNull(operand1: Expression, operand2: Expression): InstructionArg;
+    createIdentifierOrNull(operand1: Expression, operand2: Expression): Identifier;
     
     // Concrete subclasses must implement these methods:
     getConstantDataType(operand1: Expression, operand2: Expression): DataType;

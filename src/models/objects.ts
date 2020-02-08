@@ -151,6 +151,7 @@ export interface Expression {
     getConstantDataType(): DataType;
     
     // Concrete subclasses may override these methods:
+    evaluateToIdentifierName(): string;
     evaluateToIdentifierOrNull(): Identifier;
     evaluateToConstantOrNull(): Constant;
     evaluateToString(): string;
@@ -265,6 +266,10 @@ export interface Identifier {
 
 export interface MacroIdentifier extends Identifier {
     macroInvocationId: number;
+}
+
+export interface PublicFunctionIdentifier extends Identifier {
+    interfaceIndexExpression: Expression;
 }
 
 export interface IdentifierMap<T> {

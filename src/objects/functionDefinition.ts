@@ -4,7 +4,7 @@ import {
     FunctionDefinition as FunctionDefinitionInterface,
     InterfaceFunctionDefinition as InterfaceFunctionDefinitionInterface,
     PublicFunctionDefinition as PublicFunctionDefinitionInterface,
-    Identifier, AssemblyLine, Expression, Region
+    AssemblyLine, Expression, Region
 } from "models/objects";
 
 import {niceUtils} from "utils/niceUtils";
@@ -16,7 +16,7 @@ import {AssemblyError} from "objects/assemblyError";
 import {IndexDefinition, indexConstantConverter} from "objects/indexDefinition";
 import {Scope} from "objects/scope";
 import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
-import {IdentifierMap} from "objects/identifier";
+import {Identifier, PublicFunctionIdentifier, IdentifierMap} from "objects/identifier";
 import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
 
 export interface FunctionDefinition extends FunctionDefinitionInterface {}
@@ -188,7 +188,7 @@ export abstract class InterfaceFunctionDefinition extends FunctionDefinition {
 }
 
 InterfaceFunctionDefinition.prototype.getTitle = function(): string {
-    return this.getTitlePrefix() + " function " + this.identifier.getDisplayString() + " (" + this.getTitleSuffix() + ")";
+    return this.getTitlePrefix() + " function " + this.identifier.name + " (" + this.getTitleSuffix() + ")";
 }
 
 InterfaceFunctionDefinition.prototype.getTitleSuffix = function(): string {
@@ -225,12 +225,13 @@ export interface PublicFunctionDefinition extends PublicFunctionDefinitionInterf
 
 export class PublicFunctionDefinition extends InterfaceFunctionDefinition {
     constructor(
-        identifier: Identifier,
+        name: string,
         interfaceIndexExpression: Expression,
         arbiterIndexExpression: Expression,
         lineList: AssemblyLine[]
     ) {
-        super(identifier, interfaceIndexExpression, lineList, REGION_TYPE.pubFunc);
+        let tempIdentifier = new PublicFunctionIdentifier(name, interfaceIndexExpression);
+        super(tempIdentifier, interfaceIndexExpression, lineList, REGION_TYPE.pubFunc);
         this.arbiterIndexExpression = arbiterIndexExpression;
     }
 }
@@ -263,8 +264,9 @@ PublicFunctionDefinition.prototype.createRegionHelper = function(): Region[] {
 }
 
 export class GuardFunctionDefinition extends InterfaceFunctionDefinition {
-    constructor(identifier: Identifier, interfaceIndexExpression: Expression, lineList: AssemblyLine[]) {
-        super(identifier, interfaceIndexExpression, lineList, REGION_TYPE.guardFunc);
+    constructor(name: string, interfaceIndexExpression: Expression, lineList: AssemblyLine[]) {
+        let tempIdentifier = new Identifier(name);
+        super(tempIdentifier, interfaceIndexExpression, lineList, REGION_TYPE.guardFunc);
     }
 }
 

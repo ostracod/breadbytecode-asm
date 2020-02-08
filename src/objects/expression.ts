@@ -138,6 +138,10 @@ Expression.prototype.getConstantDataType = function(): DataType {
     return this.constantDataType;
 }
 
+Expression.prototype.evaluateToIdentifierName = function(): string {
+    throw this.createError("Expected identifier name.");
+}
+
 Expression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
     return null;
 }
@@ -185,7 +189,7 @@ Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
     }
     let tempIdentifier = this.evaluateToIdentifierOrNull();
     if (tempIdentifier !== null && !tempIdentifier.getIsBuiltIn()) {
-        throw this.createError(`Unknown identifier "${tempIdentifier.name}".`);
+        throw this.createError(`Unknown identifier "${tempIdentifier.getDisplayString()}".`);
     } else {
         throw this.createError("Expected number or pointer.");
     }
@@ -235,6 +239,10 @@ ArgWord.prototype.copy = function(): Expression {
 }
 
 ArgWord.prototype.getDisplayString = function(): string {
+    return this.text;
+}
+
+ArgWord.prototype.evaluateToIdentifierName = function(): string {
     return this.text;
 }
 
@@ -378,11 +386,17 @@ UnaryExpression.prototype.processExpressionsHelper = function(processExpression:
 }
 
 UnaryExpression.prototype.evaluateToConstantOrNull = function(): Constant {
+    let tempResult;
     try {
-        return this.operator.createConstantOrNull(this.operand);
+        tempResult = this.operator.createConstantOrNull(this.operand);
     } catch(error) {
         this.handleError(error);
         throw error;
+    }
+    if (tempResult === null) {
+        return Expression.prototype.evaluateToConstantOrNull.call(this);
+    } else {
+        return tempResult;
     }
 }
 
@@ -421,7 +435,8 @@ MacroIdentifierExpression.prototype.evaluateToIdentifierOrNull = function(): Ide
     if (!(this.operand instanceof ArgTerm)) {
         return null;
     }
-    return new MacroIdentifier(this.operand.text, this.macroInvocationId);
+    let tempName = this.operand.evaluateToIdentifierName();
+    return new MacroIdentifier(tempName, this.macroInvocationId);
 }
 
 MacroIdentifierExpression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
@@ -469,8 +484,23 @@ BinaryExpression.prototype.evaluateToString = function(): string {
 }
 
 BinaryExpression.prototype.evaluateToConstantOrNull = function(): Constant {
+    let tempResult;
     try {
-        return this.operator.createConstantOrNull(this.operand1, this.operand2);
+        tempResult = this.operator.createConstantOrNull(this.operand1, this.operand2);
+    } catch(error) {
+        this.handleError(error);
+        throw error;
+    }
+    if (tempResult === null) {
+        return Expression.prototype.evaluateToConstantOrNull.call(this);
+    } else {
+        return tempResult;
+    }
+}
+
+BinaryExpression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
+    try {
+        return this.operator.createIdentifierOrNull(this.operand1, this.operand2);
     } catch(error) {
         this.handleError(error);
         throw error;

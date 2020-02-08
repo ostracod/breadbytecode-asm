@@ -243,9 +243,9 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
             } else {
                 throw new AssemblyError("Expected 2 or 3 arguments.");
             }
-            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
+            var tempName = tempArgList[0].evaluateToIdentifierName();
             tempDefinition = new PublicFunctionDefinition(
-                tempIdentifier,
+                tempName,
                 tempArgList[1],
                 tempArbiterIndexExpression,
                 line.codeBlock
@@ -257,9 +257,9 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
             if (tempArgList.length != 2) {
                 throw new AssemblyError("Expected 2 arguments.");
             }
-            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
+            var tempName = tempArgList[0].evaluateToIdentifierName();
             tempDefinition = new GuardFunctionDefinition(
-                tempIdentifier,
+                tempName,
                 tempArgList[1],
                 line.codeBlock
             );

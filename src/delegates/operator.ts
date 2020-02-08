@@ -9,7 +9,7 @@ import {
     BinaryBitshiftOperator as BinaryBitshiftOperatorInterface,
     Operator, DataType
 } from "models/delegates";
-import {Expression, Constant, InstructionArg} from "models/objects";
+import {Expression, Constant, InstructionArg, Identifier} from "models/objects";
 
 import {dataTypeUtils} from "utils/dataTypeUtils";
 import {mathUtils} from "utils/mathUtils";
@@ -19,6 +19,7 @@ import {unsignedInteger64Type, signedInteger64Type, NumberType, IntegerType} fro
 import {UnaryExpression, MacroIdentifierExpression, BinaryExpression} from "objects/expression";
 import {AssemblyError} from "objects/assemblyError";
 import {NumberConstant} from "objects/constant";
+import {PublicFunctionIdentifier} from "objects/identifier";
 
 export var unaryOperatorList = [];
 export var binaryOperatorList = [];
@@ -154,6 +155,10 @@ BinaryOperator.prototype.createInstructionArgOrNull = function(operand1: Express
     return null;
 }
 
+BinaryOperator.prototype.createIdentifierOrNull = function(operand1: Expression, operand2: Expression): Identifier {
+    return null;
+}
+
 export class TypeCoercionOperator extends BinaryOperator {
     constructor() {
         super(":", 1);
@@ -181,14 +186,19 @@ TypeCoercionOperator.prototype.createInstructionArgOrNull = function(operand1: E
     return tempArg;
 }
 
-export class InterfaceFunctionOperator extends BinaryOperator {
+export class PublicFunctionIdentifierOperator extends BinaryOperator {
     constructor() {
         super(".", 1);
     }
 }
 
-InterfaceFunctionOperator.prototype.getConstantDataType = function(operand1: Expression, operand2: Expression): DataType {
+PublicFunctionIdentifierOperator.prototype.getConstantDataType = function(operand1: Expression, operand2: Expression): DataType {
     return signedInteger64Type;
+}
+
+PublicFunctionIdentifierOperator.prototype.createIdentifierOrNull = function(operand1: Expression, operand2: Expression): Identifier {
+    let tempName = operand2.evaluateToIdentifierName();
+    return new PublicFunctionIdentifier(tempName, operand1);
 }
 
 export interface BinaryNumberOperator extends BinaryNumberOperatorInterface {}
@@ -415,7 +425,7 @@ export var macroIdentifierOperator = new MacroIdentifierOperator();
 new IndexOperator();
 
 new TypeCoercionOperator();
-new InterfaceFunctionOperator();
+new PublicFunctionIdentifierOperator();
 new AdditionOperator();
 new SubtractionOperator();
 new MultiplicationOperator();
