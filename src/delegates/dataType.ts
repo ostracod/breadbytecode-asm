@@ -231,7 +231,7 @@ export class StringType extends BetaType {
 }
 
 StringType.prototype.getName = function(): string {
-    return "b" + this.byteAmount;
+    return "b" + this.bitAmount;
 }
 
 StringType.prototype.equals = function(dataType: DataType) {

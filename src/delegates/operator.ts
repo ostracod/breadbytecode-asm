@@ -18,7 +18,7 @@ import {unsignedInteger64Type, signedInteger64Type, NumberType, IntegerType} fro
 
 import {UnaryExpression, MacroIdentifierExpression, BinaryExpression} from "objects/expression";
 import {AssemblyError} from "objects/assemblyError";
-import {NumberConstant} from "objects/constant";
+import {NumberConstant, StringConstant} from "objects/constant";
 
 export var unaryOperatorList = [];
 export var binaryOperatorList = [];
@@ -200,6 +200,9 @@ PublicFunctionOperator.prototype.createConstantOrNull = function(operand1: Expre
         tempIdentifier,
         tempInterfaceIndex
     );
+    if (tempDefinition === null) {
+        throw new AssemblyError("Unknown public function.");
+    }
     return new NumberConstant(tempDefinition.index, unsignedInteger64Type)
 }
 
@@ -279,6 +282,24 @@ BinaryTypeMergeOperator.prototype.calculateFloat = function(value1: number, valu
 export class AdditionOperator extends BinaryTypeMergeOperator {
     constructor() {
         super("+", 4);
+    }
+}
+
+AdditionOperator.prototype.createConstantOrNull = function(operand1: Expression, operand2: Expression): Constant {
+    let tempConstant1 = operand1.evaluateToConstantOrNull();
+    let tempConstant2 = operand2.evaluateToConstantOrNull();
+    if (tempConstant1 !== null && tempConstant2 !== null
+            && tempConstant1 instanceof StringConstant
+            && tempConstant2 instanceof StringConstant) {
+        let tempStringConstant1 = tempConstant1 as StringConstant;
+        let tempStringConstant2 = tempConstant2 as StringConstant;
+        return new StringConstant(tempStringConstant1.value + tempStringConstant2.value);
+    } else {
+        return BinaryTypeMergeOperator.prototype.createConstantOrNull.call(
+            this,
+            operand1,
+            operand2
+        );
     }
 }
 

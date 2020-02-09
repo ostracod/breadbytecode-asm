@@ -155,7 +155,12 @@ Expression.prototype.evaluateToConstantOrNull = function(): Constant {
 }
 
 Expression.prototype.evaluateToString = function(): string {
-    throw this.createError("Expected string.");
+    let tempConstant = this.evaluateToConstantOrNull();
+    if (tempConstant === null || !(tempConstant instanceof StringConstant)) {
+        throw this.createError("Expected string.");
+    }
+    let tempStringConstant = tempConstant as StringConstant;
+    return tempStringConstant.value;
 }
 
 Expression.prototype.evaluateToDataType = function(): DataType {
@@ -183,7 +188,7 @@ Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
         }
     }
     let tempConstant = this.evaluateToConstantOrNull();
-    if (tempConstant !== null) {
+    if (tempConstant !== null && tempConstant.getDataType().argPrefix !== null) {
         tempConstant.compress();
         return new ConstantInstructionArg(tempConstant);
     }
@@ -346,10 +351,6 @@ ArgString.prototype.getDisplayString = function(): string {
     return "\"" + this.constant.value + "\"";
 }
 
-ArgString.prototype.evaluateToString = function(): string {
-    return this.constant.value;
-}
-
 ArgString.prototype.evaluateToConstantOrNull = function(): Constant {
     return this.constant;
 }
@@ -476,11 +477,6 @@ BinaryExpression.prototype.processExpressionsHelper = function(processExpression
     this.operand1 = this.operand1.processExpressions(processExpression, shouldRecurAfterProcess);
     this.operand2 = this.operand2.processExpressions(processExpression, shouldRecurAfterProcess);
     return null;
-}
-
-BinaryExpression.prototype.evaluateToString = function(): string {
-    // TODO: Accommodate string concatenation.
-    throw this.createError("Not yet implemented.");
 }
 
 BinaryExpression.prototype.evaluateToConstantOrNull = function(): Constant {
