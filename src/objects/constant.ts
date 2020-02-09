@@ -7,7 +7,7 @@ import {
 } from "models/objects";
 import {DataType, IntegerType} from "models/delegates";
 
-import {UnsignedIntegerType, SignedIntegerType, unsignedIntegerTypeList, signedIntegerTypeList, PointerType, pointerType, BetaType, NumberType, StringType} from "delegates/dataType";
+import {UnsignedIntegerType, SignedIntegerType, unsignedIntegerTypeList, signedIntegerTypeList, PointerType, pointerType, unsignedInteger64Type, BetaType, NumberType, StringType} from "delegates/dataType";
 
 import {AssemblyError} from "objects/assemblyError";
 
@@ -129,5 +129,35 @@ NullConstant.prototype.createBuffer = function(): Buffer {
 export const builtInConstantSet = {
     null: new NullConstant()
 };
+
+let tempNumberSet = {
+    funcHandleSType: 0x0001,
+    threadSType: 0x0002,
+    launchOptSType: 0x0003,
+    agentSType: 0x0004,
+    mutexSType: 0x0005,
+    fileHandleSType: 0x0006,
+    protabSType: 0x0007,
+    permSType: 0x0008,
+    
+    genericErr: 0x0000,
+    numRangeErr: 0x0001,
+    indexErr: 0x0002,
+    nullErr: 0x0003,
+    typeErr: 0x0004,
+    dataErr: 0x0005,
+    compatErr: 0x0006,
+    permErr: 0x0007,
+    argFrameErr: 0x0008,
+    stateErr: 0x0009,
+    missingErr: 0x000A,
+    capacityErr: 0x000B,
+    throttleErr: 0x000C
+};
+
+for (let key in tempNumberSet) {
+    let tempNumber = tempNumberSet[key];
+    builtInConstantSet[key] = new NumberConstant(tempNumber, unsignedInteger64Type);
+}
 
 
