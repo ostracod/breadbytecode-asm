@@ -19,7 +19,6 @@ import {unsignedInteger64Type, signedInteger64Type, NumberType, IntegerType} fro
 import {UnaryExpression, MacroIdentifierExpression, BinaryExpression} from "objects/expression";
 import {AssemblyError} from "objects/assemblyError";
 import {NumberConstant} from "objects/constant";
-import {PublicFunctionIdentifier} from "objects/identifier";
 
 export var unaryOperatorList = [];
 export var binaryOperatorList = [];
@@ -128,9 +127,7 @@ IndexOperator.prototype.createConstantOrNull = function(operand: Expression): Co
     if (tempDefinition === null) {
         throw new AssemblyError("Expected index definition.");
     }
-    let output = new NumberConstant(tempDefinition.index, unsignedInteger64Type);
-    output.compress();
-    return output;
+    return new NumberConstant(tempDefinition.index, unsignedInteger64Type);
 }
 
 export interface BinaryOperator extends BinaryOperatorInterface {}
@@ -186,19 +183,24 @@ TypeCoercionOperator.prototype.createInstructionArgOrNull = function(operand1: E
     return tempArg;
 }
 
-export class PublicFunctionIdentifierOperator extends BinaryOperator {
+export class PublicFunctionOperator extends BinaryOperator {
     constructor() {
         super(".", 1);
     }
 }
 
-PublicFunctionIdentifierOperator.prototype.getConstantDataType = function(operand1: Expression, operand2: Expression): DataType {
+PublicFunctionOperator.prototype.getConstantDataType = function(operand1: Expression, operand2: Expression): DataType {
     return signedInteger64Type;
 }
 
-PublicFunctionIdentifierOperator.prototype.createIdentifierOrNull = function(operand1: Expression, operand2: Expression): Identifier {
-    let tempName = operand2.evaluateToIdentifierName();
-    return new PublicFunctionIdentifier(tempName, operand1);
+PublicFunctionOperator.prototype.createConstantOrNull = function(operand1: Expression, operand2: Expression): Constant {
+    let tempInterfaceIndex = operand1.evaluateToNumber();
+    let tempIdentifier = operand2.evaluateToIdentifier();
+    let tempDefinition = operand1.scope.getPublicFunctionDefinition(
+        tempIdentifier,
+        tempInterfaceIndex
+    );
+    return new NumberConstant(tempDefinition.index, unsignedInteger64Type)
 }
 
 export interface BinaryNumberOperator extends BinaryNumberOperatorInterface {}
@@ -425,7 +427,7 @@ export var macroIdentifierOperator = new MacroIdentifierOperator();
 new IndexOperator();
 
 new TypeCoercionOperator();
-new PublicFunctionIdentifierOperator();
+new PublicFunctionOperator();
 new AdditionOperator();
 new SubtractionOperator();
 new MultiplicationOperator();

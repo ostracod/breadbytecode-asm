@@ -38,22 +38,27 @@ export interface ArgPerm {
 
 export interface Scope {
     indexDefinitionMapList: IdentifierMap<IndexDefinition>[];
+    publicFunctionDefinitionList: PublicFunctionDefinition[];
     parentScope: Scope;
     
     getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition;
+    getPublicFunctionDefinition(
+        identifier: Identifier,
+        interfaceIndex: number
+    ): PublicFunctionDefinition;
 }
 
 export interface Assembler {
     rootLineList: AssemblyLine[];
     aliasDefinitionMap: IdentifierMap<AliasDefinition>;
     macroDefinitionMap: {[name: string]: MacroDefinition};
-    functionDefinitionMap: IdentifierMap<FunctionDefinition>;
+    functionDefinitionList: FunctionDefinition[];
+    privateFunctionDefinitionMap: IdentifierMap<PrivateFunctionDefinition>;
+    publicFunctionDefinitionList: PublicFunctionDefinition[];
     appDataLineList: LabeledLineList;
     globalVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     dependencyDefinitionMap: IdentifierMap<DependencyDefinition>;
     nextMacroInvocationId: number;
-    nextFunctionDefinitionIndex: number;
-    nextDependencyDefinitionIndex: number;
     scope: Scope;
     globalFrameLength: FrameLength;
     fileFormatVersionNumber: VersionNumber;
@@ -240,6 +245,10 @@ export interface FunctionDefinition extends IndexDefinition {
     getTitle(): string;
 }
 
+export interface PrivateFunctionDefinition extends FunctionDefinition {
+    
+}
+
 export interface InterfaceFunctionDefinition extends FunctionDefinition {
     interfaceIndexExpression: Expression;
     
@@ -262,14 +271,11 @@ export interface Identifier {
     getDisplayString(): string;
     getMapKey(): string;
     getIsBuiltIn(): boolean;
+    equals(identifier: Identifier): boolean;
 }
 
 export interface MacroIdentifier extends Identifier {
     macroInvocationId: number;
-}
-
-export interface PublicFunctionIdentifier extends Identifier {
-    interfaceIndexExpression: Expression;
 }
 
 export interface IdentifierMap<T> {
@@ -281,6 +287,7 @@ export interface IdentifierMap<T> {
     setIndexDefinition(indexDefinition: IndexDefinition): void;
     iterate(handle: (value: T) => void): void;
     getValueList(): T[];
+    getSize(): number;
 }
 
 export interface LabelDefinition extends IndexDefinition {

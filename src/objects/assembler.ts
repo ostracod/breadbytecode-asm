@@ -30,13 +30,13 @@ export class Assembler {
         this.rootLineList = [];
         this.aliasDefinitionMap = new IdentifierMap();
         this.macroDefinitionMap = {};
-        this.functionDefinitionMap = new IdentifierMap();
+        this.functionDefinitionList = [];
+        this.privateFunctionDefinitionMap = new IdentifierMap();
+        this.publicFunctionDefinitionList = [];
         this.appDataLineList = null;
         this.globalVariableDefinitionMap = new IdentifierMap();
         this.dependencyDefinitionMap = new IdentifierMap();
         this.nextMacroInvocationId = 0;
-        this.nextFunctionDefinitionIndex = 0;
-        this.nextDependencyDefinitionIndex = 0;
         this.scope = new Scope();
         this.globalFrameLength = null;
         this.fileFormatVersionNumber = null;
@@ -203,39 +203,37 @@ Assembler.prototype.populateScopeInRootLines = function(): void {
 }
 
 Assembler.prototype.addFunctionDefinition = function(functionDefinition: FunctionDefinition): void {
-    functionDefinition.index = this.nextFunctionDefinitionIndex;
-    this.nextFunctionDefinitionIndex += 1;
+    functionDefinition.index = this.functionDefinitionList.length;
     functionDefinition.populateScope(this.scope);
     functionDefinition.extractDefinitions();
-    this.functionDefinitionMap.setIndexDefinition(functionDefinition);
+    this.functionDefinitionList.push(functionDefinition);
 }
 
 Assembler.prototype.addDependencyDefinition = function(dependencyDefinition: DependencyDefinition): void {
-    dependencyDefinition.index = this.nextDependencyDefinitionIndex;
-    this.nextDependencyDefinitionIndex += 1;
+    dependencyDefinition.index = this.dependencyDefinitionMap.getSize();
     this.dependencyDefinitionMap.setIndexDefinition(dependencyDefinition);
 }
 
 Assembler.prototype.extractFunctionDefinitions = function(): void {
-    var self = this;
-    self.processLines(function(line) {
-        var tempDirectiveName = line.directiveName;
-        var tempArgList = line.argList;
-        var tempDefinition: FunctionDefinition;
+    this.processLines(line => {
+        let tempDirectiveName = line.directiveName;
+        let tempArgList = line.argList;
+        let tempDefinition: FunctionDefinition;
         if (tempDirectiveName == "PRIV_FUNC") {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
-            var tempIdentifier = tempArgList[0].evaluateToIdentifier();
+            let tempIdentifier = tempArgList[0].evaluateToIdentifier();
             tempDefinition = new PrivateFunctionDefinition(
                 tempIdentifier,
                 line.codeBlock
             );
-            self.addFunctionDefinition(tempDefinition);
+            this.addFunctionDefinition(tempDefinition);
+            this.privateFunctionDefinitionMap.setIndexDefinition(tempDefinition);
             return [];
         }
         if (tempDirectiveName == "PUB_FUNC") {
-            var tempArbiterIndexExpression;
+            let tempArbiterIndexExpression;
             if (tempArgList.length == 3) {
                 tempArbiterIndexExpression = tempArgList[2];
             } else if (tempArgList.length == 2) {
@@ -243,27 +241,28 @@ Assembler.prototype.extractFunctionDefinitions = function(): void {
             } else {
                 throw new AssemblyError("Expected 2 or 3 arguments.");
             }
-            var tempName = tempArgList[0].evaluateToIdentifierName();
+            let tempIdentifier = tempArgList[0].evaluateToIdentifier();
             tempDefinition = new PublicFunctionDefinition(
-                tempName,
+                tempIdentifier,
                 tempArgList[1],
                 tempArbiterIndexExpression,
                 line.codeBlock
             );
-            self.addFunctionDefinition(tempDefinition);
+            this.addFunctionDefinition(tempDefinition);
+            this.publicFunctionDefinitionList.push(tempDefinition);
             return [];
         }
         if (tempDirectiveName == "GUARD_FUNC") {
             if (tempArgList.length != 2) {
                 throw new AssemblyError("Expected 2 arguments.");
             }
-            var tempName = tempArgList[0].evaluateToIdentifierName();
+            let tempIdentifier = tempArgList[0].evaluateToIdentifier();
             tempDefinition = new GuardFunctionDefinition(
-                tempName,
+                tempIdentifier,
                 tempArgList[1],
                 line.codeBlock
             );
-            self.addFunctionDefinition(tempDefinition);
+            this.addFunctionDefinition(tempDefinition);
             return [];
         }
         return null;
@@ -382,15 +381,16 @@ Assembler.prototype.populateScopeDefinitions = function(): void {
     this.scope.indexDefinitionMapList = [
         this.globalVariableDefinitionMap,
         this.appDataLineList.labelDefinitionMap,
-        this.functionDefinitionMap,
+        this.privateFunctionDefinitionMap,
         this.dependencyDefinitionMap
     ];
+    this.scope.publicFunctionDefinitionList = this.publicFunctionDefinitionList;
 }
 
 Assembler.prototype.assembleInstructions = function(): void {
-    this.functionDefinitionMap.iterate(functionDefinition => {
+    for (let functionDefinition of this.functionDefinitionList) {
         functionDefinition.assembleInstructions();
-    });
+    };
 }
 
 Assembler.prototype.generateAppFileRegion = function(): void {
@@ -403,10 +403,10 @@ Assembler.prototype.generateAppFileRegion = function(): void {
         this.globalFrameLength.createBuffer()
     );
     let funcRegionList = [];
-    this.functionDefinitionMap.iterate(functionDefinition => {
+    for (let functionDefinition of this.functionDefinitionList) {
         let tempRegion = functionDefinition.createRegion();
         funcRegionList.push(tempRegion);
-    });
+    };
     let appFuncsRegion = new CompositeRegion(REGION_TYPE.appFuncs, funcRegionList);
     let appDataRegion = new AtomicRegion(
         REGION_TYPE.appData,
@@ -453,10 +453,10 @@ Assembler.prototype.getDisplayString = function(): string {
         tempTextList.push(variableDefinition.getDisplayString());
     });
     tempTextList.push("\n= = = FUNCTION DEFINITIONS = = =\n");
-    this.functionDefinitionMap.iterate(functionDefinition => {
+    for (let functionDefinition of this.functionDefinitionList) {
         tempTextList.push(functionDefinition.getDisplayString());
         tempTextList.push("");
-    });
+    };
     tempTextList.push("= = = APP DATA LINE LIST = = =\n");
     tempTextList.push(this.appDataLineList.getDisplayString("Data body"));
     tempTextList.push("\n= = = APP FILE REGION = = =\n");

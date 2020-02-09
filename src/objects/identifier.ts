@@ -2,10 +2,10 @@
 import {
     Identifier as IdentifierInterface,
     MacroIdentifier as MacroIdentifierInterface,
-    PublicFunctionIdentifier as PublicFunctionIdentifierInterface,
     IdentifierMap as IdentifierMapInterface,
     IndexDefinition, Expression
 } from "models/objects";
+import {AssemblyError} from "objects/assemblyError";
 import {nameInstructionRefMap} from "objects/instruction";
 import {builtInConstantSet} from "objects/constant";
 
@@ -38,6 +38,10 @@ Identifier.prototype.getIsBuiltIn = function(): boolean {
     return (this.name in builtInIdentifierNameSet);
 }
 
+Identifier.prototype.equals = function(identifier: Identifier): boolean {
+    return (this.getMapKey() === identifier.getMapKey());
+}
+
 export interface MacroIdentifier extends MacroIdentifierInterface {}
 
 export class MacroIdentifier extends Identifier {
@@ -56,28 +60,6 @@ MacroIdentifier.prototype.getMapKey = function(): string {
 }
 
 MacroIdentifier.prototype.getIsBuiltIn = function(): boolean {
-    return false;
-}
-
-export interface PublicFunctionIdentifier extends PublicFunctionIdentifierInterface {}
-
-export class PublicFunctionIdentifier extends Identifier {
-    constructor(name: string, interfaceIndexExpression: Expression) {
-        super(name);
-        this.interfaceIndexExpression = interfaceIndexExpression;
-    }
-}
-
-PublicFunctionIdentifier.prototype.getDisplayString = function(): string {
-    return ".{" + this.interfaceIndexExpression.getDisplayString() + "}" + this.name;
-}
-
-PublicFunctionIdentifier.prototype.getMapKey = function(): string {
-    // TODO: Defer this expression evaluation to be as late as possible.
-    return this.name + "." + this.interfaceIndexExpression.evaluateToNumber();
-}
-
-PublicFunctionIdentifier.prototype.getIsBuiltIn = function(): boolean {
     return false;
 }
 
@@ -102,9 +84,10 @@ IdentifierMap.prototype.get = function(identifier: Identifier): any {
 
 IdentifierMap.prototype.set = function(identifier: Identifier, value: any): void {
     var tempKey = identifier.getMapKey();
-    if (!(tempKey in this.map)) {
-        this.keyList.push(tempKey);
+    if (tempKey in this.map) {
+        throw new AssemblyError("Duplicate identifier.");
     }
+    this.keyList.push(tempKey);
     this.map[tempKey] = value;
 }
 
@@ -124,6 +107,10 @@ IdentifierMap.prototype.getValueList = function(): any[] {
         output.push(value);
     });
     return output;
+}
+
+IdentifierMap.prototype.getSize = function(): number {
+    return this.keyList.length;
 }
 
 
