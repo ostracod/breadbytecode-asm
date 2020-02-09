@@ -19,7 +19,13 @@ Compile and run the assembler:
 ```
 # Inside breadbytecode-asm:
 tsc
-node ./dist/assemble.js (path to .bbasm file)
+node ./dist/assemble.js [-v] (path to .bbasm file)
+```
+
+To assemble example file `hello.bbasm` included in this repository:
+
+```
+node ./dist/assemble.js -v ./hello.bbasm
 ```
 
 ## Instruction Syntax

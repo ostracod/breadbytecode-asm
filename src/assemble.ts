@@ -8,21 +8,34 @@ export var projectPath = path.dirname(__dirname);
 
 import {Assembler} from "objects/assembler";
 
-var assemblyFileExtension = ".bbasm";
+const assemblyFileExtension = ".bbasm";
 
-if (process.argv.length != 3) {
-    console.log("Please provide a single path to a .bbasm file.");
+function printUsageAndExit() {
+    console.log("Usage: node assemble.js [-v] (path to .bbasm file)");
     process.exit(1);
 }
 
-var sourcePath = process.argv[2];
+if (process.argv.length !== 3 && process.argv.length !== 4) {
+    printUsageAndExit();
+}
+
+let sourcePath = process.argv[process.argv.length - 1];
 if (!sourcePath.toLowerCase().endsWith(assemblyFileExtension)) {
-    console.log("Input file must have " + assemblyFileExtension + " extension.");
+    console.log(`Input file must have ${assemblyFileExtension} extension.`);
     process.exit(1);
 }
 
-var destinationPath = sourcePath.substring(0, sourcePath.length - assemblyFileExtension.length);
-var assembler = new Assembler();
+let shouldBeVerbose = false;
+if (process.argv.length === 4) {
+    if (process.argv[2] === "-v") {
+        shouldBeVerbose = true;
+    } else {
+        printUsageAndExit();
+    }
+}
+
+let destinationPath = sourcePath.substring(0, sourcePath.length - assemblyFileExtension.length);
+let assembler = new Assembler(shouldBeVerbose);
 assembler.assembleCodeFile(sourcePath, destinationPath);
 
 

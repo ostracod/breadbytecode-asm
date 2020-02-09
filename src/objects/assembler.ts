@@ -26,7 +26,8 @@ import {dependencyUtils} from "utils/dependencyUtils";
 export interface Assembler extends AssemblerInterface {}
 
 export class Assembler {
-    constructor() {
+    constructor(shouldBeVerbose: boolean) {
+        this.shouldBeVerbose = shouldBeVerbose;
         this.rootLineList = [];
         this.aliasDefinitionMap = new IdentifierMap();
         this.macroDefinitionMap = {};
@@ -466,6 +467,9 @@ Assembler.prototype.getDisplayString = function(): string {
 }
 
 Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationPath: string): void {
+    
+    console.log(`Assembling "${sourcePath}"...`);
+    
     try {
         this.rootLineList = this.loadAndParseAssemblyFile(sourcePath);
         this.expandAliasInvocations();
@@ -499,12 +503,13 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
         }
     }
     
-    // TEST CODE.
-    console.log(this.getDisplayString());
+    if (this.shouldBeVerbose) {
+        console.log(this.getDisplayString());
+    }
     
     fs.writeFileSync(destinationPath, this.appFileRegion.createBuffer());
     console.log("Finished assembling.");
-    console.log("Destination path: " + destinationPath);
+    console.log(`Destination path: "${destinationPath}"`);
 }
 
 

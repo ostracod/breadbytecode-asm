@@ -49,6 +49,7 @@ export interface Scope {
 }
 
 export interface Assembler {
+    shouldBeVerbose: boolean;
     rootLineList: AssemblyLine[];
     aliasDefinitionMap: IdentifierMap<AliasDefinition>;
     macroDefinitionMap: {[name: string]: MacroDefinition};
