@@ -49,21 +49,18 @@ export interface Scope {
 }
 
 export interface Assembler {
+    rootRegionType: number;
+    funcsRegionType: number;
     shouldBeVerbose: boolean;
     rootLineList: AssemblyLine[];
     aliasDefinitionMap: IdentifierMap<AliasDefinition>;
     macroDefinitionMap: {[name: string]: MacroDefinition};
     functionDefinitionList: FunctionDefinition[];
-    privateFunctionDefinitionMap: IdentifierMap<PrivateFunctionDefinition>;
-    publicFunctionDefinitionList: PublicFunctionDefinition[];
-    appDataLineList: LabeledLineList;
-    globalVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     dependencyDefinitionMap: IdentifierMap<DependencyDefinition>;
     nextMacroInvocationId: number;
     scope: Scope;
-    globalFrameLength: FrameLength;
     fileFormatVersionNumber: VersionNumber;
-    appFileRegion: Region;
+    fileRegion: Region;
     
     processLines(processLine: LineProcessor): void;
     processExpressionsInLines(
@@ -71,7 +68,6 @@ export interface Assembler {
         shouldRecurAfterProcess?: boolean
     ): void;
     loadAndParseAssemblyFile(path: string): AssemblyLine[];
-    getDisplayString(): string;
     assembleCodeFile(sourcePath: string, destinationPath: string): void;
     extractMacroDefinitions(lineList: AssemblyLine[]): AssemblyLine[];
     getNextMacroInvocationId(): number;
@@ -82,18 +78,30 @@ export interface Assembler {
     populateScopeInRootLines(): void;
     addFunctionDefinition(functionDefinition: FunctionDefinition): void;
     addDependencyDefinition(dependencyDefinition: DependencyDefinition): void;
-    extractFunctionDefinitions(): void;
-    extractAppDataDefinitions(): void;
-    extractGlobalVariableDefinitions(): void;
     extractDependencyDefinitions(): void;
     extractFileFormatVersionNumber(): void;
-    populateScopeDefinitions(): void;
     assembleInstructions(): void;
-    generateAppFileRegion(): void;
+    generateFileRegion(): void;
+    
+    // Concrete subclasses may override these methods:
+    getDisplayString(): string;
+    extractDefinitions(): void;
+    populateScopeDefinitions(): void;
+    createFileSubregions(): Region[];
+    
+    // Concrete subclasses must implement these methods:
+    extractFunctionDefinitions(): void;
 }
 
 export interface BytecodeAppAssembler extends Assembler {
+    privateFunctionDefinitionMap: IdentifierMap<PrivateFunctionDefinition>;
+    publicFunctionDefinitionList: PublicFunctionDefinition[];
+    appDataLineList: LabeledLineList;
+    globalVariableDefinitionMap: IdentifierMap<VariableDefinition>;
+    globalFrameLength: FrameLength;
     
+    extractAppDataDefinitions(): void;
+    extractGlobalVariableDefinitions(): void;
 }
 
 export interface InterfaceAssembler extends Assembler {
