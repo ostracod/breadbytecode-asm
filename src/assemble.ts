@@ -1,17 +1,35 @@
 
 // This code is intended to perform the functionality of rootpath.
 // Put all other code after these few lines.
-import * as path from "path";
-process.env.NODE_PATH = path.dirname(__filename);
+import * as pathUtils from "path";
+process.env.NODE_PATH = pathUtils.dirname(__filename);
 require("module")._initPaths();
-export var projectPath = path.dirname(__dirname);
+export var projectPath = pathUtils.dirname(__dirname);
 
-import {Assembler} from "objects/assembler";
+import {BytecodeAppAssembler, InterfaceAssembler} from "objects/assembler";
 
-const assemblyFileExtension = ".bbasm";
+const assemblerClassMap = {
+    ".bbasm": BytecodeAppAssembler,
+    ".biasm": InterfaceAssembler
+};
+
+function printPermittedFileExtensions() {
+    let extensionList = [];
+    for (let extension in assemblerClassMap) {
+        extensionList.push(extension);
+    }
+    console.log("Permitted assembly file extensions: " + extensionList.join(", "));
+}
 
 function printUsageAndExit() {
-    console.log("Usage: node assemble.js [-v] (path to .bbasm file)");
+    console.log(`Usage: node assemble.js [-v] (path to assembly file)`);
+    printPermittedFileExtensions();
+    process.exit(1);
+}
+
+function printExtensionErrorAndExit() {
+    console.log("Invalid assembly file extension.");
+    printPermittedFileExtensions();
     process.exit(1);
 }
 
@@ -20,9 +38,14 @@ if (process.argv.length !== 3 && process.argv.length !== 4) {
 }
 
 let sourcePath = process.argv[process.argv.length - 1];
-if (!sourcePath.toLowerCase().endsWith(assemblyFileExtension)) {
-    console.log(`Input file must have ${assemblyFileExtension} extension.`);
-    process.exit(1);
+let fileName = pathUtils.basename(sourcePath);
+let tempIndex = fileName.lastIndexOf(".");
+if (tempIndex < 0) {
+    printExtensionErrorAndExit();
+}
+let fileExtension = fileName.substring(tempIndex, fileName.length);
+if (!(fileExtension in assemblerClassMap)) {
+    printExtensionErrorAndExit();
 }
 
 let shouldBeVerbose = false;
@@ -34,8 +57,9 @@ if (process.argv.length === 4) {
     }
 }
 
-let destinationPath = sourcePath.substring(0, sourcePath.length - assemblyFileExtension.length);
-let assembler = new Assembler(shouldBeVerbose);
+let destinationPath = sourcePath.substring(0, sourcePath.length - fileExtension.length);
+let assemblerClass = assemblerClassMap[fileExtension];
+let assembler = new assemblerClass(shouldBeVerbose);
 assembler.assembleCodeFile(sourcePath, destinationPath);
 
 

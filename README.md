@@ -1,7 +1,7 @@
 
 # BreadBytecode Assembler
 
-This utility converts assembly code to BreadBytecode for BreadSystem.
+This utility converts assembly code to bytecode application files or interface files for BreadSystem.
 
 ## Usage
 
@@ -19,8 +19,10 @@ Compile and run the assembler:
 ```
 # Inside breadbytecode-asm:
 tsc
-node ./dist/assemble.js [-v] (path to .bbasm file)
+node ./dist/assemble.js [-v] (path to assembly file)
 ```
+
+Bytecode application assembly files must have the extension `.bbasm`. Interface assembly files must have the extension `.biasm`.
 
 To assemble example file `hello.bbasm` included in this repository:
 
@@ -107,8 +109,8 @@ END
 
 ## List of Directives
 
-`BYTECODE_VER ver`  
-Declares the bytecode version number to be used in the application.
+`FORMAT_VER ver`  
+Declares the file format version number to be used in the application file or interface file.
 
 `DEF name, expression`  
 Declares an alias to an expression.
@@ -123,28 +125,31 @@ Declares a bundle dependency with the given version number.
 Declares an application dependency with the given interfaces.
 
 `PRIV_FUNC name ... END`  
-Declares a private function.
+Declares a private function. Only valid in an application file.
 
 `PUB_FUNC name, ifaceIndex, arbiterIndex? ... END`  
-Declares a public function which belongs to the given interface.
+Declares a public function which belongs to the given interface. Only valid in an application file.
 
 `GUARD_FUNC name, ifaceIndex ... END`  
-Declares a guard function which belongs to the given interface.
+Declares a guard function which belongs to the given interface. Only valid in an application file.
+
+`IFACE_FUNC name, arbiterIndex? ... END`
+Declares a interface function. Only valid in an interface file.
 
 `VAR name, dataType`  
-Declares a local or global variable.
+Declares a local or global variable. Only valid in an application file.
 
 `ARG name, dataType, argPermModifiers`  
 Declares an argument variable.
 
 `LBL name`  
-Declares an instruction or data label.
+Declares an instruction or data label. Only valid in an application file.
 
 `JMP_TABLE ... END`  
-Declares the jump table region for the current function.
+Declares the jump table region for the current function. Only valid in an application file.
 
 `APP_DATA ... END`  
-Declares the application data region.
+Declares the application data region. Only valid in an application file.
 
 `DATA values`  
 Provides constant values for a jump table or the application data region.

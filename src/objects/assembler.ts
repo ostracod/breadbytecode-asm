@@ -2,7 +2,11 @@
 import * as fs from "fs";
 
 import {LineProcessor, ExpressionProcessor} from "models/items";
-import {Assembler as AssemblerInterface, AssemblyLine, FunctionDefinition, Identifier, IndexDefinition, Region, DependencyDefinition} from "models/objects";
+import {
+    Assembler as AssemblerInterface,
+    BytecodeAppAssembler as BytecodeAppAssemblerInterface,
+    InterfaceAssembler as InterfaceAssemblerInterface,
+    AssemblyLine, FunctionDefinition, Identifier, IndexDefinition, Region, DependencyDefinition} from "models/objects";
 
 import {AssemblyError} from "objects/assemblyError";
 import {IdentifierMap} from "objects/identifier";
@@ -25,7 +29,7 @@ import {dependencyUtils} from "utils/dependencyUtils";
 
 export interface Assembler extends AssemblerInterface {}
 
-export class Assembler {
+export abstract class Assembler {
     constructor(shouldBeVerbose: boolean) {
         this.shouldBeVerbose = shouldBeVerbose;
         this.rootLineList = [];
@@ -361,7 +365,7 @@ Assembler.prototype.extractDependencyDefinitions = function(): void {
 Assembler.prototype.extractFileFormatVersionNumber = function(): void {
     this.processLines(line => {
         let tempArgList = line.argList;
-        if (line.directiveName == "BYTECODE_VER") {
+        if (line.directiveName == "FORMAT_VER") {
             if (tempArgList.length !== 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
@@ -374,7 +378,7 @@ Assembler.prototype.extractFileFormatVersionNumber = function(): void {
         return null;
     });
     if (this.fileFormatVersionNumber === null) {
-        throw new AssemblyError("Missing BYTECODE_VER directive.");
+        throw new AssemblyError("Missing FORMAT_VER directive.");
     }
 }
 
@@ -510,6 +514,20 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
     fs.writeFileSync(destinationPath, this.appFileRegion.createBuffer());
     console.log("Finished assembling.");
     console.log(`Destination path: "${destinationPath}"`);
+}
+
+export interface BytecodeAppAssembler extends BytecodeAppAssemblerInterface {}
+
+export class BytecodeAppAssembler extends Assembler {
+    // TODO: Implement.
+    
+}
+
+export interface InterfaceAssembler extends InterfaceAssemblerInterface {}
+
+export class InterfaceAssembler extends Assembler {
+    // TODO: Implement.
+    
 }
 
 

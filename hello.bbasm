@@ -1,7 +1,7 @@
 
 # Example program which prints "Hello world" to a terminal.
 
-BYTECODE_VER 1.0.0
+FORMAT_VER 1.0.0
 
 VER_DEP initableIface, ":system/ifaces/initable", 1.0.0, implemented
 VER_DEP termDriverIface, ":system/ifaces/termDriver", 1.0.0

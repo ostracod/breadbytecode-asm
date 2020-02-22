@@ -92,6 +92,14 @@ export interface Assembler {
     generateAppFileRegion(): void;
 }
 
+export interface BytecodeAppAssembler extends Assembler {
+    
+}
+
+export interface InterfaceAssembler extends Assembler {
+    
+}
+
 export interface AssemblyError {
     message: string;
     lineNumber: number;
