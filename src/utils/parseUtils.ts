@@ -23,7 +23,7 @@ export class ParseUtils {
 
 export var parseUtils = new ParseUtils();
 
-var codeBlockDirectiveNameSet = ["PRIV_FUNC", "PUB_FUNC", "GUARD_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
+var codeBlockDirectiveNameSet = ["PRIV_FUNC", "PUB_FUNC", "GUARD_FUNC", "IFACE_FUNC", "JMP_TABLE", "APP_DATA", "MACRO"];
 
 ParseUtils.prototype.skipWhitespace = function(text: string, index: number): number {
     while (index < text.length) {

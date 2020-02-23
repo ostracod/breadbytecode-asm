@@ -80,7 +80,6 @@ export interface Assembler {
     addDependencyDefinition(dependencyDefinition: DependencyDefinition): void;
     extractDependencyDefinitions(): void;
     extractFileFormatVersionNumber(): void;
-    assembleInstructions(): void;
     generateFileRegion(): void;
     
     // Concrete subclasses may override these methods:
@@ -233,52 +232,68 @@ export interface SubscriptExpression extends Expression {
     dataTypeExpression: Expression;
 }
 
-export interface FunctionDefinition extends IndexDefinition {
-    lineList: LabeledLineList;
-    regionType: number;
-    jumpTableLineList: LabeledLineList;
-    argVariableDefinitionMap: IdentifierMap<ArgVariableDefinition>;
+export interface FunctionImplementation {
+    functionDefinition: FunctionDefinition;
     localVariableDefinitionMap: IdentifierMap<VariableDefinition>;
-    instructionList: Instruction[];
-    scope: Scope;
     localFrameLength: FrameLength;
-    argFrameLength: FrameLength;
+    instructionList: Instruction[];
+    jumpTableLineList: LabeledLineList;
     
-    populateScope(parentScope: Scope): void;
-    extractDefinitions(): void;
+    getDisplayString(indentationLevel: number): string;
+    getScope(): Scope;
+    getLineList(): LabeledLineList;
     processLines(processLine: LineProcessor): void;
-    processJumpTableLines(processLine: LineProcessor): void;
+    extractDefinitions(): void;
     extractJumpTables(): void;
-    extractVariableDefinitions(): void;
+    extractLocalVariableDefinitions(): void;
     extractLabelDefinitions(): void;
     populateScopeDefinitions(): void;
     assembleInstructions(): void;
+    createSubregions(): Region[];
+}
+
+export interface FunctionDefinition extends IndexDefinition {
+    lineList: LabeledLineList;
+    regionType: number;
+    argVariableDefinitionMap: IdentifierMap<ArgVariableDefinition>;
+    argFrameLength: FrameLength;
+    scope: Scope;
+    functionImplementation: FunctionImplementation;
+    
+    processLines(processLine: LineProcessor): void;
+    populateScope(parentScope: Scope): void;
+    extractDefinitions(): void;
+    extractArgVariableDefinitions(): void;
+    populateScopeDefinitions(): void;
     createRegion(): Region;
     
     // Concrete subclasses may override these methods:
-    createRegionHelper(): Region[];
+    createSubregions(): Region[];
+    getTitleSuffix(): string;
     
     // Concrete subclasses must implement these methods:
-    getTitle(): string;
+    getTitlePrefix(): string;
+    
 }
 
 export interface PrivateFunctionDefinition extends FunctionDefinition {
     
 }
 
-export interface InterfaceFunctionDefinition extends FunctionDefinition {
-    interfaceIndexExpression: Expression;
-    
+export interface ArgPermFunctionDefinition extends FunctionDefinition {
     getArgPermsRegion(): Region;
-    
-    // Concrete subclasses may override these methods:
-    getTitleSuffix(): string;
-    
-    // Concrete subclasses must implement these methods:
-    getTitlePrefix(): string;
 }
 
-export interface PublicFunctionDefinition extends InterfaceFunctionDefinition {
+export interface PublicFunctionDefinition extends ArgPermFunctionDefinition {
+    interfaceIndexExpression: Expression;
+    arbiterIndexExpression: Expression;
+}
+
+export interface GuardFunctionDefinition extends ArgPermFunctionDefinition {
+    interfaceIndexExpression: Expression;
+}
+
+export interface InterfaceFunctionDefinition extends ArgPermFunctionDefinition {
     arbiterIndexExpression: Expression;
 }
 

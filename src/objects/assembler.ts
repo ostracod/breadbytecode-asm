@@ -13,11 +13,7 @@ import {IdentifierMap} from "objects/identifier";
 import {Scope} from "objects/scope";
 import {MacroDefinition} from "objects/macroDefinition";
 import {AliasDefinition} from "objects/aliasDefinition";
-import {
-    PrivateFunctionDefinition,
-    PublicFunctionDefinition,
-    GuardFunctionDefinition
-} from "objects/functionDefinition";
+import {PrivateFunctionDefinition, PublicFunctionDefinition, GuardFunctionDefinition, InterfaceFunctionDefinition} from "objects/functionDefinition";
 import {AppDataLineList} from "objects/labeledLineList";
 import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
 import {PathDependencyDefinition, VersionDependencyDefinition, InterfaceDependencyDefinition} from "objects/dependencyDefinition";
@@ -208,6 +204,7 @@ Assembler.prototype.addFunctionDefinition = function(functionDefinition: Functio
     functionDefinition.index = this.functionDefinitionList.length;
     functionDefinition.populateScope(this.scope);
     functionDefinition.extractDefinitions();
+    functionDefinition.populateScopeDefinitions();
     this.functionDefinitionList.push(functionDefinition);
 }
 
@@ -298,12 +295,6 @@ Assembler.prototype.populateScopeDefinitions = function(): void {
     this.scope.indexDefinitionMapList = [this.dependencyDefinitionMap];
 }
 
-Assembler.prototype.assembleInstructions = function(): void {
-    for (let functionDefinition of this.functionDefinitionList) {
-        functionDefinition.assembleInstructions();
-    };
-}
-
 Assembler.prototype.createFileSubregions = function(): Region[] {
     let formatVersionRegion = new AtomicRegion(
         REGION_TYPE.fileFormatVer,
@@ -331,6 +322,14 @@ Assembler.prototype.createFileSubregions = function(): Region[] {
 }
 
 Assembler.prototype.generateFileRegion = function(): void {
+    if (this.rootLineList.length > 0) {
+        let tempLine = this.rootLineList[0];
+        throw new AssemblyError(
+            "Unknown directive.",
+            tempLine.lineNumber,
+            tempLine.filePath
+        );
+    }
     let tempRegionList = this.createFileSubregions();
     this.fileRegion = new CompositeRegion(this.rootRegionType, tempRegionList);
 }
@@ -374,16 +373,7 @@ Assembler.prototype.assembleCodeFile = function(sourcePath: string, destinationP
         this.expandAliasInvocations();
         this.populateScopeInRootLines();
         this.extractDefinitions();
-        if (this.rootLineList.length > 0) {
-            let tempLine = this.rootLineList[0];
-            throw new AssemblyError(
-                "Unknown directive.",
-                tempLine.lineNumber,
-                tempLine.filePath
-            );
-        }
         this.populateScopeDefinitions();
-        this.assembleInstructions();
         this.generateFileRegion();
     } catch(error) {
         if (error instanceof AssemblyError) {
@@ -470,13 +460,12 @@ BytecodeAppAssembler.prototype.extractFunctionDefinitions = function(): void {
     this.processLines(line => {
         let tempDirectiveName = line.directiveName;
         let tempArgList = line.argList;
-        let tempDefinition: FunctionDefinition;
         if (tempDirectiveName == "PRIV_FUNC") {
             if (tempArgList.length != 1) {
                 throw new AssemblyError("Expected 1 argument.");
             }
             let tempIdentifier = tempArgList[0].evaluateToIdentifier();
-            tempDefinition = new PrivateFunctionDefinition(
+            let tempDefinition = new PrivateFunctionDefinition(
                 tempIdentifier,
                 line.codeBlock
             );
@@ -494,7 +483,7 @@ BytecodeAppAssembler.prototype.extractFunctionDefinitions = function(): void {
                 throw new AssemblyError("Expected 2 or 3 arguments.");
             }
             let tempIdentifier = tempArgList[0].evaluateToIdentifier();
-            tempDefinition = new PublicFunctionDefinition(
+            let tempDefinition = new PublicFunctionDefinition(
                 tempIdentifier,
                 tempArgList[1],
                 tempArbiterIndexExpression,
@@ -509,7 +498,7 @@ BytecodeAppAssembler.prototype.extractFunctionDefinitions = function(): void {
                 throw new AssemblyError("Expected 2 arguments.");
             }
             let tempIdentifier = tempArgList[0].evaluateToIdentifier();
-            tempDefinition = new GuardFunctionDefinition(
+            let tempDefinition = new GuardFunctionDefinition(
                 tempIdentifier,
                 tempArgList[1],
                 line.codeBlock
@@ -560,8 +549,34 @@ BytecodeAppAssembler.prototype.extractGlobalVariableDefinitions = function(): vo
 export interface InterfaceAssembler extends InterfaceAssemblerInterface {}
 
 export class InterfaceAssembler extends Assembler {
-    // TODO: Implement.
-    
+    constructor(shouldBeVerbose: boolean) {
+        super(REGION_TYPE.ifaceFile, REGION_TYPE.ifaceFuncs, shouldBeVerbose);
+    }
+}
+
+InterfaceAssembler.prototype.extractFunctionDefinitions = function(): void {
+    this.processLines(line => {
+        let tempArgList = line.argList;
+        if (line.directiveName == "IFACE_FUNC") {
+            let tempArbiterIndexExpression;
+            if (tempArgList.length == 2) {
+                tempArbiterIndexExpression = tempArgList[1];
+            } else if (tempArgList.length == 1) {
+                tempArbiterIndexExpression = null;
+            } else {
+                throw new AssemblyError("Expected 1 or 2 arguments.");
+            }
+            let tempIdentifier = tempArgList[0].evaluateToIdentifier();
+            let tempDefinition = new InterfaceFunctionDefinition(
+                tempIdentifier,
+                tempArbiterIndexExpression,
+                line.codeBlock
+            );
+            this.addFunctionDefinition(tempDefinition);
+            return [];
+        }
+        return null;
+    });
 }
 
 

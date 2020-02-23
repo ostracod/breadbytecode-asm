@@ -1,11 +1,14 @@
 
 import {LineProcessor} from "models/items";
 import {
+    FunctionImplementation as FunctionImplementationInterface,
     FunctionDefinition as FunctionDefinitionInterface,
     PrivateFunctionDefinition as PrivateFunctionDefinitionInterface,
-    InterfaceFunctionDefinition as InterfaceFunctionDefinitionInterface,
+    ArgPermFunctionDefinition as ArgPermFunctionDefinitionInterface,
     PublicFunctionDefinition as PublicFunctionDefinitionInterface,
-    AssemblyLine, Expression, Region
+    GuardFunctionDefinition as GuardFunctionDefinitionInterface,
+    InterfaceFunctionDefinition as InterfaceFunctionDefinitionInterface,
+    AssemblyLine, Expression, Region, LabeledLineList
 } from "models/objects";
 
 import {niceUtils} from "utils/niceUtils";
@@ -20,96 +23,81 @@ import {InstructionLineList, JumpTableLineList} from "objects/labeledLineList";
 import {Identifier, IdentifierMap} from "objects/identifier";
 import {REGION_TYPE, AtomicRegion, CompositeRegion} from "objects/region";
 
-export interface FunctionDefinition extends FunctionDefinitionInterface {}
+export interface FunctionImplementation extends FunctionImplementationInterface {}
 
-export abstract class FunctionDefinition extends IndexDefinition {
-    constructor(identifier: Identifier, lineList: AssemblyLine[], regionType: number) {
-        super(identifier, indexConstantConverter);
-        this.lineList = new InstructionLineList(lineList);
-        this.regionType = regionType;
-        this.jumpTableLineList = null;
-        this.argVariableDefinitionMap = new IdentifierMap();
+export class FunctionImplementation {
+    constructor(functionDefinition: FunctionDefinition) {
+        this.functionDefinition = functionDefinition;
         this.localVariableDefinitionMap = new IdentifierMap();
-        this.instructionList = [];
-        this.scope = null;
         this.localFrameLength = null;
-        this.argFrameLength = null;
+        this.instructionList = [];
+        this.jumpTableLineList = null;
     }
 }
 
-FunctionDefinition.prototype.populateScope = function(parentScope: Scope): void {
-    this.scope = new Scope(parentScope);
-    this.lineList.populateScope(this.scope);
+FunctionImplementation.prototype.getDisplayString = function(indentationLevel: number): string {
+    let tempTextList = [];
+    tempTextList.push(this.getLineList().getDisplayString(
+        "Instruction body",
+        indentationLevel
+    ));
+    tempTextList.push(niceUtils.getDisplayableListDisplayString(
+        "Assembled instructions",
+        this.instructionList,
+        indentationLevel
+    ));
+    tempTextList.push(this.jumpTableLineList.getDisplayString(
+        "Jump table",
+        indentationLevel
+    ));
+    tempTextList.push(niceUtils.getIdentifierMapDisplayString(
+        "Local variables",
+        this.localVariableDefinitionMap,
+        indentationLevel
+    ));
+    return niceUtils.joinTextList(tempTextList);
 }
 
-FunctionDefinition.prototype.extractDefinitions = function(): void {
+FunctionImplementation.prototype.getScope = function(): Scope {
+    return this.functionDefinition.scope;
+}
+
+FunctionImplementation.prototype.getLineList = function(): LabeledLineList {
+    return this.functionDefinition.lineList;
+}
+
+FunctionImplementation.prototype.processLines = function(processLine: LineProcessor): void {
+    this.functionDefinition.processLines(processLine);
+}
+
+FunctionImplementation.prototype.extractDefinitions = function(): void {
     this.extractJumpTables();
-    this.extractVariableDefinitions();
+    this.extractLocalVariableDefinitions();
     this.extractLabelDefinitions();
-    this.populateScopeDefinitions();
 }
 
-FunctionDefinition.prototype.processLines = function(processLine: LineProcessor): void {
-    this.lineList.processLines(processLine);
-}
-
-FunctionDefinition.prototype.processJumpTableLines = function(processLine: LineProcessor): void {
-    this.jumpTableLineList.processLines(processLine);
-}
-
-FunctionDefinition.prototype.extractJumpTables = function(): void {
-    var tempLineList = [];
-    var self = this;
-    self.processLines(function(line) {
-        if (line.directiveName == "JMP_TABLE") {
-            if (line.argList.length != 0) {
+FunctionImplementation.prototype.extractJumpTables = function(): void {
+    let tempLineList = [];
+    this.processLines(line => {
+        if (line.directiveName === "JMP_TABLE") {
+            if (line.argList.length !== 0) {
                 throw new AssemblyError("Expected 0 arguments.");
             }
-            var index = 0;
-            while (index < line.codeBlock.length) {
-                var tempLine = line.codeBlock[index];
+            for (let tempLine of line.codeBlock) {
                 tempLineList.push(tempLine);
-                index += 1;
             }
             return [];
         }
         return null;
     });
-    self.jumpTableLineList = new JumpTableLineList(tempLineList, this.scope);
+    this.jumpTableLineList = new JumpTableLineList(tempLineList, this.getScope());
 }
 
-FunctionDefinition.prototype.getDisplayString = function(): string {
-    var tempTextList = [this.getTitle() + ":"];
-    tempTextList.push(this.lineList.getDisplayString("Instruction body", 1));
-    tempTextList.push(niceUtils.getDisplayableListDisplayString(
-        "Assembled instructions",
-        this.instructionList,
-        1
-    ));
-    tempTextList.push(this.jumpTableLineList.getDisplayString("Jump table", 1));
-    tempTextList.push(niceUtils.getIdentifierMapDisplayString(
-        "Argument variables",
-        this.argVariableDefinitionMap,
-        1
-    ));
-    tempTextList.push(niceUtils.getIdentifierMapDisplayString(
-        "Local variables",
-        this.localVariableDefinitionMap,
-        1
-    ));
-    return niceUtils.joinTextList(tempTextList);
-}
-
-FunctionDefinition.prototype.extractVariableDefinitions = function(): void {
+FunctionImplementation.prototype.extractLocalVariableDefinitions = function(): void {
     this.processLines(line => {
-        var tempLocalDefinition = variableUtils.extractLocalVariableDefinition(line);
+        let tempLocalDefinition = variableUtils.extractLocalVariableDefinition(line);
         if (tempLocalDefinition !== null) {
             this.localVariableDefinitionMap.setIndexDefinition(tempLocalDefinition);
-            return [];
-        }
-        var tempArgDefinition = variableUtils.extractArgVariableDefinition(line);
-        if (tempArgDefinition !== null) {
-            this.argVariableDefinitionMap.setIndexDefinition(tempArgDefinition);
             return [];
         }
         return null;
@@ -117,34 +105,26 @@ FunctionDefinition.prototype.extractVariableDefinitions = function(): void {
     this.localFrameLength = variableUtils.populateVariableDefinitionIndexes(
         this.localVariableDefinitionMap
     );
-    this.argFrameLength = variableUtils.populateVariableDefinitionIndexes(
-        this.argVariableDefinitionMap
-    );
 }
 
-FunctionDefinition.prototype.extractLabelDefinitions = function(): void {
-    this.lineList.extractLabelDefinitions();
+FunctionImplementation.prototype.extractLabelDefinitions = function(): void {
+    this.getLineList().extractLabelDefinitions();
     this.jumpTableLineList.extractLabelDefinitions();
 }
 
-FunctionDefinition.prototype.populateScopeDefinitions = function(): void {
-    this.scope.indexDefinitionMapList = [
+FunctionImplementation.prototype.populateScopeDefinitions = function(): void {
+    this.getScope().indexDefinitionMapList.push(
         this.localVariableDefinitionMap,
-        this.argVariableDefinitionMap,
-        this.lineList.labelDefinitionMap,
+        this.getLineList().labelDefinitionMap,
         this.jumpTableLineList.labelDefinitionMap
-    ];
-}
-
-FunctionDefinition.prototype.assembleInstructions = function(): void {
-    this.instructionList = this.lineList.assembleInstructions();
-}
-
-FunctionDefinition.prototype.createRegion = function(): Region {
-    let argFrameLengthRegion = new AtomicRegion(
-        REGION_TYPE.argFrameLen,
-        this.argFrameLength.createBuffer()
     );
+}
+
+FunctionImplementation.prototype.assembleInstructions = function(): void {
+    this.instructionList = this.getLineList().assembleInstructions();
+}
+
+FunctionImplementation.prototype.createSubregions = function(): Region[] {
     let localFrameLengthRegion = new AtomicRegion(
         REGION_TYPE.localFrameLen,
         this.localFrameLength.createBuffer()
@@ -153,20 +133,118 @@ FunctionDefinition.prototype.createRegion = function(): Region {
         this.instructionList.map(instruction => instruction.createBuffer())
     );
     let instructionsRegion = new AtomicRegion(REGION_TYPE.instrs, tempBuffer);
-    let tempRegionList = [
-        argFrameLengthRegion,
-        localFrameLengthRegion,
-        instructionsRegion
-    ].concat(this.createRegionHelper());
+    let output = [localFrameLengthRegion, instructionsRegion];
     tempBuffer = this.jumpTableLineList.createBuffer();
     if (tempBuffer.length > 0) {
-        tempRegionList.push(new AtomicRegion(REGION_TYPE.jmpTable, tempBuffer));
+        output.push(new AtomicRegion(REGION_TYPE.jmpTable, tempBuffer));
     }
+    return output;
+}
+
+export interface FunctionDefinition extends FunctionDefinitionInterface {}
+
+export abstract class FunctionDefinition extends IndexDefinition {
+    constructor(identifier: Identifier, lineList: AssemblyLine[], regionType: number) {
+        super(identifier, indexConstantConverter);
+        this.lineList = new InstructionLineList(lineList);
+        this.regionType = regionType;
+        this.argVariableDefinitionMap = new IdentifierMap();
+        this.argFrameLength = null;
+        this.scope = null;
+        this.functionImplementation = null;
+    }
+}
+
+FunctionDefinition.prototype.processLines = function(processLine: LineProcessor): void {
+    this.lineList.processLines(processLine);
+}
+
+FunctionDefinition.prototype.populateScope = function(parentScope: Scope): void {
+    this.scope = new Scope(parentScope);
+    this.lineList.populateScope(this.scope);
+}
+
+FunctionDefinition.prototype.extractDefinitions = function(): void {
+    this.extractArgVariableDefinitions();
+    if (this.functionImplementation !== null) {
+        this.functionImplementation.extractDefinitions();
+    }
+}
+
+FunctionDefinition.prototype.getDisplayString = function(): string {
+    let tempTitle = this.getTitlePrefix() + " function " + this.identifier.name;
+    let tempSuffix = this.getTitleSuffix();
+    if (tempSuffix !== null) {
+        tempTitle += ` (${tempSuffix})`;
+    }
+    var tempTextList = [tempTitle + ":"];
+    if (this.functionImplementation !== null) {
+        tempTextList.push(this.functionImplementation.getDisplayString(1));
+    }
+    tempTextList.push(niceUtils.getIdentifierMapDisplayString(
+        "Argument variables",
+        this.argVariableDefinitionMap,
+        1
+    ));
+    return niceUtils.joinTextList(tempTextList);
+}
+
+FunctionDefinition.prototype.extractArgVariableDefinitions = function(): void {
+    this.processLines(line => {
+        let tempArgDefinition = variableUtils.extractArgVariableDefinition(line);
+        if (tempArgDefinition !== null) {
+            this.argVariableDefinitionMap.setIndexDefinition(tempArgDefinition);
+            return [];
+        }
+        return null;
+    });
+    this.argFrameLength = variableUtils.populateVariableDefinitionIndexes(
+        this.argVariableDefinitionMap
+    );
+}
+
+FunctionDefinition.prototype.populateScopeDefinitions = function(): void {
+    this.scope.indexDefinitionMapList = [this.argVariableDefinitionMap];
+    if (this.functionImplementation !== null) {
+        this.functionImplementation.populateScopeDefinitions();
+    }
+}
+
+FunctionDefinition.prototype.createRegion = function(): Region {
+    if (this.functionImplementation === null) {
+        let tempLineList = this.lineList.lineList;
+        if (tempLineList.length > 0) {
+            let tempLine = tempLineList[0];
+            throw new AssemblyError(
+                "Unknown directive.",
+                tempLine.lineNumber,
+                tempLine.filePath
+            );
+        }
+    } else {
+        this.functionImplementation.assembleInstructions();
+    }
+    let tempRegionList = this.createSubregions();
     return new CompositeRegion(this.regionType, tempRegionList);
 }
 
-FunctionDefinition.prototype.createRegionHelper = function(): Region[] {
-    return [];
+FunctionDefinition.prototype.createSubregions = function(): Region[] {
+    let argFrameLengthRegion = new AtomicRegion(
+        REGION_TYPE.argFrameLen,
+        this.argFrameLength.createBuffer()
+    );
+    let output = [argFrameLengthRegion];
+    if (this.functionImplementation !== null) {
+        let tempRegionList = this.functionImplementation.createSubregions();
+        for (let region of tempRegionList) {
+            output.push(region);
+        }
+    }
+    return output;
+}
+
+FunctionDefinition.prototype.getTitleSuffix = function(): string {
+    return null;
 }
 
 export interface PrivateFunctionDefinition extends PrivateFunctionDefinitionInterface {}
@@ -174,41 +252,32 @@ export interface PrivateFunctionDefinition extends PrivateFunctionDefinitionInte
 export class PrivateFunctionDefinition extends FunctionDefinition {
     constructor(identifier: Identifier, lineList: AssemblyLine[]) {
         super(identifier, lineList, REGION_TYPE.privFunc);
+        this.functionImplementation = new FunctionImplementation(this);
     }
 }
 
-PrivateFunctionDefinition.prototype.getTitle = function(): string {
-    return "Private function " + this.identifier.getDisplayString();
+PrivateFunctionDefinition.prototype.getTitlePrefix = function(): string {
+    return "Private";
 }
 
-export interface InterfaceFunctionDefinition extends InterfaceFunctionDefinitionInterface {}
+export interface ArgPermFunctionDefinition extends ArgPermFunctionDefinitionInterface {}
 
-export abstract class InterfaceFunctionDefinition extends FunctionDefinition {
-    constructor(identifier: Identifier, interfaceIndexExpression: Expression, lineList: AssemblyLine[], regionType: number) {
-        super(identifier, lineList, regionType);
-        this.interfaceIndexExpression = interfaceIndexExpression;
-    }
+export abstract class ArgPermFunctionDefinition extends FunctionDefinition {
+    
 }
 
-InterfaceFunctionDefinition.prototype.getTitle = function(): string {
-    return this.getTitlePrefix() + " function " + this.identifier.name + " (" + this.getTitleSuffix() + ")";
-}
-
-InterfaceFunctionDefinition.prototype.getTitleSuffix = function(): string {
-    return this.interfaceIndexExpression.getDisplayString()
-}
-
-InterfaceFunctionDefinition.prototype.createRegionHelper = function(): Region[] {
+ArgPermFunctionDefinition.prototype.createSubregions = function(): Region[] {
+    let output = FunctionDefinition.prototype.createSubregions.call(this);
     let nameRegion = new AtomicRegion(REGION_TYPE.name, Buffer.from(this.identifier.name));
     let argPermsRegion = this.getArgPermsRegion();
-    let output = [nameRegion];
+    output.push(nameRegion);
     if (argPermsRegion !== null) {
         output.push(argPermsRegion);
     }
     return output;
 }
 
-InterfaceFunctionDefinition.prototype.getArgPermsRegion = function(): Region {
+ArgPermFunctionDefinition.prototype.getArgPermsRegion = function(): Region {
     let bufferList = [];
     this.argVariableDefinitionMap.iterate(definition => {
         if (!(definition.dataType instanceof PointerType)) {
@@ -226,15 +295,17 @@ InterfaceFunctionDefinition.prototype.getArgPermsRegion = function(): Region {
 
 export interface PublicFunctionDefinition extends PublicFunctionDefinitionInterface {}
 
-export class PublicFunctionDefinition extends InterfaceFunctionDefinition {
+export class PublicFunctionDefinition extends ArgPermFunctionDefinition {
     constructor(
         identifier: Identifier,
         interfaceIndexExpression: Expression,
         arbiterIndexExpression: Expression,
         lineList: AssemblyLine[]
     ) {
-        super(identifier, interfaceIndexExpression, lineList, REGION_TYPE.pubFunc);
+        super(identifier, lineList, REGION_TYPE.pubFunc);
+        this.interfaceIndexExpression = interfaceIndexExpression;
         this.arbiterIndexExpression = arbiterIndexExpression;
+        this.functionImplementation = new FunctionImplementation(this);
     }
 }
 
@@ -243,15 +314,15 @@ PublicFunctionDefinition.prototype.getTitlePrefix = function(): string {
 }
 
 PublicFunctionDefinition.prototype.getTitleSuffix = function(): string {
-    var output = InterfaceFunctionDefinition.prototype.getTitleSuffix.call(this);
+    var output = this.interfaceIndexExpression.getDisplayString();
     if (this.arbiterIndexExpression !== null) {
         output += ", " + this.arbiterIndexExpression.getDisplayString();
     }
     return output;
 }
 
-PublicFunctionDefinition.prototype.createRegionHelper = function(): Region[] {
-    let output = InterfaceFunctionDefinition.prototype.createRegionHelper.call(this);
+PublicFunctionDefinition.prototype.createSubregions = function(): Region[] {
+    let output = ArgPermFunctionDefinition.prototype.createSubregions.call(this);
     let tempBuffer = Buffer.alloc(8);
     tempBuffer.writeUInt32LE(this.interfaceIndexExpression.evaluateToNumber(), 0);
     let tempNumber;
@@ -265,13 +336,17 @@ PublicFunctionDefinition.prototype.createRegionHelper = function(): Region[] {
     return output;
 }
 
-export class GuardFunctionDefinition extends InterfaceFunctionDefinition {
+export interface GuardFunctionDefinition extends GuardFunctionDefinitionInterface {}
+
+export class GuardFunctionDefinition extends ArgPermFunctionDefinition {
     constructor(
         identifier: Identifier,
         interfaceIndexExpression: Expression,
         lineList: AssemblyLine[]
     ) {
-        super(identifier, interfaceIndexExpression, lineList, REGION_TYPE.guardFunc);
+        super(identifier, lineList, REGION_TYPE.guardFunc);
+        this.interfaceIndexExpression = interfaceIndexExpression;
+        this.functionImplementation = new FunctionImplementation(this);
     }
 }
 
@@ -279,11 +354,49 @@ GuardFunctionDefinition.prototype.getTitlePrefix = function(): string {
     return "Guard";
 }
 
-GuardFunctionDefinition.prototype.createRegionHelper = function(): Region[] {
-    let output = InterfaceFunctionDefinition.prototype.createRegionHelper.call(this);
+GuardFunctionDefinition.prototype.getTitleSuffix = function(): string {
+    return this.interfaceIndexExpression.getDisplayString();
+}
+
+GuardFunctionDefinition.prototype.createSubregions = function(): Region[] {
+    let output = ArgPermFunctionDefinition.prototype.createSubregions.call(this);
     let tempBuffer = Buffer.alloc(4);
     tempBuffer.writeUInt32LE(this.interfaceIndexExpression.evaluateToNumber(), 0);
     output.push(new AtomicRegion(REGION_TYPE.guardFuncAttrs, tempBuffer));
+    return output;
+}
+
+export interface InterfaceFunctionDefinition extends InterfaceFunctionDefinitionInterface {}
+
+export class InterfaceFunctionDefinition extends ArgPermFunctionDefinition {
+    constructor(identifier: Identifier, arbiterIndexExpression: Expression, lineList: AssemblyLine[]) {
+        super(identifier, lineList, REGION_TYPE.ifaceFunc);
+        this.arbiterIndexExpression = arbiterIndexExpression;
+    }
+}
+
+InterfaceFunctionDefinition.prototype.getTitlePrefix = function(): string {
+    return "Interface";
+}
+
+InterfaceFunctionDefinition.prototype.getTitleSuffix = function(): string {
+    if (this.arbiterIndexExpression === null) {
+        return null;
+    }
+    return this.arbiterIndexExpression.getDisplayString();
+}
+
+InterfaceFunctionDefinition.prototype.createSubregions = function(): Region[] {
+    let output = ArgPermFunctionDefinition.prototype.createSubregions.call(this);
+    let tempBuffer = Buffer.alloc(4);
+    let tempNumber;
+    if (this.arbiterIndexExpression === null) {
+        tempNumber = -1;
+    } else {
+        tempNumber = this.arbiterIndexExpression.evaluateToNumber();
+    }
+    tempBuffer.writeInt32LE(tempNumber, 0);
+    output.push(new AtomicRegion(REGION_TYPE.ifaceFuncAttrs, tempBuffer));
     return output;
 }
 
