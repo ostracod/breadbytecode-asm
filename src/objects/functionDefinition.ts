@@ -13,6 +13,7 @@ import {
 
 import {niceUtils} from "utils/niceUtils";
 import {variableUtils} from "utils/variableUtils";
+import {descriptionUtils} from "utils/descriptionUtils";
 
 import {PointerType} from "delegates/dataType";
 
@@ -150,6 +151,7 @@ export abstract class FunctionDefinition extends IndexDefinition {
         this.regionType = regionType;
         this.argVariableDefinitionMap = new IdentifierMap();
         this.argFrameLength = null;
+        this.descriptionLineList = [];
         this.scope = null;
         this.functionImplementation = null;
     }
@@ -166,6 +168,7 @@ FunctionDefinition.prototype.populateScope = function(parentScope: Scope): void 
 
 FunctionDefinition.prototype.extractDefinitions = function(): void {
     this.extractArgVariableDefinitions();
+    this.extractDescriptionLines();
     if (this.functionImplementation !== null) {
         this.functionImplementation.extractDefinitions();
     }
@@ -186,6 +189,11 @@ FunctionDefinition.prototype.getDisplayString = function(): string {
         this.argVariableDefinitionMap,
         1
     ));
+    tempTextList.push(niceUtils.getTextListDisplayString(
+        "Description",
+        this.descriptionLineList,
+        1
+    ));
     return niceUtils.joinTextList(tempTextList);
 }
 
@@ -201,6 +209,17 @@ FunctionDefinition.prototype.extractArgVariableDefinitions = function(): void {
     this.argFrameLength = variableUtils.populateVariableDefinitionIndexes(
         this.argVariableDefinitionMap
     );
+}
+
+FunctionDefinition.prototype.extractDescriptionLines = function(): void {
+    this.processLines(line => {
+        let tempText = descriptionUtils.extractDescriptionLine(line);
+        if (tempText !== null) {
+            this.descriptionLineList.push(tempText);
+            return [];
+        }
+        return null;
+    });
 }
 
 FunctionDefinition.prototype.populateScopeDefinitions = function(): void {
@@ -233,7 +252,13 @@ FunctionDefinition.prototype.createSubregions = function(): Region[] {
         REGION_TYPE.argFrameLen,
         this.argFrameLength.createBuffer()
     );
-    let output = [argFrameLengthRegion];
+    let output: Region[] = [argFrameLengthRegion];
+    let descriptionRegion = descriptionUtils.createDescriptionRegion(
+        this.descriptionLineList
+    );
+    if (descriptionRegion !== null) {
+        output.push(descriptionRegion);
+    }
     if (this.functionImplementation !== null) {
         let tempRegionList = this.functionImplementation.createSubregions();
         for (let region of tempRegionList) {

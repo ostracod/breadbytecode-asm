@@ -22,6 +22,7 @@ import {parseUtils} from "utils/parseUtils";
 import {lineUtils} from "utils/lineUtils";
 import {variableUtils} from "utils/variableUtils";
 import {dependencyUtils} from "utils/dependencyUtils";
+import {descriptionUtils} from "utils/descriptionUtils";
 
 export interface Assembler extends AssemblerInterface {}
 
@@ -38,6 +39,7 @@ export abstract class Assembler {
         this.nextMacroInvocationId = 0;
         this.scope = new Scope();
         this.fileFormatVersionNumber = null;
+        this.descriptionLineList = [];
         this.fileRegion = null;
     }
 }
@@ -285,10 +287,22 @@ Assembler.prototype.extractFileFormatVersionNumber = function(): void {
     }
 }
 
+Assembler.prototype.extractDescriptionLines = function(): void {
+    this.processLines(line => {
+        let tempText = descriptionUtils.extractDescriptionLine(line);
+        if (tempText !== null) {
+            this.descriptionLineList.push(tempText);
+            return [];
+        }
+        return null;
+    });
+}
+
 Assembler.prototype.extractDefinitions = function(): void {
     this.extractFunctionDefinitions();
     this.extractDependencyDefinitions();
     this.extractFileFormatVersionNumber();
+    this.extractDescriptionLines();
 }
 
 Assembler.prototype.populateScopeDefinitions = function(): void {
@@ -311,12 +325,18 @@ Assembler.prototype.createFileSubregions = function(): Region[] {
         let tempRegion = dependencyDefinition.createRegion();
         dependencyRegionList.push(tempRegion);
     });
-    let output = [
+    let output: Region[] = [
         formatVersionRegion,
         appFuncsRegion
     ];
     if (dependencyRegionList.length > 0) {
         output.push(new CompositeRegion(REGION_TYPE.deps, dependencyRegionList));
+    }
+    let descriptionRegion = descriptionUtils.createDescriptionRegion(
+        this.descriptionLineList
+    );
+    if (descriptionRegion !== null) {
+        output.push(descriptionRegion);
     }
     return output;
 }
@@ -358,7 +378,9 @@ Assembler.prototype.getDisplayString = function(): string {
         tempTextList.push(functionDefinition.getDisplayString());
         tempTextList.push("");
     };
-    tempTextList.push("= = = APP FILE REGION = = =\n");
+    tempTextList.push("= = = DESCRIPTION = = =\n");
+    tempTextList.push(this.descriptionLineList.join("\n"));
+    tempTextList.push("\n= = = APP FILE REGION = = =\n");
     tempTextList.push(this.fileRegion.getDisplayString());
     tempTextList.push("");
     return tempTextList.join("\n");

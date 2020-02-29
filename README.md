@@ -154,6 +154,9 @@ Declares the application data region. Only valid in an application file.
 `DATA values`  
 Provides constant values for a jump table or the application data region.
 
+`DESC text`  
+Adds a line to the description region of a function or file.
+
 `INCLUDE path`  
 Incorporates additional assembly code in the given file.
 

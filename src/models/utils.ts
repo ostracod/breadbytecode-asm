@@ -1,7 +1,7 @@
 
 import {ExpressionProcessor, LineProcessor, NumberTypeClass, VariableDefinitionClass, ArgNumeric, MixedNumber} from "models/items";
 import {Operator, DataType, NumberType} from "models/delegates";
-import {Expression, AssemblyLine, Identifier, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition, InstructionArg, FrameLength} from "models/objects";
+import {Expression, AssemblyLine, Identifier, IdentifierMap, Displayable, ArgWord, ArgNumber, ArgString, VariableDefinition, ArgVariableDefinition, InstructionArg, FrameLength, Region} from "models/objects";
 
 export interface DataTypeUtils {
     getDataTypeByName(name: string): DataType;
@@ -37,6 +37,11 @@ export interface LineUtils {
 
 export interface NiceUtils {
     getIndentation(indentationLevel: number): string;
+    getTextListDisplayString(
+        title: string,
+        textList: string[],
+        indentationLevel?: number
+    ): string;
     getDisplayableListDisplayString(
         title: string,
         displayableList: Displayable[],
@@ -112,6 +117,11 @@ export interface DependencyUtils {
         argList: Expression[],
         modifiersStartIndex: number
     ): {identifier: Identifier, path: string, dependencyModifierList: number[]};
+}
+
+export interface DescriptionUtils {
+    extractDescriptionLine(line: AssemblyLine): string;
+    createDescriptionRegion(descriptionLineList: string[]): Region;
 }
 
 

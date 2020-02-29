@@ -20,24 +20,36 @@ NiceUtils.prototype.getIndentation = function(indentationLevel: number): string 
     return output;
 }
 
-NiceUtils.prototype.getDisplayableListDisplayString = function(
+NiceUtils.prototype.getTextListDisplayString = function(
     title: string,
-    displayableList: Displayable[],
+    textList: string[],
     indentationLevel?: number
 ): string {
     if (typeof indentationLevel === "undefined") {
         indentationLevel = 0
     }
-    if (displayableList.length <= 0) {
+    if (textList.length <= 0) {
         return "";
     }
     let tempIndentation1 = niceUtils.getIndentation(indentationLevel);
     let tempIndentation2 = niceUtils.getIndentation(indentationLevel + 1);
     let tempTextList = [tempIndentation1 + title + ":"];
-    for (let displayable of displayableList) {
-        tempTextList.push(tempIndentation2 + displayable.getDisplayString());
+    for (let text of textList) {
+        tempTextList.push(tempIndentation2 + text);
     }
     return tempTextList.join("\n");
+}
+
+NiceUtils.prototype.getDisplayableListDisplayString = function(
+    title: string,
+    displayableList: Displayable[],
+    indentationLevel?: number
+): string {
+    return niceUtils.getTextListDisplayString(
+        title,
+        displayableList.map(displayable => displayable.getDisplayString()),
+        indentationLevel
+    );
 }
 
 NiceUtils.prototype.getIdentifierMapDisplayString = function(

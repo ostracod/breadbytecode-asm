@@ -60,6 +60,7 @@ export interface Assembler {
     nextMacroInvocationId: number;
     scope: Scope;
     fileFormatVersionNumber: VersionNumber;
+    descriptionLineList: string[];
     fileRegion: Region;
     
     processLines(processLine: LineProcessor): void;
@@ -80,6 +81,7 @@ export interface Assembler {
     addDependencyDefinition(dependencyDefinition: DependencyDefinition): void;
     extractDependencyDefinitions(): void;
     extractFileFormatVersionNumber(): void;
+    extractDescriptionLines(): void;
     generateFileRegion(): void;
     
     // Concrete subclasses may override these methods:
@@ -257,6 +259,7 @@ export interface FunctionDefinition extends IndexDefinition {
     regionType: number;
     argVariableDefinitionMap: IdentifierMap<ArgVariableDefinition>;
     argFrameLength: FrameLength;
+    descriptionLineList: string[];
     scope: Scope;
     functionImplementation: FunctionImplementation;
     
@@ -264,6 +267,7 @@ export interface FunctionDefinition extends IndexDefinition {
     populateScope(parentScope: Scope): void;
     extractDefinitions(): void;
     extractArgVariableDefinitions(): void;
+    extractDescriptionLines(): void;
     populateScopeDefinitions(): void;
     createRegion(): Region;
     
