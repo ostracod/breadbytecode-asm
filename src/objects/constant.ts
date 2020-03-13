@@ -141,18 +141,19 @@ let tempNumberSet = {
     permSType: 0x0008,
     
     genericErr: 0x0000,
-    numRangeErr: 0x0001,
-    indexErr: 0x0002,
-    nullErr: 0x0003,
-    typeErr: 0x0004,
-    dataErr: 0x0005,
-    compatErr: 0x0006,
-    permErr: 0x0007,
-    argFrameErr: 0x0008,
+    noImplErr: 0x0001
+    typeErr: 0x0002,
+    numRangeErr: 0x0003,
+    indexErr: 0x0004,
+    nullErr: 0x0005,
+    dataErr: 0x0006,
+    argFrameErr: 0x0007,
+    missingErr: 0x0008,
     stateErr: 0x0009,
-    missingErr: 0x000A,
-    capacityErr: 0x000B,
-    throttleErr: 0x000C
+    compatErr: 0x000A,
+    permErr: 0x000B,
+    capacityErr: 0x000C,
+    throttleErr: 0x000D
 };
 
 for (let key in tempNumberSet) {
