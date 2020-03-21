@@ -131,17 +131,18 @@ export const builtInConstantSet = {
 };
 
 let tempNumberSet = {
-    funcHandleSType: 0x0001,
-    threadSType: 0x0002,
-    launchOptSType: 0x0003,
-    agentSType: 0x0004,
-    mutexSType: 0x0005,
-    fileHandleSType: 0x0006,
-    protabSType: 0x0007,
-    permSType: 0x0008,
+    errSType: 0x0001,
+    funcHandleSType: 0x0002,
+    threadSType: 0x0003,
+    launchOptSType: 0x0004,
+    agentSType: 0x0005,
+    mutexSType: 0x0006,
+    fileHandleSType: 0x0007,
+    protabSType: 0x0008,
+    permSType: 0x0009,
     
     genericErr: 0x0000,
-    noImplErr: 0x0001
+    noImplErr: 0x0001,
     typeErr: 0x0002,
     numRangeErr: 0x0003,
     indexErr: 0x0004,
