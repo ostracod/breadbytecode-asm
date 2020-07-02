@@ -97,7 +97,7 @@ export interface Assembler {
 export interface BytecodeAppAssembler extends Assembler {
     privateFunctionDefinitionMap: IdentifierMap<PrivateFunctionDefinition>;
     publicFunctionDefinitionList: PublicFunctionDefinition[];
-    appDataLineList: LabeledLineList;
+    appDataLineList: DataLineList;
     globalVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     globalFrameLength: FrameLength;
     
@@ -239,11 +239,11 @@ export interface FunctionImplementation {
     localVariableDefinitionMap: IdentifierMap<VariableDefinition>;
     localFrameLength: FrameLength;
     instructionList: Instruction[];
-    jumpTableLineList: LabeledLineList;
+    jumpTableLineList: DataLineList;
     
     getDisplayString(indentationLevel: number): string;
     getScope(): Scope;
-    getLineList(): LabeledLineList;
+    getLineList(): InstructionLineList;
     processLines(processLine: LineProcessor): void;
     extractDefinitions(): void;
     extractJumpTables(): void;
@@ -255,7 +255,7 @@ export interface FunctionImplementation {
 }
 
 export interface FunctionDefinition extends IndexDefinition {
-    lineList: LabeledLineList;
+    lineList: InstructionLineList;
     regionType: number;
     argVariableDefinitionMap: IdentifierMap<ArgVariableDefinition>;
     argFrameLength: FrameLength;

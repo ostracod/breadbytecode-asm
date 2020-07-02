@@ -10,25 +10,24 @@ import {InstructionRef, ConstantInstructionArg, RefInstructionArg} from "objects
 
 export interface InstructionUtils extends InstructionUtilsInterface {}
 
-export function InstructionUtils() {
+export class InstructionUtils {
     
+    createArgBuffer(refPrefix: number, dataType: DataType, buffer: Buffer): Buffer {
+        return Buffer.concat([Buffer.from([(refPrefix << 4) + dataType.argPrefix]), buffer]);
+    }
+    
+    createInstructionArgWithIndex(refPrefix: number, dataType: DataType, index: number): InstructionArg {
+        let tempRef = new InstructionRef(refPrefix);
+        let tempNumberConstant = new NumberConstant(
+            index,
+            unsignedInteger64Type
+        );
+        tempNumberConstant.compress();
+        let tempArg = new ConstantInstructionArg(tempNumberConstant);
+        return new RefInstructionArg(tempRef, dataType, tempArg);
+    }
 }
 
 export var instructionUtils = new InstructionUtils();
-
-InstructionUtils.prototype.createArgBuffer = function(refPrefix: number, dataType: DataType, buffer: Buffer): Buffer {
-    return Buffer.concat([Buffer.from([(refPrefix << 4) + dataType.argPrefix]), buffer]);
-}
-
-InstructionUtils.prototype.createInstructionArgWithIndex = function(refPrefix: number, dataType: DataType, index: number): InstructionArg {
-    let tempRef = new InstructionRef(refPrefix);
-    let tempNumberConstant = new NumberConstant(
-        index,
-        unsignedInteger64Type
-    );
-    tempNumberConstant.compress();
-    let tempArg = new ConstantInstructionArg(tempNumberConstant);
-    return new RefInstructionArg(tempRef, dataType, tempArg);
-}
 
 

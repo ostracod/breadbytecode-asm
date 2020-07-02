@@ -49,6 +49,7 @@ var attributeCharacterMap = niceUtils.getReverseMap(characterAttributeMap);
 export interface ArgPerm extends ArgPermInterface {}
 
 export class ArgPerm {
+    
     constructor(name: string) {
         if (name.length < 3) {
             throw new AssemblyError("Invalid arg perm.");
@@ -82,30 +83,30 @@ export class ArgPerm {
             index += 1;
         }
     }
-}
-
-ArgPerm.prototype.getDisplayString = function(): string {
-    var output = accessCharacterPairMap[this.access] + recipientCharacterMap[this.recipient];
-    var attribute;
-    for (attribute in this.hasAttributeMap) {
-        if (this.hasAttributeMap[attribute]) {
-            output = output + attributeCharacterMap[attribute];
+    
+    getDisplayString(): string {
+        var output = accessCharacterPairMap[this.access] + recipientCharacterMap[this.recipient];
+        var attribute;
+        for (attribute in this.hasAttributeMap) {
+            if (this.hasAttributeMap[attribute]) {
+                output = output + attributeCharacterMap[attribute];
+            }
         }
+        return output;
     }
-    return output;
-}
-
-ArgPerm.prototype.createBuffer = function(index: number): Buffer {
-    let tempBitfield = (this.access << 6) | (this.recipient << 4);
-    for (let attribute in this.hasAttributeMap) {
-        if (this.hasAttributeMap[attribute]) {
-            tempBitfield |= parseInt(attribute);
+    
+    createBuffer(index: number): Buffer {
+        let tempBitfield = (this.access << 6) | (this.recipient << 4);
+        for (let attribute in this.hasAttributeMap) {
+            if (this.hasAttributeMap[attribute]) {
+                tempBitfield |= parseInt(attribute);
+            }
         }
+        let output = Buffer.alloc(3);
+        output.writeUInt16LE(index, 0);
+        output.writeUInt8(tempBitfield, 2);
+        return output;
     }
-    let output = Buffer.alloc(3);
-    output.writeUInt16LE(index, 0);
-    output.writeUInt8(tempBitfield, 2);
-    return output;
 }
 
 

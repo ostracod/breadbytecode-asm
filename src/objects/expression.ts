@@ -30,6 +30,7 @@ import {dataTypeUtils} from "utils/dataTypeUtils";
 export interface Expression extends ExpressionInterface {}
 
 export abstract class Expression {
+    
     constructor() {
         this.line = null;
         this.scope = null;
@@ -39,496 +40,503 @@ export abstract class Expression {
         // and retrieve this value.
         this.constantDataType = null;
     }
-}
-
-Expression.prototype.createError = function(message: string): AssemblyError {
-    throw new AssemblyError(message, this.line.lineNumber, this.line.filePath);
-}
-
-Expression.prototype.handleError = function(error: Error): void {
-    if (error instanceof AssemblyError) {
-        if (error.lineNumber === null) {
-            error.lineNumber = this.line.lineNumber;
-        }
-        if (error.filePath === null) {
-            error.filePath = this.line.filePath;
-        }
+    
+    createError(message: string): AssemblyError {
+        throw new AssemblyError(message, this.line.lineNumber, this.line.filePath);
     }
-}
-
-Expression.prototype.processExpressions = function(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
-    if (typeof shouldRecurAfterProcess === "undefined") {
-        shouldRecurAfterProcess = false;
-    }
-    var output = this;
-    while (true) {
-        var tempResult = output.processExpressionsHelper(processExpression, shouldRecurAfterProcess);
-        if (tempResult === null) {
-            return output;
-        }
-        output = tempResult;
-        if (!shouldRecurAfterProcess) {
-            break;
+    
+    handleError(error: Error): void {
+        if (error instanceof AssemblyError) {
+            if (error.lineNumber === null) {
+                error.lineNumber = this.line.lineNumber;
+            }
+            if (error.filePath === null) {
+                error.filePath = this.line.filePath;
+            }
         }
     }
-    return output;
-}
-
-Expression.prototype.evaluateToIdentifier = function(): Identifier {
-    var output = this.evaluateToIdentifierOrNull();
-    if (output === null) {
-        throw this.createError("Expected identifier.");
+    
+    processExpressions(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
+        if (typeof shouldRecurAfterProcess === "undefined") {
+            shouldRecurAfterProcess = false;
+        }
+        var output: Expression = this;
+        while (true) {
+            var tempResult = output.processExpressionsHelper(processExpression, shouldRecurAfterProcess);
+            if (tempResult === null) {
+                return output;
+            }
+            output = tempResult;
+            if (!shouldRecurAfterProcess) {
+                break;
+            }
+        }
+        return output;
     }
-    return output;
-}
-
-Expression.prototype.evaluateToIndexDefinitionOrNull = function(): IndexDefinition {
-    let tempIdentifier = this.evaluateToIdentifierOrNull();
-    if (tempIdentifier === null) {
+    
+    evaluateToIdentifier(): Identifier {
+        var output = this.evaluateToIdentifierOrNull();
+        if (output === null) {
+            throw this.createError("Expected identifier.");
+        }
+        return output;
+    }
+    
+    evaluateToIndexDefinitionOrNull(): IndexDefinition {
+        let tempIdentifier = this.evaluateToIdentifierOrNull();
+        if (tempIdentifier === null) {
+            return null;
+        }
+        return this.scope.getIndexDefinitionByIdentifier(tempIdentifier);
+    }
+    
+    evaluateToConstant(): Constant {
+        var output = this.evaluateToConstantOrNull();
+        if (output === null) {
+            throw this.createError("Expected constant.");
+        }
+        if (this.constantDataType !== null
+                && !this.constantDataType.equals(output.getDataType())) {
+            throw this.createError("Constant has inconsistent data type.");
+        }
+        return output;
+    }
+    
+    evaluateToNumber(): number {
+        let tempConstant = this.evaluateToConstantOrNull();
+        if (tempConstant === null || !(tempConstant instanceof NumberConstant)) {
+            throw this.createError("Expected number constant.");
+        }
+        let tempNumberConstant = tempConstant as NumberConstant;
+        return Number(tempNumberConstant.value);
+    }
+    
+    evaluateToDependencyModifier(): number {
+        let output = this.evaluateToDependencyModifierOrNull();
+        if (output === null) {
+            throw this.createError("Expected dependency modifier.");
+        }
+        return output;
+    }
+    
+    substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression {
+        var tempIdentifier = this.evaluateToIdentifierOrNull();
+        if (tempIdentifier === null) {
+            return null;
+        }
+        var tempExpression = identifierExpressionMap.get(tempIdentifier);
+        if (tempExpression === null) {
+            return null;
+        }
+        return tempExpression.copy();
+    }
+    
+    getConstantDataType(): DataType {
+        if (this.constantDataType === null) {
+            this.constantDataType = this.getConstantDataTypeHelper();
+        }
+        return this.constantDataType;
+    }
+    
+    evaluateToIdentifierName(): string {
+        throw this.createError("Expected identifier name.");
+    }
+    
+    evaluateToIdentifierOrNull(): Identifier {
         return null;
     }
-    return this.scope.getIndexDefinitionByIdentifier(tempIdentifier);
-}
-
-Expression.prototype.evaluateToConstant = function(): Constant {
-    var output = this.evaluateToConstantOrNull();
-    if (output === null) {
-        throw this.createError("Expected constant.");
-    }
-    if (this.constantDataType !== null
-            && !this.constantDataType.equals(output.getDataType())) {
-        throw this.createError("Constant has inconsistent data type.");
-    }
-    return output;
-}
-
-Expression.prototype.evaluateToNumber = function(): number {
-    let tempConstant = this.evaluateToConstantOrNull();
-    if (tempConstant === null || !(tempConstant instanceof NumberConstant)) {
-        throw this.createError("Expected number constant.");
-    }
-    let tempNumberConstant = tempConstant as NumberConstant;
-    return Number(tempNumberConstant.value);
-}
-
-Expression.prototype.evaluateToDependencyModifier = function(): number {
-    let output = this.evaluateToDependencyModifierOrNull();
-    if (output === null) {
-        throw this.createError("Expected dependency modifier.");
-    }
-    return output;
-}
-
-Expression.prototype.substituteIdentifiers = function(identifierExpressionMap: IdentifierMap<Expression>): Expression {
-    var tempIdentifier = this.evaluateToIdentifierOrNull();
-    if (tempIdentifier === null) {
+    
+    evaluateToConstantOrNull(): Constant {
+        let tempDefinition = this.evaluateToIndexDefinitionOrNull();
+        if (tempDefinition !== null) {
+            return tempDefinition.createConstantOrNull();
+        }
         return null;
     }
-    var tempExpression = identifierExpressionMap.get(tempIdentifier);
-    if (tempExpression === null) {
+    
+    evaluateToString(): string {
+        let tempConstant = this.evaluateToConstantOrNull();
+        if (tempConstant === null || !(tempConstant instanceof StringConstant)) {
+            throw this.createError("Expected string.");
+        }
+        let tempStringConstant = tempConstant as StringConstant;
+        return tempStringConstant.value;
+    }
+    
+    evaluateToDataType(): DataType {
+        throw this.createError("Expected data type.");
+    }
+    
+    evaluateToArgPerm(): ArgPerm {
+        throw this.createError("Expected arg perm.");
+    }
+    
+    evaluateToVersionNumber(): VersionNumber {
+        throw this.createError("Expected version number.");
+    }
+    
+    evaluateToDependencyModifierOrNull(): number {
         return null;
     }
-    return tempExpression.copy();
-}
-
-Expression.prototype.getConstantDataType = function(): DataType {
-    if (this.constantDataType === null) {
-        this.constantDataType = this.getConstantDataTypeHelper();
-    }
-    return this.constantDataType;
-}
-
-Expression.prototype.evaluateToIdentifierName = function(): string {
-    throw this.createError("Expected identifier name.");
-}
-
-Expression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
-    return null;
-}
-
-Expression.prototype.evaluateToConstantOrNull = function(): Constant {
-    let tempDefinition = this.evaluateToIndexDefinitionOrNull();
-    if (tempDefinition !== null) {
-        return tempDefinition.createConstantOrNull();
-    }
-    return null;
-}
-
-Expression.prototype.evaluateToString = function(): string {
-    let tempConstant = this.evaluateToConstantOrNull();
-    if (tempConstant === null || !(tempConstant instanceof StringConstant)) {
-        throw this.createError("Expected string.");
-    }
-    let tempStringConstant = tempConstant as StringConstant;
-    return tempStringConstant.value;
-}
-
-Expression.prototype.evaluateToDataType = function(): DataType {
-    throw this.createError("Expected data type.");
-}
-
-Expression.prototype.evaluateToArgPerm = function(): ArgPerm {
-    throw this.createError("Expected arg perm.");
-}
-
-Expression.prototype.evaluateToVersionNumber = function(): VersionNumber {
-    throw this.createError("Expected version number.");
-}
-
-Expression.prototype.evaluateToDependencyModifierOrNull = function(): number {
-    return null;
-}
-
-Expression.prototype.evaluateToInstructionArg = function(): InstructionArg {
-    let tempDefinition = this.evaluateToIndexDefinitionOrNull();
-    if (tempDefinition !== null) {
-        let tempResult = tempDefinition.createInstructionArgOrNull();
-        if (tempResult !== null) {
-            return tempResult;
+    
+    evaluateToInstructionArg(): InstructionArg {
+        let tempDefinition = this.evaluateToIndexDefinitionOrNull();
+        if (tempDefinition !== null) {
+            let tempResult = tempDefinition.createInstructionArgOrNull();
+            if (tempResult !== null) {
+                return tempResult;
+            }
+        }
+        let tempConstant = this.evaluateToConstantOrNull();
+        if (tempConstant !== null && tempConstant.getDataType().argPrefix !== null) {
+            tempConstant.compress();
+            return new ConstantInstructionArg(tempConstant);
+        }
+        let tempIdentifier = this.evaluateToIdentifierOrNull();
+        if (tempIdentifier !== null && !tempIdentifier.getIsBuiltIn()) {
+            throw this.createError(`Unknown identifier "${tempIdentifier.getDisplayString()}".`);
+        } else {
+            throw this.createError("Expected number or pointer.");
         }
     }
-    let tempConstant = this.evaluateToConstantOrNull();
-    if (tempConstant !== null && tempConstant.getDataType().argPrefix !== null) {
-        tempConstant.compress();
-        return new ConstantInstructionArg(tempConstant);
+    
+    evaluateToInstructionRef(): InstructionRef {
+        let tempArg = this.evaluateToInstructionArg();
+        if (!(tempArg.getDataType() instanceof PointerType)) {
+            throw this.createError("Expected pointer for instruction ref.");
+        }
+        return new PointerInstructionRef(tempArg);
     }
-    let tempIdentifier = this.evaluateToIdentifierOrNull();
-    if (tempIdentifier !== null && !tempIdentifier.getIsBuiltIn()) {
-        throw this.createError(`Unknown identifier "${tempIdentifier.getDisplayString()}".`);
-    } else {
-        throw this.createError("Expected number or pointer.");
+    
+    populateMacroInvocationId(macroInvocationId: number): void {
+        // Do nothing.
     }
-}
-
-Expression.prototype.evaluateToInstructionRef = function(): InstructionRef {
-    let tempArg = this.evaluateToInstructionArg();
-    if (!(tempArg.getDataType() instanceof PointerType)) {
-        throw this.createError("Expected pointer for instruction ref.");
+    
+    getConstantDataTypeHelper(): DataType {
+        throw this.createError("Expected constant value.");
     }
-    return new PointerInstructionRef(tempArg);
-}
-
-Expression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
-    // Do nothing.
-}
-
-Expression.prototype.getConstantDataTypeHelper = function(): DataType {
-    throw this.createError("Expected constant value.");
 }
 
 export interface ArgTerm extends ArgTermInterface {}
 
 export abstract class ArgTerm extends Expression {
     
-}
-
-ArgTerm.prototype.processExpressionsHelper = function(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
-    var tempResult = processExpression(this);
-    if (tempResult !== null) {
-        return tempResult;
+    processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
+        var tempResult = processExpression(this);
+        if (tempResult !== null) {
+            return tempResult;
+        }
+        return null;
     }
-    return null;
 }
 
 export interface ArgWord extends ArgWordInterface {}
 
 export class ArgWord extends ArgTerm {
+    
     constructor(text: string) {
         super();
         this.text = text;
     }
-}
-
-ArgWord.prototype.copy = function(): Expression {
-    return new ArgWord(this.text);
-}
-
-ArgWord.prototype.getDisplayString = function(): string {
-    return this.text;
-}
-
-ArgWord.prototype.evaluateToIdentifierName = function(): string {
-    return this.text;
-}
-
-ArgWord.prototype.evaluateToIdentifierOrNull = function(): Identifier {
-    return new Identifier(this.text);
-}
-
-ArgWord.prototype.evaluateToConstantOrNull = function(): Constant {
-    if (this.text in builtInConstantSet) {
-        return builtInConstantSet[this.text].copy();
+    
+    copy(): Expression {
+        return new ArgWord(this.text);
     }
-    return ArgTerm.prototype.evaluateToConstantOrNull.call(this);
-}
-
-ArgWord.prototype.evaluateToDataType = function(): DataType {
-    return dataTypeUtils.getDataTypeByName(this.text);
-}
-
-ArgWord.prototype.evaluateToArgPerm = function(): ArgPerm {
-    return new ArgPerm(this.text);
-}
-
-ArgWord.prototype.evaluateToDependencyModifierOrNull = function(): number {
-    if (this.text in DEPENDENCY_MODIFIER) {
-        return DEPENDENCY_MODIFIER[this.text];
+    
+    getDisplayString(): string {
+        return this.text;
     }
-    return ArgTerm.prototype.evaluateToDependencyModifierOrNull.call(this);
-}
-
-ArgWord.prototype.evaluateToInstructionRef = function(): InstructionRef {
-    if (this.text in nameInstructionRefMap) {
-        return nameInstructionRefMap[this.text];
+    
+    evaluateToIdentifierName(): string {
+        return this.text;
     }
-    return ArgTerm.prototype.evaluateToInstructionRef.call(this);
-}
-
-ArgWord.prototype.getConstantDataTypeHelper = function(): DataType {
-    return signedInteger64Type;
+    
+    evaluateToIdentifierOrNull(): Identifier {
+        return new Identifier(this.text);
+    }
+    
+    evaluateToConstantOrNull(): Constant {
+        if (this.text in builtInConstantSet) {
+            return builtInConstantSet[this.text].copy();
+        }
+        return super.evaluateToConstantOrNull();
+    }
+    
+    evaluateToDataType(): DataType {
+        return dataTypeUtils.getDataTypeByName(this.text);
+    }
+    
+    evaluateToArgPerm(): ArgPerm {
+        return new ArgPerm(this.text);
+    }
+    
+    evaluateToDependencyModifierOrNull(): number {
+        if (this.text in DEPENDENCY_MODIFIER) {
+            return DEPENDENCY_MODIFIER[this.text];
+        }
+        return super.evaluateToDependencyModifierOrNull();
+    }
+    
+    evaluateToInstructionRef(): InstructionRef {
+        if (this.text in nameInstructionRefMap) {
+            return nameInstructionRefMap[this.text];
+        }
+        return super.evaluateToInstructionRef();
+    }
+    
+    getConstantDataTypeHelper(): DataType {
+        return signedInteger64Type;
+    }
 }
 
 export interface ArgNumber extends ArgNumberInterface {}
 
 export class ArgNumber extends ArgTerm {
+    
     constructor(constant: NumberConstant) {
         super();
         this.constant = constant;
     }
-}
-
-ArgNumber.prototype.copy = function(): Expression {
-    return new ArgNumber(this.constant.copy());
-}
-
-ArgNumber.prototype.getDisplayString = function(): string {
-    return this.constant.value + "";
-}
-
-ArgNumber.prototype.evaluateToConstantOrNull = function(): Constant {
-    return this.constant.copy();
-}
-
-ArgNumber.prototype.getConstantDataTypeHelper = function(): DataType {
-    return this.constant.numberType;
+    
+    copy(): Expression {
+        return new ArgNumber(this.constant.copy() as NumberConstant);
+    }
+    
+    getDisplayString(): string {
+        return this.constant.value + "";
+    }
+    
+    evaluateToConstantOrNull(): Constant {
+        return this.constant.copy();
+    }
+    
+    getConstantDataTypeHelper(): DataType {
+        return this.constant.numberType;
+    }
 }
 
 export interface ArgVersionNumber extends ArgVersionNumberInterface {}
 
 export class ArgVersionNumber extends ArgTerm {
+    
     constructor(versionNumber: VersionNumber) {
         super();
         this.versionNumber = versionNumber;
     }
-}
-
-ArgVersionNumber.prototype.copy = function(): Expression {
-    return new ArgVersionNumber(this.versionNumber.copy());
-}
-
-ArgVersionNumber.prototype.getDisplayString = function(): string {
-    return this.versionNumber.getDisplayString();
-}
-
-ArgVersionNumber.prototype.evaluateToVersionNumber = function(): VersionNumber {
-    return this.versionNumber.copy();
+    
+    copy(): Expression {
+        return new ArgVersionNumber(this.versionNumber.copy());
+    }
+    
+    getDisplayString(): string {
+        return this.versionNumber.getDisplayString();
+    }
+    
+    evaluateToVersionNumber(): VersionNumber {
+        return this.versionNumber.copy();
+    }
 }
 
 export interface ArgString extends ArgStringInterface {}
 
 export class ArgString extends ArgTerm {
+    
     constructor(value: string) {
         super();
         this.constant = new StringConstant(value);
     }
-}
-
-ArgString.prototype.copy = function(): Expression {
-    return new ArgString(this.constant.value);
-}
-
-ArgString.prototype.getDisplayString = function(): string {
-    return "\"" + this.constant.value + "\"";
-}
-
-ArgString.prototype.evaluateToConstantOrNull = function(): Constant {
-    return this.constant;
-}
-
-ArgString.prototype.getConstantDataTypeHelper = function(): DataType {
-    return this.constant.getDataType();
+    
+    copy(): Expression {
+        return new ArgString(this.constant.value);
+    }
+    
+    getDisplayString(): string {
+        return "\"" + this.constant.value + "\"";
+    }
+    
+    evaluateToConstantOrNull(): Constant {
+        return this.constant;
+    }
+    
+    getConstantDataTypeHelper(): DataType {
+        return this.constant.getDataType();
+    }
 }
 
 export interface UnaryExpression extends UnaryExpressionInterface {}
 
 export class UnaryExpression extends Expression {
+    
     constructor(operator: UnaryOperator, operand: Expression) {
         super();
         this.operator = operator;
         this.operand = operand;
     }
-}
-
-UnaryExpression.prototype.copy = function(): Expression {
-    return new UnaryExpression(this.operator, this.operand.copy());
-}
-
-UnaryExpression.prototype.getDisplayString = function(): string {
-    return this.operator.text + this.operand.getDisplayString();
-}
-
-UnaryExpression.prototype.processExpressionsHelper = function(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
-    var tempResult = processExpression(this);
-    if (tempResult !== null) {
-        return tempResult;
+    
+    copy(): Expression {
+        return new UnaryExpression(this.operator, this.operand.copy());
     }
-    this.operand = this.operand.processExpressions(processExpression, shouldRecurAfterProcess);
-    return null;
-}
-
-UnaryExpression.prototype.evaluateToConstantOrNull = function(): Constant {
-    let tempResult;
-    try {
-        tempResult = this.operator.createConstantOrNull(this.operand);
-    } catch(error) {
-        this.handleError(error);
-        throw error;
+    
+    getDisplayString(): string {
+        return this.operator.text + this.operand.getDisplayString();
     }
-    if (tempResult === null) {
-        return Expression.prototype.evaluateToConstantOrNull.call(this);
-    } else {
-        return tempResult;
+    
+    processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
+        var tempResult = processExpression(this);
+        if (tempResult !== null) {
+            return tempResult;
+        }
+        this.operand = this.operand.processExpressions(processExpression, shouldRecurAfterProcess);
+        return null;
     }
-}
-
-UnaryExpression.prototype.getConstantDataTypeHelper = function(): DataType {
-    try {
-        return this.operator.getConstantDataType(this.operand);
-    } catch(error) {
-        this.handleError(error);
-        throw error;
+    
+    evaluateToConstantOrNull(): Constant {
+        let tempResult;
+        try {
+            tempResult = this.operator.createConstantOrNull(this.operand);
+        } catch(error) {
+            this.handleError(error);
+            throw error;
+        }
+        if (tempResult === null) {
+            return super.evaluateToConstantOrNull();
+        } else {
+            return tempResult;
+        }
+    }
+    
+    getConstantDataTypeHelper(): DataType {
+        try {
+            return this.operator.getConstantDataType(this.operand);
+        } catch(error) {
+            this.handleError(error);
+            throw error;
+        }
     }
 }
 
 export interface MacroIdentifierExpression extends MacroIdentifierExpressionInterface {}
 
 export class MacroIdentifierExpression extends UnaryExpression {
+    
     constructor(operand: Expression) {
         super(macroIdentifierOperator, operand);
         this.macroInvocationId = null;
     }
-}
-
-MacroIdentifierExpression.prototype.copy = function(): Expression {
-    var output = new MacroIdentifierExpression(this.operand.copy());
-    output.macroInvocationId = this.macroInvocationId;
-    return output;
-}
-
-MacroIdentifierExpression.prototype.getDisplayString = function(): string {
-    if (this.macroInvocationId === null) {
-        return UnaryExpression.prototype.getDisplayString.call(this);
+    
+    copy(): Expression {
+        var output = new MacroIdentifierExpression(this.operand.copy());
+        output.macroInvocationId = this.macroInvocationId;
+        return output;
     }
-    return this.operator.text + "{" + this.macroInvocationId + "}" + this.operand.getDisplayString();
-}
-
-MacroIdentifierExpression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
-    if (!(this.operand instanceof ArgTerm)) {
-        return null;
+    
+    getDisplayString(): string {
+        if (this.macroInvocationId === null) {
+            return super.getDisplayString();
+        }
+        return this.operator.text + "{" + this.macroInvocationId + "}" + this.operand.getDisplayString();
     }
-    let tempName = this.operand.evaluateToIdentifierName();
-    return new MacroIdentifier(tempName, this.macroInvocationId);
-}
-
-MacroIdentifierExpression.prototype.populateMacroInvocationId = function(macroInvocationId: number): void {
-    if (this.macroInvocationId === null) {
-        this.macroInvocationId = macroInvocationId;
+    
+    evaluateToIdentifierOrNull(): Identifier {
+        if (!(this.operand instanceof ArgTerm)) {
+            return null;
+        }
+        let tempName = this.operand.evaluateToIdentifierName();
+        return new MacroIdentifier(tempName, this.macroInvocationId);
+    }
+    
+    populateMacroInvocationId(macroInvocationId: number): void {
+        if (this.macroInvocationId === null) {
+            this.macroInvocationId = macroInvocationId;
+        }
     }
 }
 
 export interface BinaryExpression extends BinaryExpressionInterface {}
 
 export class BinaryExpression extends Expression {
+    
     constructor(operator: BinaryOperator, operand1: Expression, operand2: Expression) {
         super();
         this.operator = operator;
         this.operand1 = operand1;
         this.operand2 = operand2;
     }
-}
-
-BinaryExpression.prototype.copy = function(): Expression {
-    return new BinaryExpression(
-        this.operator,
-        this.operand1.copy(),
-        this.operand2.copy()
-    );
-}
-
-BinaryExpression.prototype.getDisplayString = function(): string {
-    return "(" + this.operand1.getDisplayString() + " " + this.operator.text + " " + this.operand2.getDisplayString() + ")";
-}
-
-BinaryExpression.prototype.processExpressionsHelper = function(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
-    var tempResult = processExpression(this);
-    if (tempResult !== null) {
-        return tempResult;
+    
+    copy(): Expression {
+        return new BinaryExpression(
+            this.operator,
+            this.operand1.copy(),
+            this.operand2.copy()
+        );
     }
-    this.operand1 = this.operand1.processExpressions(processExpression, shouldRecurAfterProcess);
-    this.operand2 = this.operand2.processExpressions(processExpression, shouldRecurAfterProcess);
-    return null;
-}
-
-BinaryExpression.prototype.evaluateToConstantOrNull = function(): Constant {
-    let tempResult;
-    try {
-        tempResult = this.operator.createConstantOrNull(this.operand1, this.operand2);
-    } catch(error) {
-        this.handleError(error);
-        throw error;
+    
+    getDisplayString(): string {
+        return "(" + this.operand1.getDisplayString() + " " + this.operator.text + " " + this.operand2.getDisplayString() + ")";
     }
-    if (tempResult === null) {
-        return Expression.prototype.evaluateToConstantOrNull.call(this);
-    } else {
-        return tempResult;
+    
+    processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
+        var tempResult = processExpression(this);
+        if (tempResult !== null) {
+            return tempResult;
+        }
+        this.operand1 = this.operand1.processExpressions(processExpression, shouldRecurAfterProcess);
+        this.operand2 = this.operand2.processExpressions(processExpression, shouldRecurAfterProcess);
+        return null;
     }
-}
-
-BinaryExpression.prototype.evaluateToIdentifierOrNull = function(): Identifier {
-    try {
-        return this.operator.createIdentifierOrNull(this.operand1, this.operand2);
-    } catch(error) {
-        this.handleError(error);
-        throw error;
+    
+    evaluateToConstantOrNull(): Constant {
+        let tempResult;
+        try {
+            tempResult = this.operator.createConstantOrNull(this.operand1, this.operand2);
+        } catch(error) {
+            this.handleError(error);
+            throw error;
+        }
+        if (tempResult === null) {
+            return super.evaluateToConstantOrNull();
+        } else {
+            return tempResult;
+        }
     }
-}
-
-BinaryExpression.prototype.evaluateToInstructionArg = function(): InstructionArg {
-    let tempResult;
-    try {
-        tempResult = this.operator.createInstructionArgOrNull(this.operand1, this.operand2);
-    } catch(error) {
-        this.handleError(error);
-        throw error;
+    
+    evaluateToIdentifierOrNull(): Identifier {
+        try {
+            return this.operator.createIdentifierOrNull(this.operand1, this.operand2);
+        } catch(error) {
+            this.handleError(error);
+            throw error;
+        }
     }
-    if (tempResult !== null) {
-        return tempResult;
+    
+    evaluateToInstructionArg(): InstructionArg {
+        let tempResult;
+        try {
+            tempResult = this.operator.createInstructionArgOrNull(this.operand1, this.operand2);
+        } catch(error) {
+            this.handleError(error);
+            throw error;
+        }
+        if (tempResult !== null) {
+            return tempResult;
+        }
+        return super.evaluateToInstructionArg();
     }
-    return Expression.prototype.evaluateToInstructionArg.call(this);
-}
-
-BinaryExpression.prototype.getConstantDataTypeHelper = function(): DataType {
-    try {
-        return this.operator.getConstantDataType(this.operand1, this.operand2);
-    } catch(error) {
-        this.handleError(error);
-        throw error;
+    
+    getConstantDataTypeHelper(): DataType {
+        try {
+            return this.operator.getConstantDataType(this.operand1, this.operand2);
+        } catch(error) {
+            this.handleError(error);
+            throw error;
+        }
     }
 }
 
 export interface SubscriptExpression extends SubscriptExpressionInterface {}
 
 export class SubscriptExpression extends Expression {
+    
     constructor(
         sequenceExpression: Expression,
         indexExpression: Expression,
@@ -539,50 +547,50 @@ export class SubscriptExpression extends Expression {
         this.indexExpression = indexExpression;
         this.dataTypeExpression = dataTypeExpression;
     }
-}
-
-SubscriptExpression.prototype.copy = function(): Expression {
-    return new SubscriptExpression(
-        this.sequenceExpression.copy(),
-        this.indexExpression.copy(),
-        this.dataTypeExpression.copy()
-    );
-}
-
-SubscriptExpression.prototype.getDisplayString = function(): string {
-    return "(" + this.sequenceExpression.getDisplayString() + "[" + this.indexExpression.getDisplayString() + "]:" + this.dataTypeExpression.getDisplayString() + ")";
-}
-
-SubscriptExpression.prototype.processExpressionsHelper = function(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
-    var tempResult = processExpression(this);
-    if (tempResult !== null) {
-        return tempResult;
+    
+    copy(): Expression {
+        return new SubscriptExpression(
+            this.sequenceExpression.copy(),
+            this.indexExpression.copy(),
+            this.dataTypeExpression.copy()
+        );
     }
-    this.sequenceExpression = this.sequenceExpression.processExpressions(
-        processExpression,
-        shouldRecurAfterProcess
-    );
-    this.indexExpression = this.indexExpression.processExpressions(
-        processExpression,
-        shouldRecurAfterProcess
-    );
-    this.dataTypeExpression = this.dataTypeExpression.processExpressions(
-        processExpression,
-        shouldRecurAfterProcess
-    );
-    return null;
-}
-
-SubscriptExpression.prototype.evaluateToInstructionArg = function(): InstructionArg {
-    return new RefInstructionArg(
-        this.sequenceExpression.evaluateToInstructionRef(),
-        this.dataTypeExpression.evaluateToDataType(),
-        this.indexExpression.evaluateToInstructionArg()
-    );
-}
-
-SubscriptExpression.prototype.getConstantDataTypeHelper = function(): DataType {
-    return this.dataTypeExpression.evaluateToDataType()
+    
+    getDisplayString(): string {
+        return "(" + this.sequenceExpression.getDisplayString() + "[" + this.indexExpression.getDisplayString() + "]:" + this.dataTypeExpression.getDisplayString() + ")";
+    }
+    
+    processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
+        var tempResult = processExpression(this);
+        if (tempResult !== null) {
+            return tempResult;
+        }
+        this.sequenceExpression = this.sequenceExpression.processExpressions(
+            processExpression,
+            shouldRecurAfterProcess
+        );
+        this.indexExpression = this.indexExpression.processExpressions(
+            processExpression,
+            shouldRecurAfterProcess
+        );
+        this.dataTypeExpression = this.dataTypeExpression.processExpressions(
+            processExpression,
+            shouldRecurAfterProcess
+        );
+        return null;
+    }
+    
+    evaluateToInstructionArg(): InstructionArg {
+        return new RefInstructionArg(
+            this.sequenceExpression.evaluateToInstructionRef(),
+            this.dataTypeExpression.evaluateToDataType(),
+            this.indexExpression.evaluateToInstructionArg()
+        );
+    }
+    
+    getConstantDataTypeHelper(): DataType {
+        return this.dataTypeExpression.evaluateToDataType()
+    }
 }
 
 

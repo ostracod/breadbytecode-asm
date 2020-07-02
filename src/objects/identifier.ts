@@ -20,26 +20,27 @@ for (let name in builtInConstantSet) {
 export interface Identifier extends IdentifierInterface {}
 
 export class Identifier {
+    
     constructor(name: string) {
         // TODO: Make sure that name contains valid characters.
         this.name = name;
     }
-}
-
-Identifier.prototype.getDisplayString = function(): string {
-    return this.name;
-}
-
-Identifier.prototype.getMapKey = function(): string {
-    return this.name;
-}
-
-Identifier.prototype.getIsBuiltIn = function(): boolean {
-    return (this.name in builtInIdentifierNameSet);
-}
-
-Identifier.prototype.equals = function(identifier: Identifier): boolean {
-    return (this.getMapKey() === identifier.getMapKey());
+    
+    getDisplayString(): string {
+        return this.name;
+    }
+    
+    getMapKey(): string {
+        return this.name;
+    }
+    
+    getIsBuiltIn(): boolean {
+        return (this.name in builtInIdentifierNameSet);
+    }
+    
+    equals(identifier: Identifier): boolean {
+        return (this.getMapKey() === identifier.getMapKey());
+    }
 }
 
 export interface MacroIdentifier extends MacroIdentifierInterface {}
@@ -49,68 +50,69 @@ export class MacroIdentifier extends Identifier {
         super(name);
         this.macroInvocationId = macroInvocationId;
     }
-}
-
-MacroIdentifier.prototype.getDisplayString = function(): string {
-    return "@{" + this.macroInvocationId + "}" + this.name;
-}
-
-MacroIdentifier.prototype.getMapKey = function(): string {
-    return this.name + "@" + this.macroInvocationId;
-}
-
-MacroIdentifier.prototype.getIsBuiltIn = function(): boolean {
-    return false;
+    
+    getDisplayString(): string {
+        return "@{" + this.macroInvocationId + "}" + this.name;
+    }
+    
+    getMapKey(): string {
+        return this.name + "@" + this.macroInvocationId;
+    }
+    
+    getIsBuiltIn(): boolean {
+        return false;
+    }
 }
 
 export interface IdentifierMap<T> extends IdentifierMapInterface<T> {}
 
 export class IdentifierMap<T> {
+    
     constructor() {
         this.map = {};
         // Ensures correct order for iteration.
         this.keyList = [];
     }
-}
-
-IdentifierMap.prototype.get = function(identifier: Identifier): any {
-    var tempKey = identifier.getMapKey();
-    if (tempKey in this.map) {
-        return this.map[tempKey];
-    } else {
-        return null;
+    
+    get(identifier: Identifier): any {
+        var tempKey = identifier.getMapKey();
+        if (tempKey in this.map) {
+            return this.map[tempKey];
+        } else {
+            return null;
+        }
     }
-}
-
-IdentifierMap.prototype.set = function(identifier: Identifier, value: any): void {
-    var tempKey = identifier.getMapKey();
-    if (tempKey in this.map) {
-        throw new AssemblyError("Duplicate identifier.");
+    
+    set(identifier: Identifier, value: any): void {
+        var tempKey = identifier.getMapKey();
+        if (tempKey in this.map) {
+            throw new AssemblyError("Duplicate identifier.");
+        }
+        this.keyList.push(tempKey);
+        this.map[tempKey] = value;
     }
-    this.keyList.push(tempKey);
-    this.map[tempKey] = value;
-}
-
-IdentifierMap.prototype.setIndexDefinition = function(indexDefinition: IndexDefinition): void {
-    this.set(indexDefinition.identifier, indexDefinition);
-}
-
-IdentifierMap.prototype.iterate = function(handle: (value: any) => void): void {
-    for (let key of this.keyList) {
-        handle(this.map[key]);
+    
+    setIndexDefinition(indexDefinition: IndexDefinition): void {
+        this.set(indexDefinition.identifier, indexDefinition);
     }
-}
-
-IdentifierMap.prototype.getValueList = function(): any[] {
-    let output = [];
-    this.iterate(value => {
-        output.push(value);
-    });
-    return output;
-}
-
-IdentifierMap.prototype.getSize = function(): number {
-    return this.keyList.length;
+    
+    iterate(handle: (value: any) => void): void {
+        for (let key of this.keyList) {
+            handle(this.map[key]);
+        }
+    }
+    
+    getValueList(): any[] {
+        let output = [];
+        this.iterate(value => {
+            output.push(value);
+        });
+        return output;
+    }
+    
+    getSize(): number {
+        return this.keyList.length;
+    }
 }
 
 

@@ -9,6 +9,7 @@ export interface InstructionType extends InstructionTypeInterface {}
 export var instructionTypeMap: {[name: string]: InstructionType} = {};
 
 export class InstructionType {
+    
     constructor(name: string, opcode: number, argAmount: number) {
         this.name = name;
         this.opcode = opcode;

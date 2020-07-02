@@ -7,6 +7,7 @@ import {
 export interface Scope extends ScopeInterface {}
 
 export class Scope {
+    
     constructor(parentScope?: Scope) {
         this.indexDefinitionMapList = null;
         this.publicFunctionDefinitionList = null;
@@ -16,39 +17,39 @@ export class Scope {
             this.parentScope = parentScope;
         }
     }
-}
-
-Scope.prototype.getIndexDefinitionByIdentifier = function(identifier: Identifier): IndexDefinition {
-    for (let identifierMap of this.indexDefinitionMapList) {
-        let tempDefinition = identifierMap.get(identifier);
-        if (tempDefinition !== null) {
-            return tempDefinition;
-        }
-    }
-    if (this.parentScope === null) {
-        return null;
-    } else {
-        return this.parentScope.getIndexDefinitionByIdentifier(identifier);
-    }
-}
-
-Scope.prototype.getPublicFunctionDefinition = function(
-    identifier: Identifier,
-    interfaceIndex: number
-): PublicFunctionDefinition {
-    if (this.publicFunctionDefinitionList !== null) {
-        for (let functionDefinition of this.publicFunctionDefinitionList) {
-            let tempExpression = functionDefinition.interfaceIndexExpression;
-            if (identifier.equals(functionDefinition.identifier)
-                    && interfaceIndex === tempExpression.evaluateToNumber()) {
-                return functionDefinition;
+    
+    getIndexDefinitionByIdentifier(identifier: Identifier): IndexDefinition {
+        for (let identifierMap of this.indexDefinitionMapList) {
+            let tempDefinition = identifierMap.get(identifier);
+            if (tempDefinition !== null) {
+                return tempDefinition;
             }
         }
+        if (this.parentScope === null) {
+            return null;
+        } else {
+            return this.parentScope.getIndexDefinitionByIdentifier(identifier);
+        }
     }
-    if (this.parentScope === null) {
-        return null;
-    } else {
-        return this.parentScope.getPublicFunctionDefinition(identifier, interfaceIndex);
+    
+    getPublicFunctionDefinition(
+        identifier: Identifier,
+        interfaceIndex: number
+    ): PublicFunctionDefinition {
+        if (this.publicFunctionDefinitionList !== null) {
+            for (let functionDefinition of this.publicFunctionDefinitionList) {
+                let tempExpression = functionDefinition.interfaceIndexExpression;
+                if (identifier.equals(functionDefinition.identifier)
+                        && interfaceIndex === tempExpression.evaluateToNumber()) {
+                    return functionDefinition;
+                }
+            }
+        }
+        if (this.parentScope === null) {
+            return null;
+        } else {
+            return this.parentScope.getPublicFunctionDefinition(identifier, interfaceIndex);
+        }
     }
 }
 
