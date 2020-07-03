@@ -11,7 +11,7 @@ export class AliasDefinition {
     }
     
     getDisplayString(): string {
-        return this.identifier.getDisplayString() + " = " + this.expression.getDisplayString();
+        return `${this.identifier.getDisplayString()} = ${this.expression.getDisplayString()}`;
     }
 }
 

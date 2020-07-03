@@ -8,11 +8,7 @@ export interface ExpressionUtils extends ExpressionUtilsInterface {}
 export class ExpressionUtils {
     
     copyExpressions(expressionList: Expression[]): Expression[] {
-        let output = [];
-        for (let expression of expressionList) {
-            output.push(expression.copy());
-        }
-        return output;
+        return expressionList.map(expression => expression.copy());
     }
     
     // processExpression accepts an expression, and returns

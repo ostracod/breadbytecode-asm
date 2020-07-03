@@ -42,10 +42,7 @@ export class AssemblyLine {
             indentationLevel = 0;
         }
         let tempIndentation = niceUtils.getIndentation(indentationLevel);
-        let tempTextList = [];
-        for (let arg of this.argList) {
-            tempTextList.push(arg.getDisplayString());
-        }
+        let tempTextList = this.argList.map(arg => arg.getDisplayString());
         let tempLineText = tempIndentation + this.directiveName + " " + tempTextList.join(", ");
         if (this.codeBlock === null) {
             return tempLineText;

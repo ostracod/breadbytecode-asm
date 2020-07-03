@@ -15,7 +15,7 @@ export class MacroDefinition {
     }
     
     invoke(argList: Expression[], macroInvocationId: number): AssemblyLine[] {
-        if (argList.length != this.argIdentifierList.length) {
+        if (argList.length !== this.argIdentifierList.length) {
             throw new AssemblyError("Wrong number of macro arguments.");
         }
         let identifierExpressionMap = new IdentifierMap() as IdentifierMap<Expression>;
@@ -32,10 +32,9 @@ export class MacroDefinition {
     
     getDisplayString(): string {
         let tempTextList = [];
-        let tempIdentifierTextList = [];
-        for (let identifier of this.argIdentifierList) {
-            tempIdentifierTextList.push(identifier.getDisplayString());
-        }
+        let tempIdentifierTextList = this.argIdentifierList.map(identifier => {
+            return identifier.getDisplayString();
+        });
         let tempText = this.name;
         if (tempIdentifierTextList.length > 0) {
             tempText += " " + tempIdentifierTextList.join(", ");

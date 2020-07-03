@@ -16,7 +16,7 @@ export class VersionNumber {
     }
     
     getDisplayString(): string {
-        return this.majorNumber + "." + this.minorNumber + "." + this.patchNumber;
+        return `${this.majorNumber}.${this.minorNumber}.${this.patchNumber}`;
     }
     
     createBuffer(): Buffer {

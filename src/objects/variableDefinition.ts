@@ -19,7 +19,7 @@ export class VariableDefinition extends IndexDefinition {
     }
     
     getDisplayString(): string {
-        return "VAR " + this.identifier.getDisplayString() + ", " + this.dataType.getName();
+        return `VAR ${this.identifier.getDisplayString()}, ${this.dataType.getName()}`;
     }
 }
 

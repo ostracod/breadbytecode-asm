@@ -37,7 +37,7 @@ export abstract class DependencyDefinition extends IndexDefinition {
     }
     
     getDisplayString(): string {
-        let output = this.identifier.getDisplayString() + " = \"" + this.path + "\"";
+        let output = `${this.identifier.getDisplayString()} = "${this.path}"`;
         let tempText = this.getDisplayStringHelper();
         if (tempText !== null) {
             output += ", " + tempText;
@@ -46,7 +46,7 @@ export abstract class DependencyDefinition extends IndexDefinition {
             return dependencyModifierNameMap[modifier];
         });
         if (tempTextList.length > 0) {
-            output += " (" + tempTextList.join(", ") + ")";
+            output += ` (${tempTextList.join(", ")})`;
         }
         return output;
     }

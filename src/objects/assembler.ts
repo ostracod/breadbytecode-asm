@@ -59,7 +59,7 @@ export abstract class Assembler {
     extractMacroDefinitions(lineList: AssemblyLine[]): AssemblyLine[] {
         let tempResult = lineUtils.processLines(lineList, line => {
             let tempArgList = line.argList;
-            if (line.directiveName == "MACRO") {
+            if (line.directiveName === "MACRO") {
                 if (tempArgList.length < 1) {
                     throw new AssemblyError("Expected at least 1 argument.");
                 }
@@ -108,8 +108,8 @@ export abstract class Assembler {
     extractAliasDefinitions(lineList: AssemblyLine[]): AssemblyLine[] {
         let tempResult = lineUtils.processLines(lineList, line => {
             let tempArgList = line.argList;
-            if (line.directiveName == "DEF") {
-                if (tempArgList.length != 2) {
+            if (line.directiveName === "DEF") {
+                if (tempArgList.length !== 2) {
                     throw new AssemblyError("Expected 2 arguments.");
                 }
                 let tempIdentifier = tempArgList[0].evaluateToIdentifier();
@@ -140,8 +140,8 @@ export abstract class Assembler {
     processIncludeDirectives(lineList: AssemblyLine[]): {lineList: AssemblyLine[], includeCount: number} {
         let tempResult = lineUtils.processLines(lineList, line => {
             let tempArgList = line.argList;
-            if (line.directiveName == "INCLUDE") {
-                if (tempArgList.length != 1) {
+            if (line.directiveName === "INCLUDE") {
+                if (tempArgList.length !== 1) {
                     throw new AssemblyError("Expected 1 argument.");
                 }
                 let tempPath = tempArgList[0].evaluateToString();
@@ -212,7 +212,7 @@ export abstract class Assembler {
         this.processLines(line => {
             let tempDirectiveName = line.directiveName;
             let tempArgList = line.argList;
-            if (tempDirectiveName == "PATH_DEP") {
+            if (tempDirectiveName === "PATH_DEP") {
                 let tempResult = dependencyUtils.evaluateDependencyArgs(tempArgList, 2);
                 let tempDefinition = new PathDependencyDefinition(
                     tempResult.identifier,
@@ -222,7 +222,7 @@ export abstract class Assembler {
                 this.addDependencyDefinition(tempDefinition);
                 return [];
             }
-            if (tempDirectiveName == "VER_DEP") {
+            if (tempDirectiveName === "VER_DEP") {
                 let tempResult = dependencyUtils.evaluateDependencyArgs(tempArgList, 3);
                 let tempVersionNumber = tempArgList[2].evaluateToVersionNumber();
                 let tempDefinition = new VersionDependencyDefinition(
@@ -234,7 +234,7 @@ export abstract class Assembler {
                 this.addDependencyDefinition(tempDefinition);
                 return [];
             }
-            if (tempDirectiveName == "IFACE_DEP") {
+            if (tempDirectiveName === "IFACE_DEP") {
                 let tempDependencyExpressionList = [];
                 let index = 2;
                 while (index < tempArgList.length) {
@@ -263,7 +263,7 @@ export abstract class Assembler {
     extractFileFormatVersionNumber(): void {
         this.processLines(line => {
             let tempArgList = line.argList;
-            if (line.directiveName == "FORMAT_VER") {
+            if (line.directiveName === "FORMAT_VER") {
                 if (tempArgList.length !== 1) {
                     throw new AssemblyError("Expected 1 argument.");
                 }
@@ -307,11 +307,9 @@ export abstract class Assembler {
             REGION_TYPE.fileFormatVer,
             this.fileFormatVersionNumber.createBuffer()
         );
-        let funcRegionList = [];
-        for (let functionDefinition of this.functionDefinitionList) {
-            let tempRegion = functionDefinition.createRegion();
-            funcRegionList.push(tempRegion);
-        };
+        let funcRegionList = this.functionDefinitionList.map(functionDefinition => {
+            return functionDefinition.createRegion();
+        });
         let appFuncsRegion = new CompositeRegion(this.funcsRegionType, funcRegionList);
         let dependencyRegionList = [];
         this.dependencyDefinitionMap.iterate(dependencyDefinition => {
@@ -475,8 +473,8 @@ export class BytecodeAppAssembler extends Assembler {
         this.processLines(line => {
             let tempDirectiveName = line.directiveName;
             let tempArgList = line.argList;
-            if (tempDirectiveName == "PRIV_FUNC") {
-                if (tempArgList.length != 1) {
+            if (tempDirectiveName === "PRIV_FUNC") {
+                if (tempArgList.length !== 1) {
                     throw new AssemblyError("Expected 1 argument.");
                 }
                 let tempIdentifier = tempArgList[0].evaluateToIdentifier();
@@ -488,11 +486,11 @@ export class BytecodeAppAssembler extends Assembler {
                 this.privateFunctionDefinitionMap.setIndexDefinition(tempDefinition);
                 return [];
             }
-            if (tempDirectiveName == "PUB_FUNC") {
+            if (tempDirectiveName === "PUB_FUNC") {
                 let tempArbiterIndexExpression;
-                if (tempArgList.length == 3) {
+                if (tempArgList.length === 3) {
                     tempArbiterIndexExpression = tempArgList[2];
-                } else if (tempArgList.length == 2) {
+                } else if (tempArgList.length === 2) {
                     tempArbiterIndexExpression = null;
                 } else {
                     throw new AssemblyError("Expected 2 or 3 arguments.");
@@ -508,8 +506,8 @@ export class BytecodeAppAssembler extends Assembler {
                 this.publicFunctionDefinitionList.push(tempDefinition);
                 return [];
             }
-            if (tempDirectiveName == "GUARD_FUNC") {
-                if (tempArgList.length != 2) {
+            if (tempDirectiveName === "GUARD_FUNC") {
+                if (tempArgList.length !== 2) {
                     throw new AssemblyError("Expected 2 arguments.");
                 }
                 let tempIdentifier = tempArgList[0].evaluateToIdentifier();
@@ -528,8 +526,8 @@ export class BytecodeAppAssembler extends Assembler {
     extractAppDataDefinitions(): void {
         let tempLineList = [];
         this.processLines(line => {
-            if (line.directiveName == "APP_DATA") {
-                if (line.argList.length != 0) {
+            if (line.directiveName === "APP_DATA") {
+                if (line.argList.length !== 0) {
                     throw new AssemblyError("Expected 0 arguments.");
                 }
                 for (let tempLine of line.codeBlock) {
@@ -569,11 +567,11 @@ export class InterfaceAssembler extends Assembler {
     extractFunctionDefinitions(): void {
         this.processLines(line => {
             let tempArgList = line.argList;
-            if (line.directiveName == "IFACE_FUNC") {
+            if (line.directiveName === "IFACE_FUNC") {
                 let tempArbiterIndexExpression;
-                if (tempArgList.length == 2) {
+                if (tempArgList.length === 2) {
                     tempArbiterIndexExpression = tempArgList[1];
-                } else if (tempArgList.length == 1) {
+                } else if (tempArgList.length === 1) {
                     tempArbiterIndexExpression = null;
                 } else {
                     throw new AssemblyError("Expected 1 or 2 arguments.");

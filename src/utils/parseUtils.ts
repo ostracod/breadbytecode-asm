@@ -24,7 +24,7 @@ export class ParseUtils {
     skipWhitespace(text: string, index: number): number {
         while (index < text.length) {
             let tempCharacter = text.charAt(index);
-            if (tempCharacter != " " && tempCharacter != "\t") {
+            if (tempCharacter !== " " && tempCharacter !== "\t") {
                 break
             }
             index += 1;
@@ -35,7 +35,7 @@ export class ParseUtils {
     skipDirectiveCharacters(text: string, index: number): number {
         while (index < text.length) {
             let tempCharacter = text.charAt(index);
-            if (tempCharacter == " " || tempCharacter == "\t" || tempCharacter == "#") {
+            if (tempCharacter === " " || tempCharacter === "\t" || tempCharacter === "#") {
                 break;
             }
             index += 1;
@@ -44,7 +44,7 @@ export class ParseUtils {
     }
     
     isFirstArgWordCharacter(character: string): boolean {
-        if (character == "_") {
+        if (character === "_") {
             return true;
         }
         let tempCharCode = character.charCodeAt(0);
@@ -63,7 +63,7 @@ export class ParseUtils {
     }
     
     isFirstArgNumericCharacter(character: string): boolean {
-        if (character == ".") {
+        if (character === ".") {
             return true;
         }
         let tempCharCode = character.charCodeAt(0);
@@ -77,7 +77,7 @@ export class ParseUtils {
         if (parseUtils.isFirstArgNumericCharacter(character)) {
             return true;
         }
-        return (character == "x");
+        return (character === "x");
     }
     
     parseArgOperator(
@@ -92,7 +92,7 @@ export class ParseUtils {
                 continue;
             }
             let tempText = text.substring(index, tempEndIndex);
-            if (tempText == tempOperatorText) {
+            if (tempText === tempOperatorText) {
                 return {operator: operator, index: tempEndIndex};
             }
         }
@@ -141,8 +141,8 @@ export class ParseUtils {
         let tempText = text.substring(tempStartIndex, tempEndIndex);
         let tempComponentList = tempText.split(".");
         let tempArgNumeric;
-        if (tempComponentList.length == 1) {
-            if (tempText.length > 2 && tempText.substring(0, 2) == "0x") {
+        if (tempComponentList.length === 1) {
+            if (tempText.length > 2 && tempText.substring(0, 2) === "0x") {
                 tempArgNumeric = parseUtils.parseHexadecimalArgNumber(
                     tempText.substring(2, tempText.length)
                 );
@@ -153,10 +153,10 @@ export class ParseUtils {
                 );
                 tempArgNumeric = new ArgNumber(tempConstant);
             }
-        } else if (tempComponentList.length == 2) {
+        } else if (tempComponentList.length === 2) {
             let tempConstant = new NumberConstant(parseFloat(tempText), float64Type);
             tempArgNumeric = new ArgNumber(tempConstant);
-        } else if (tempComponentList.length == 3) {
+        } else if (tempComponentList.length === 3) {
             let tempVersionNumber = new VersionNumber(
                 parseInt(tempComponentList[0]),
                 parseInt(tempComponentList[1]),
@@ -171,7 +171,7 @@ export class ParseUtils {
     
     parseArgString(text: string, index: number): {argString: ArgString, index: number} {
         let tempCharacter = text.charAt(index);
-        if (tempCharacter != "\"") {
+        if (tempCharacter !== "\"") {
             throw new AssemblyError("Expected quotation mark.");
         }
         index += 1;
@@ -184,16 +184,16 @@ export class ParseUtils {
             let tempCharacter = text.charAt(index);
             index += 1;
             if (tempIsEscaped) {
-                if (tempCharacter == "n") {
+                if (tempCharacter === "n") {
                     tempText += "\n";
                 } else {
                     tempText += tempCharacter;
                 }
                 tempIsEscaped = false;
             } else {
-                if (tempCharacter == "\"") {
+                if (tempCharacter === "\"") {
                     break;
-                } else if (tempCharacter == "\\") {
+                } else if (tempCharacter === "\\") {
                     tempIsEscaped = true;
                 } else {
                     tempText += tempCharacter;
@@ -231,12 +231,12 @@ export class ParseUtils {
                 let tempResult2 = parseUtils.parseArgNumeric(text, index);
                 index = tempResult2.index;
                 outputExpression = tempResult2.argNumeric;
-            } else if (tempCharacter == "\"") {
+            } else if (tempCharacter === "\"") {
                 // Parse string literal.
                 let tempResult3 = parseUtils.parseArgString(text, index);
                 index = tempResult3.index;
                 outputExpression = tempResult3.argString;
-            } else if (tempCharacter == "(") {
+            } else if (tempCharacter === "(") {
                 // Parse expression in parentheses.
                 index += 1;
                 let tempResult4 = parseUtils.parseArgExpression(text, index, 99);
@@ -247,7 +247,7 @@ export class ParseUtils {
                     throw new AssemblyError("Expected closing parenthesis.");
                 }
                 let tempCharacter = text.charAt(index);
-                if (tempCharacter != ")") {
+                if (tempCharacter !== ")") {
                     throw new AssemblyError("Expected closing parenthesis.");
                 }
                 index += 1;
@@ -270,7 +270,7 @@ export class ParseUtils {
                 break;
             }
             let tempCharacter = text.charAt(index);
-            if (tempCharacter == "[") {
+            if (tempCharacter === "[") {
                 if (precedence <= 2) {
                     break;
                 }
@@ -284,7 +284,7 @@ export class ParseUtils {
                     throw new AssemblyError("Expected subscript data type.");
                 }
                 let tempText = text.substring(index, index + 2);
-                if (tempText != "]:") {
+                if (tempText !== "]:") {
                     throw new AssemblyError("Expected subscript data type.");
                 }
                 index += 2;
@@ -329,7 +329,7 @@ export class ParseUtils {
         let tempStartIndex = index;
         index = parseUtils.skipDirectiveCharacters(text, index);
         let tempEndIndex = index;
-        if (tempStartIndex == tempEndIndex) {
+        if (tempStartIndex === tempEndIndex) {
             return null;
         }
         let tempDirectiveName = text.substring(tempStartIndex, tempEndIndex);
@@ -339,12 +339,12 @@ export class ParseUtils {
         while (true) {
             index = parseUtils.skipWhitespace(text, index);
             // Handle empty argument list.
-            if (tempArgList.length == 0) {
+            if (tempArgList.length === 0) {
                 if (index >= text.length) {
                     break;
                 }
                 let tempCharacter = text.charAt(index);
-                if (tempCharacter == "#") {
+                if (tempCharacter === "#") {
                     break;
                 }
             }
@@ -358,10 +358,10 @@ export class ParseUtils {
             }
             // Seek the next argument if it exists.
             let tempCharacter = text.charAt(index);
-            if (tempCharacter == "#") {
+            if (tempCharacter === "#") {
                 break;
             }
-            if (tempCharacter != ",") {
+            if (tempCharacter !== ",") {
                 throw new AssemblyError("Expected comma.");
             }
             index += 1;
@@ -376,7 +376,7 @@ export class ParseUtils {
     
     loadAssemblyFileContent(path: string): string[] {
         if (!fs.existsSync(path)) {
-            throw new AssemblyError("Missing source file \"" + path + "\".");
+            throw new AssemblyError(`Missing source file "${path}".`);
         }
         let tempContent = fs.readFileSync(path, "utf8");
         return tempContent.split("\n");
@@ -411,8 +411,8 @@ export class ParseUtils {
         let branchList = [];
         for (let line of lineList) {
             let tempDirectiveName = line.directiveName;
-            if (tempDirectiveName == "END") {
-                if (line.argList.length != 0) {
+            if (tempDirectiveName === "END") {
+                if (line.argList.length !== 0) {
                     throw new AssemblyError("Expected 0 arguments.", line.lineNumber);
                 }
                 if (branchList.length <= 0) {

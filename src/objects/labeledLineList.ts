@@ -57,8 +57,8 @@ export class LabeledLineList {
         let index = 0;
         this.processLines(line => {
             let tempArgList = line.argList;
-            if (line.directiveName == "LBL") {
-                if (tempArgList.length != 1) {
+            if (line.directiveName === "LBL") {
+                if (tempArgList.length !== 1) {
                     throw new AssemblyError("Expected 1 argument.");
                 }
                 let tempIdentifier = tempArgList[0].evaluateToIdentifier();
@@ -129,7 +129,7 @@ export class DataLineList extends LabeledLineList {
     extractLabelDefinitions(): void {
         super.extractLabelDefinitions();
         this.processLines(line => {
-            if (line.directiveName != "DATA") {
+            if (line.directiveName !== "DATA") {
                 throw new AssemblyError("Expected DATA directive.");
             }
             return null;

@@ -52,11 +52,11 @@ export class MacroIdentifier extends Identifier {
     }
     
     getDisplayString(): string {
-        return "@{" + this.macroInvocationId + "}" + this.name;
+        return `@{${this.macroInvocationId}}${this.name}`;
     }
     
     getMapKey(): string {
-        return this.name + "@" + this.macroInvocationId;
+        return `${this.name}@${this.macroInvocationId}`;
     }
     
     getIsBuiltIn(): boolean {

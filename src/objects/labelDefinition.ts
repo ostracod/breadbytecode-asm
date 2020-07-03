@@ -12,7 +12,7 @@ export abstract class LabelDefinition extends IndexDefinition {
     }
     
     getDisplayString(): string {
-        return this.identifier.getDisplayString() + " = " + this.index;
+        return `${this.identifier.getDisplayString()} = ${this.index}`;
     }
 }
 

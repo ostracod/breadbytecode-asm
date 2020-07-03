@@ -18,7 +18,7 @@ export class VariableUtils {
         line: AssemblyLine,
         variableDefinitionClass: VariableDefinitionClass
     ): VariableDefinition {
-        if (line.directiveName != "VAR") {
+        if (line.directiveName !== "VAR") {
             return null;
         }
         let tempArgList = line.argList;
@@ -39,7 +39,7 @@ export class VariableUtils {
     }
     
     extractArgVariableDefinition(line: AssemblyLine): ArgVariableDefinition {
-        if (line.directiveName != "ARG") {
+        if (line.directiveName !== "ARG") {
             return null;
         }
         let tempArgList = line.argList;

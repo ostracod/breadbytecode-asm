@@ -34,10 +34,7 @@ export class Instruction {
     getDisplayString(): string {
         let output = mathUtils.convertNumberToHexadecimal(this.instructionType.opcode, 4);
         if (this.argList.length > 0) {
-            let tempTextList = [];
-            for (let arg of this.argList) {
-                tempTextList.push(arg.getDisplayString());
-            }
+            let tempTextList = this.argList.map(arg => arg.getDisplayString());
             output += " " + tempTextList.join(", ");
         }
         return output;
@@ -100,7 +97,7 @@ export class InstructionArg {
     
     getDisplayString(): string {
         let tempBuffer = this.createBuffer();
-        return "{" + mathUtils.convertBufferToHexadecimal(tempBuffer) + "}";
+        return `{${mathUtils.convertBufferToHexadecimal(tempBuffer)}}`;
     }
 }
 

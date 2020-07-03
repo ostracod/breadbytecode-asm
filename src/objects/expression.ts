@@ -351,7 +351,7 @@ export class ArgString extends ArgTerm {
     }
     
     getDisplayString(): string {
-        return "\"" + this.constant.value + "\"";
+        return `"${this.constant.value}"`;
     }
     
     evaluateToConstantOrNull(): Constant {
@@ -434,7 +434,7 @@ export class MacroIdentifierExpression extends UnaryExpression {
         if (this.macroInvocationId === null) {
             return super.getDisplayString();
         }
-        return this.operator.text + "{" + this.macroInvocationId + "}" + this.operand.getDisplayString();
+        return `${this.operator.text}{${this.macroInvocationId}}${this.operand.getDisplayString()}`;
     }
     
     evaluateToIdentifierOrNull(): Identifier {
@@ -472,7 +472,7 @@ export class BinaryExpression extends Expression {
     }
     
     getDisplayString(): string {
-        return "(" + this.operand1.getDisplayString() + " " + this.operator.text + " " + this.operand2.getDisplayString() + ")";
+        return `(${this.operand1.getDisplayString()} ${this.operator.text} ${this.operand2.getDisplayString()})`;
     }
     
     processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
@@ -557,7 +557,7 @@ export class SubscriptExpression extends Expression {
     }
     
     getDisplayString(): string {
-        return "(" + this.sequenceExpression.getDisplayString() + "[" + this.indexExpression.getDisplayString() + "]:" + this.dataTypeExpression.getDisplayString() + ")";
+        return `(${this.sequenceExpression.getDisplayString()}[${this.indexExpression.getDisplayString()}]:${this.dataTypeExpression.getDisplayString()})`;
     }
     
     processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {

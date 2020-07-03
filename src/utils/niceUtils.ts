@@ -79,7 +79,7 @@ export class NiceUtils {
     }
     
     pluralize(word: string, amount: number): string {
-        if (amount == 1) {
+        if (amount === 1) {
             return word;
         } else {
             return word + "s";

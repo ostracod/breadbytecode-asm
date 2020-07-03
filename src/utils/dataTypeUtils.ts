@@ -20,7 +20,7 @@ export class DataTypeUtils {
         for (let dataType of dataTypeList) {
             if (dataType instanceof numberTypeClass) {
                 let tempNumberType = dataType as NumberType;
-                if (tempNumberType.byteAmount == byteAmount) {
+                if (tempNumberType.byteAmount === byteAmount) {
                     return dataType;
                 }
             }

@@ -10,7 +10,7 @@ export interface DescriptionUtils extends DescriptionUtilsInterface {}
 export class DescriptionUtils {
     
     extractDescriptionLine(line: AssemblyLine): string {
-        if (line.directiveName != "DESC") {
+        if (line.directiveName !== "DESC") {
             return null;
         }
         let tempArgList = line.argList;

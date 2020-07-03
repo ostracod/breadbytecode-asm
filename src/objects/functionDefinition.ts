@@ -176,7 +176,7 @@ export abstract class FunctionDefinition extends IndexDefinition {
     }
     
     getDisplayString(): string {
-        let tempTitle = this.getTitlePrefix() + " function " + this.identifier.name;
+        let tempTitle = `${this.getTitlePrefix()} function ${this.identifier.name}`;
         let tempSuffix = this.getTitleSuffix();
         if (tempSuffix !== null) {
             tempTitle += ` (${tempSuffix})`;

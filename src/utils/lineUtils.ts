@@ -9,11 +9,7 @@ export interface LineUtils extends LineUtilsInterface {}
 export class LineUtils {
     
     copyLines(lineList: AssemblyLine[]): AssemblyLine[] {
-        let output = [];
-        for (let line of lineList) {
-            output.push(line.copy());
-        }
-        return output;
+        return lineList.map(line => line.copy());
     }
     
     processExpressionsInLines(
@@ -43,10 +39,7 @@ export class LineUtils {
         if (typeof indentationLevel === "undefined") {
             indentationLevel = 0;
         }
-        let tempTextList = [];
-        for (let line of lineList) {
-            tempTextList.push(line.getDisplayString(indentationLevel));
-        }
+        let tempTextList = lineList.map(line => line.getDisplayString(indentationLevel));
         return tempTextList.join("\n");
     }
     
