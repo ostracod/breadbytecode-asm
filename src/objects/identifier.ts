@@ -75,7 +75,7 @@ export class IdentifierMap<T> {
     }
     
     get(identifier: Identifier): any {
-        var tempKey = identifier.getMapKey();
+        let tempKey = identifier.getMapKey();
         if (tempKey in this.map) {
             return this.map[tempKey];
         } else {
@@ -84,7 +84,7 @@ export class IdentifierMap<T> {
     }
     
     set(identifier: Identifier, value: any): void {
-        var tempKey = identifier.getMapKey();
+        let tempKey = identifier.getMapKey();
         if (tempKey in this.map) {
             throw new AssemblyError("Duplicate identifier.");
         }

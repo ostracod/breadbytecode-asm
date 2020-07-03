@@ -45,7 +45,7 @@ export abstract class Assembler {
     }
     
     processLines(processLine: LineProcessor): void {
-        var tempResult = lineUtils.processLines(this.rootLineList, processLine);
+        let tempResult = lineUtils.processLines(this.rootLineList, processLine);
         this.rootLineList = tempResult.lineList;
     }
     
@@ -57,28 +57,25 @@ export abstract class Assembler {
     }
     
     extractMacroDefinitions(lineList: AssemblyLine[]): AssemblyLine[] {
-        var self = this;
-        var tempResult = lineUtils.processLines(lineList, function(line) {
-            var tempArgList = line.argList;
+        let tempResult = lineUtils.processLines(lineList, line => {
+            let tempArgList = line.argList;
             if (line.directiveName == "MACRO") {
                 if (tempArgList.length < 1) {
                     throw new AssemblyError("Expected at least 1 argument.");
                 }
-                var tempNameIdentifier = tempArgList[0].evaluateToIdentifier();
-                var tempName = tempNameIdentifier.name;
-                var tempIdentifierList = [];
-                var index = 1;
-                while (index < tempArgList.length) {
-                    var tempIdentifier = tempArgList[index].evaluateToIdentifier();
+                let tempNameIdentifier = tempArgList[0].evaluateToIdentifier();
+                let tempName = tempNameIdentifier.name;
+                let tempIdentifierList = [];
+                for (let index = 1; index < tempArgList.length; index++) {
+                    let tempIdentifier = tempArgList[index].evaluateToIdentifier();
                     tempIdentifierList.push(tempIdentifier);
-                    index += 1;
                 }
-                var tempDefinition = new MacroDefinition(
+                let tempDefinition = new MacroDefinition(
                     tempName,
                     tempIdentifierList,
                     line.codeBlock
                 );
-                self.macroDefinitionMap[tempName] = tempDefinition;
+                this.macroDefinitionMap[tempName] = tempDefinition;
                 return [];
             }
             return null;
@@ -87,18 +84,17 @@ export abstract class Assembler {
     }
     
     getNextMacroInvocationId(): number {
-        var output = this.nextMacroInvocationId;
+        let output = this.nextMacroInvocationId;
         this.nextMacroInvocationId += 1;
         return output;
     }
     
     expandMacroInvocations(lineList: AssemblyLine[]): {lineList: AssemblyLine[], expandCount: number} {
-        var self = this;
-        var tempResult = lineUtils.processLines(lineList, function(line) {
-            var tempDirectiveName = line.directiveName;
-            if (tempDirectiveName in self.macroDefinitionMap) {
-                var tempDefinition = self.macroDefinitionMap[tempDirectiveName];
-                var macroInvocationId = self.getNextMacroInvocationId();
+        let tempResult = lineUtils.processLines(lineList, line => {
+            let tempDirectiveName = line.directiveName;
+            if (tempDirectiveName in this.macroDefinitionMap) {
+                let tempDefinition = this.macroDefinitionMap[tempDirectiveName];
+                let macroInvocationId = this.getNextMacroInvocationId();
                 return tempDefinition.invoke(line.argList, macroInvocationId);
             }
             return null;
@@ -110,17 +106,16 @@ export abstract class Assembler {
     }
     
     extractAliasDefinitions(lineList: AssemblyLine[]): AssemblyLine[] {
-        var self = this;
-        var tempResult = lineUtils.processLines(lineList, function(line) {
-            var tempArgList = line.argList;
+        let tempResult = lineUtils.processLines(lineList, line => {
+            let tempArgList = line.argList;
             if (line.directiveName == "DEF") {
                 if (tempArgList.length != 2) {
                     throw new AssemblyError("Expected 2 arguments.");
                 }
-                var tempIdentifier = tempArgList[0].evaluateToIdentifier();
-                var tempExpression = tempArgList[1];
-                var tempDefinition = new AliasDefinition(tempIdentifier, tempExpression);
-                self.aliasDefinitionMap.set(tempIdentifier, tempDefinition);
+                let tempIdentifier = tempArgList[0].evaluateToIdentifier();
+                let tempExpression = tempArgList[1];
+                let tempDefinition = new AliasDefinition(tempIdentifier, tempExpression);
+                this.aliasDefinitionMap.set(tempIdentifier, tempDefinition);
                 return [];
             }
             return null;
@@ -129,13 +124,12 @@ export abstract class Assembler {
     }
     
     expandAliasInvocations(): void {
-        var self = this;
-        self.processExpressionsInLines(function(expression) {
-            var tempIdentifier = expression.evaluateToIdentifierOrNull();
+        this.processExpressionsInLines(expression => {
+            let tempIdentifier = expression.evaluateToIdentifierOrNull();
             if (tempIdentifier === null) {
                 return null;
             }
-            var tempDefinition = self.aliasDefinitionMap.get(tempIdentifier);
+            let tempDefinition = this.aliasDefinitionMap.get(tempIdentifier);
             if (tempDefinition === null) {
                 return null;
             }
@@ -144,15 +138,14 @@ export abstract class Assembler {
     }
     
     processIncludeDirectives(lineList: AssemblyLine[]): {lineList: AssemblyLine[], includeCount: number} {
-        var self = this;
-        var tempResult = lineUtils.processLines(lineList, function(line) {
-            var tempArgList = line.argList;
+        let tempResult = lineUtils.processLines(lineList, line => {
+            let tempArgList = line.argList;
             if (line.directiveName == "INCLUDE") {
                 if (tempArgList.length != 1) {
                     throw new AssemblyError("Expected 1 argument.");
                 }
-                var tempPath = tempArgList[0].evaluateToString();
-                return self.loadAndParseAssemblyFile(tempPath);
+                let tempPath = tempArgList[0].evaluateToString();
+                return this.loadAndParseAssemblyFile(tempPath);
             }
             return null;
         });
@@ -181,13 +174,13 @@ export abstract class Assembler {
         // We do all of this in a loop because included files may define
         // macros, and macros may define INCLUDE directives.
         while (true) {
-            var tempResult1 = this.expandMacroInvocations(tempLineList);
+            let tempResult1 = this.expandMacroInvocations(tempLineList);
             tempLineList = tempResult1.lineList;
-            var tempExpandCount = tempResult1.expandCount;
+            let tempExpandCount = tempResult1.expandCount;
             tempLineList = this.extractAliasDefinitions(tempLineList);
-            var tempResult2 = this.processIncludeDirectives(tempLineList);
+            let tempResult2 = this.processIncludeDirectives(tempLineList);
             tempLineList = tempResult2.lineList;
-            var tempIncludeCount = tempResult2.includeCount;
+            let tempIncludeCount = tempResult2.includeCount;
             if (tempExpandCount <= 0 && tempIncludeCount <= 0) {
                 break;
             }
@@ -355,7 +348,7 @@ export abstract class Assembler {
     }
     
     getDisplayString(): string {
-        var tempTextList = [];
+        let tempTextList = [];
         tempTextList.push("\n= = = FILE FORMAT VERSION = = =\n");
         tempTextList.push(this.fileFormatVersionNumber.getDisplayString());
         tempTextList.push("\n= = = DEPENDENCY DEFINITIONS = = =\n");
@@ -363,13 +356,12 @@ export abstract class Assembler {
             tempTextList.push(dependencyDefinition.getDisplayString());
         });
         tempTextList.push("\n= = = ALIAS DEFINITIONS = = =\n");
-        this.aliasDefinitionMap.iterate(function(definition) {
+        this.aliasDefinitionMap.iterate(definition => {
             tempTextList.push(definition.getDisplayString());
         });
         tempTextList.push("\n= = = MACRO DEFINITIONS = = =\n");
-        var name;
-        for (name in this.macroDefinitionMap) {
-            var tempDefinition = this.macroDefinitionMap[name];
+        for (let name in this.macroDefinitionMap) {
+            let tempDefinition = this.macroDefinitionMap[name];
             tempTextList.push(tempDefinition.getDisplayString());
             tempTextList.push("");
         }
@@ -434,7 +426,7 @@ export class BytecodeAppAssembler extends Assembler {
     }
     
     getDisplayString(): string {
-        var tempTextList = [];
+        let tempTextList = [];
         tempTextList.push("\n= = = GLOBAL VARIABLE DEFINITIONS = = =\n");
         this.globalVariableDefinitionMap.iterate(variableDefinition => {
             tempTextList.push(variableDefinition.getDisplayString());
@@ -534,30 +526,26 @@ export class BytecodeAppAssembler extends Assembler {
     }
     
     extractAppDataDefinitions(): void {
-        var tempLineList = [];
-        var self = this;
-        self.processLines(function(line) {
+        let tempLineList = [];
+        this.processLines(line => {
             if (line.directiveName == "APP_DATA") {
                 if (line.argList.length != 0) {
                     throw new AssemblyError("Expected 0 arguments.");
                 }
-                var index = 0;
-                while (index < line.codeBlock.length) {
-                    var tempLine = line.codeBlock[index];
+                for (let tempLine of line.codeBlock) {
                     tempLineList.push(tempLine);
-                    index += 1;
                 }
                 return [];
             }
             return null
         });
-        self.appDataLineList = new AppDataLineList(tempLineList, this.scope);
-        self.appDataLineList.extractLabelDefinitions();
+        this.appDataLineList = new AppDataLineList(tempLineList, this.scope);
+        this.appDataLineList.extractLabelDefinitions();
     }
     
     extractGlobalVariableDefinitions(): void {
         this.processLines(line => {
-            var tempDefinition = variableUtils.extractGlobalVariableDefinition(line);
+            let tempDefinition = variableUtils.extractGlobalVariableDefinition(line);
             if (tempDefinition !== null) {
                 this.globalVariableDefinitionMap.setIndexDefinition(tempDefinition);
                 return [];

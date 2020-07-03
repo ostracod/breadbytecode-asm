@@ -34,7 +34,7 @@ export class Instruction {
     getDisplayString(): string {
         let output = mathUtils.convertNumberToHexadecimal(this.instructionType.opcode, 4);
         if (this.argList.length > 0) {
-            var tempTextList = [];
+            let tempTextList = [];
             for (let arg of this.argList) {
                 tempTextList.push(arg.getDisplayString());
             }

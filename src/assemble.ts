@@ -4,7 +4,7 @@
 import * as pathUtils from "path";
 process.env.NODE_PATH = pathUtils.dirname(__filename);
 require("module")._initPaths();
-export var projectPath = pathUtils.dirname(__dirname);
+export let projectPath = pathUtils.dirname(__dirname);
 
 import {BytecodeAppAssembler, InterfaceAssembler} from "objects/assembler";
 

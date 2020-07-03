@@ -17,35 +17,32 @@ export class DataTypeUtils {
     }
     
     getNumberType(numberTypeClass: NumberTypeClass, byteAmount: number): NumberType {
-        var index = 0;
-        while (index < dataTypeList.length) {
-            var tempDataType = dataTypeList[index];
-            if (tempDataType instanceof numberTypeClass) {
-                var tempNumberType = tempDataType as NumberType;
+        for (let dataType of dataTypeList) {
+            if (dataType instanceof numberTypeClass) {
+                let tempNumberType = dataType as NumberType;
                 if (tempNumberType.byteAmount == byteAmount) {
-                    return tempDataType;
+                    return dataType;
                 }
             }
-            index += 1;
         }
         return null;
     }
     
     mergeNumberTypes(numberType1: NumberType, numberType2: NumberType): NumberType {
         
-        var tempClass;
-        var tempByteAmount;
+        let tempClass;
+        let tempByteAmount;
         
-        var tempPriority1 = numberType1.getClassMergePriority();
-        var tempPriority2 = numberType2.getClassMergePriority();
+        let tempPriority1 = numberType1.getClassMergePriority();
+        let tempPriority2 = numberType2.getClassMergePriority();
         if (tempPriority1 >= tempPriority2) {
             tempClass = numberType1.constructor;
         } else {
             tempClass = numberType2.constructor;
         }
         
-        var tempPriority1 = numberType1.getByteAmountMergePriority();
-        var tempPriority2 = numberType2.getByteAmountMergePriority();
+        tempPriority1 = numberType1.getByteAmountMergePriority();
+        tempPriority2 = numberType2.getByteAmountMergePriority();
         if (tempPriority1 > tempPriority2) {
             tempByteAmount = numberType1.byteAmount;
         } else if (tempPriority1 < tempPriority2) {
@@ -58,6 +55,6 @@ export class DataTypeUtils {
     }
 }
 
-export var dataTypeUtils = new DataTypeUtils();
+export const dataTypeUtils = new DataTypeUtils();
 
 

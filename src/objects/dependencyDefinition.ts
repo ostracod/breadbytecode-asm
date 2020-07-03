@@ -17,7 +17,7 @@ export const DEPENDENCY_MODIFIER = {
     guarded: 1
 };
 
-var dependencyModifierNameMap = niceUtils.getReverseMap(DEPENDENCY_MODIFIER);
+const dependencyModifierNameMap = niceUtils.getReverseMap(DEPENDENCY_MODIFIER);
 
 export interface DependencyDefinition extends DependencyDefinitionInterface {}
 

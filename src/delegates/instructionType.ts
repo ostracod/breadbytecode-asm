@@ -6,7 +6,7 @@ import {InstructionType as InstructionTypeInterface} from "models/delegates";
 
 export interface InstructionType extends InstructionTypeInterface {}
 
-export var instructionTypeMap: {[name: string]: InstructionType} = {};
+export let instructionTypeMap: {[name: string]: InstructionType} = {};
 
 export class InstructionType {
     
@@ -24,10 +24,8 @@ const instructionsPath = pathUtils.join(
 );
 let categoryJsonList = JSON.parse(fs.readFileSync(instructionsPath, "utf8"));
 
-var tempCount = 0;
 for (let categoryJson of categoryJsonList) {
     for (let instructionJson of categoryJson.instructionList) {
-        tempCount += 1;
         new InstructionType(
             instructionJson.name,
             instructionJson.opcode,

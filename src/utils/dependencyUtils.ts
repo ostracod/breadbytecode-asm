@@ -29,6 +29,6 @@ export class DependencyUtils {
     }
 }
 
-export var dependencyUtils = new DependencyUtils();
+export const dependencyUtils = new DependencyUtils();
 
 

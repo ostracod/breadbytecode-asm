@@ -21,12 +21,12 @@ export class VariableUtils {
         if (line.directiveName != "VAR") {
             return null;
         }
-        var tempArgList = line.argList;
+        let tempArgList = line.argList;
         if (tempArgList.length !== 2) {
             throw new AssemblyError("Expected 2 arguments.");
         }
-        var tempIdentifier = tempArgList[0].evaluateToIdentifier();
-        var tempDataType = tempArgList[1].evaluateToDataType();
+        let tempIdentifier = tempArgList[0].evaluateToIdentifier();
+        let tempDataType = tempArgList[1].evaluateToDataType();
         return new variableDefinitionClass(tempIdentifier, tempDataType);
     }
     
@@ -42,19 +42,17 @@ export class VariableUtils {
         if (line.directiveName != "ARG") {
             return null;
         }
-        var tempArgList = line.argList;
+        let tempArgList = line.argList;
         if (tempArgList.length < 2) {
             throw new AssemblyError("Expected at least 2 arguments.");
         }
-        var tempIdentifier = tempArgList[0].evaluateToIdentifier();
-        var tempDataType = tempArgList[1].evaluateToDataType();
-        var tempPermList: ArgPerm[] = [];
-        var index = 2;
-        while (index < tempArgList.length) {
-            var tempArg = tempArgList[index];
-            var tempPerm = tempArg.evaluateToArgPerm();
+        let tempIdentifier = tempArgList[0].evaluateToIdentifier();
+        let tempDataType = tempArgList[1].evaluateToDataType();
+        let tempPermList: ArgPerm[] = [];
+        for (let index = 2; index < tempArgList.length; index++) {
+            let tempArg = tempArgList[index];
+            let tempPerm = tempArg.evaluateToArgPerm();
             tempPermList.push(tempPerm);
-            index += 1;
         }
         return new ArgVariableDefinition(
             tempIdentifier,
@@ -82,6 +80,6 @@ export class VariableUtils {
     }
 }
 
-export var variableUtils = new VariableUtils();
+export const variableUtils = new VariableUtils();
 
 

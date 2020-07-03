@@ -31,6 +31,6 @@ export class DescriptionUtils {
     }
 }
 
-export var descriptionUtils = new DescriptionUtils();
+export const descriptionUtils = new DescriptionUtils();
 
 

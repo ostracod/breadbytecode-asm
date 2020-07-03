@@ -3,48 +3,48 @@ import {ArgPerm as ArgPermInterface} from "models/objects";
 import {niceUtils} from "utils/niceUtils";
 import {AssemblyError} from "objects/assemblyError";
 
-var PERM_ACCESS = {
+const PERM_ACCESS = {
     directRead: 0,
     directWrite: 1,
     indirectRead: 2,
     indirectWrite: 3
 };
 
-var PERM_RECIPIENT = {
+const PERM_RECIPIENT = {
     arbiter: 0,
     implementer: 1,
     caller: 2
 };
 
-var PERM_ATTRIBUTE = {
+const PERM_ATTRIBUTE = {
     isRecursive: 4,
     propagationCountIsInfinite: 2,
     isTemporary: 1
 };
 
-var characterPairAccessMap = {
+const characterPairAccessMap = {
     dr: PERM_ACCESS.directRead,
     dw: PERM_ACCESS.directWrite,
     ir: PERM_ACCESS.indirectRead,
     iw: PERM_ACCESS.indirectWrite,
 }
 
-var characterRecipientMap = {
+const characterRecipientMap = {
     a: PERM_RECIPIENT.arbiter,
     i: PERM_RECIPIENT.implementer,
     c: PERM_RECIPIENT.caller
 }
 
-var characterAttributeMap = {
+const characterAttributeMap = {
     r: PERM_ATTRIBUTE.isRecursive,
     p: PERM_ATTRIBUTE.propagationCountIsInfinite,
     t: PERM_ATTRIBUTE.isTemporary
 }
 
 // Maps from enumeration value to character.
-var accessCharacterPairMap = niceUtils.getReverseMap(characterPairAccessMap);
-var recipientCharacterMap = niceUtils.getReverseMap(characterRecipientMap);
-var attributeCharacterMap = niceUtils.getReverseMap(characterAttributeMap);
+const accessCharacterPairMap = niceUtils.getReverseMap(characterPairAccessMap);
+const recipientCharacterMap = niceUtils.getReverseMap(characterRecipientMap);
+const attributeCharacterMap = niceUtils.getReverseMap(characterAttributeMap);
 
 export interface ArgPerm extends ArgPermInterface {}
 
@@ -54,40 +54,37 @@ export class ArgPerm {
         if (name.length < 3) {
             throw new AssemblyError("Invalid arg perm.");
         }
-        var tempCharacterPair = name.substring(0, 2);
+        let tempCharacterPair = name.substring(0, 2);
         if (!(tempCharacterPair in characterPairAccessMap)) {
             throw new AssemblyError("Invalid arg perm.");
         }
         this.access = characterPairAccessMap[tempCharacterPair];
-        var tempCharacter = name.charAt(2);
+        let tempCharacter = name.charAt(2);
         if (!(tempCharacter in characterRecipientMap)) {
             throw new AssemblyError("Invalid arg perm.");
         }
         this.recipient = characterRecipientMap[tempCharacter];
         // Map from attribute enumeration value to boolean.
         this.hasAttributeMap = {};
-        var attributeName;
+        let attributeName;
         for (attributeName in PERM_ATTRIBUTE) {
-            var tempAttribute = PERM_ATTRIBUTE[attributeName];
+            let tempAttribute = PERM_ATTRIBUTE[attributeName];
             this.hasAttributeMap[tempAttribute] = false;
         }
-        var index = 3;
-        while (index < name.length) {
-            var tempCharacter = name.charAt(index);
+        for (let index = 3; index < name.length; index++) {
+            let tempCharacter = name.charAt(index);
             if (tempCharacter in characterAttributeMap) {
-                var tempAttribute = characterAttributeMap[tempCharacter];
+                let tempAttribute = characterAttributeMap[tempCharacter];
                 this.hasAttributeMap[tempAttribute] = true;
             } else {
                 throw new AssemblyError("Invalid arg perm.");
             }
-            index += 1;
         }
     }
     
     getDisplayString(): string {
-        var output = accessCharacterPairMap[this.access] + recipientCharacterMap[this.recipient];
-        var attribute;
-        for (attribute in this.hasAttributeMap) {
+        let output = accessCharacterPairMap[this.access] + recipientCharacterMap[this.recipient];
+        for (let attribute in this.hasAttributeMap) {
             if (this.hasAttributeMap[attribute]) {
                 output = output + attributeCharacterMap[attribute];
             }

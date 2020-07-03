@@ -8,12 +8,9 @@ export interface ExpressionUtils extends ExpressionUtilsInterface {}
 export class ExpressionUtils {
     
     copyExpressions(expressionList: Expression[]): Expression[] {
-        var output = [];
-        var index = 0;
-        while (index < expressionList.length) {
-            var tempExpression = expressionList[index];
-            output.push(tempExpression.copy());
-            index += 1;
+        let output = [];
+        for (let expression of expressionList) {
+            output.push(expression.copy());
         }
         return output;
     }
@@ -33,15 +30,13 @@ export class ExpressionUtils {
         if (typeof shouldRecurAfterProcess === "undefined") {
             shouldRecurAfterProcess = false;
         }
-        var index = 0;
-        while (index < expressionList.length) {
-            var tempExpression = expressionList[index];
+        for (let index = 0; index < expressionList.length; index++) {
+            let tempExpression = expressionList[index];
             tempExpression = tempExpression.processExpressions(
                 processExpression,
                 shouldRecurAfterProcess
             );
             expressionList[index] = tempExpression;
-            index += 1;
         }
     }
 }

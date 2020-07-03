@@ -18,28 +18,23 @@ export class MacroDefinition {
         if (argList.length != this.argIdentifierList.length) {
             throw new AssemblyError("Wrong number of macro arguments.");
         }
-        var identifierExpressionMap = new IdentifierMap() as IdentifierMap<Expression>;
-        var index = 0;
-        while (index < this.argIdentifierList.length) {
-            var tempIdentifier = this.argIdentifierList[index];
-            var tempExpression = argList[index];
+        let identifierExpressionMap = new IdentifierMap() as IdentifierMap<Expression>;
+        for (let index = 0; index < this.argIdentifierList.length; index++) {
+            let tempIdentifier = this.argIdentifierList[index];
+            let tempExpression = argList[index];
             identifierExpressionMap.set(tempIdentifier, tempExpression);
-            index += 1;
         }
-        var output = lineUtils.copyLines(this.lineList);
+        let output = lineUtils.copyLines(this.lineList);
         lineUtils.substituteIdentifiersInLines(output, identifierExpressionMap);
         lineUtils.populateMacroInvocationIdInLines(output, macroInvocationId);
         return output;
     }
     
     getDisplayString(): string {
-        var tempTextList = [];
-        var tempIdentifierTextList = [];
-        var index = 0;
-        while (index < this.argIdentifierList.length) {
-            var tempIdentifier = this.argIdentifierList[index];
-            tempIdentifierTextList.push(tempIdentifier.getDisplayString());
-            index += 1;
+        let tempTextList = [];
+        let tempIdentifierTextList = [];
+        for (let identifier of this.argIdentifierList) {
+            tempIdentifierTextList.push(identifier.getDisplayString());
         }
         let tempText = this.name;
         if (tempIdentifierTextList.length > 0) {

@@ -9,10 +9,10 @@ import {
 } from "models/delegates";
 import {mathUtils} from "utils/mathUtils";
 
-export var dataTypeList: DataType[] = [];
-export var dataTypeMap: {[name: string]: DataType} = {};
-export var unsignedIntegerTypeList: UnsignedIntegerType[] = [];
-export var signedIntegerTypeList: SignedIntegerType[] = [];
+export let dataTypeList: DataType[] = [];
+export let dataTypeMap: {[name: string]: DataType} = {};
+export let unsignedIntegerTypeList: UnsignedIntegerType[] = [];
+export let signedIntegerTypeList: SignedIntegerType[] = [];
 
 export interface DataType extends DataTypeInterface {}
 
@@ -250,23 +250,20 @@ export class StringType extends BetaType {
     }
 }
 
-export var pointerType = new PointerType();
-export var unsignedInteger8Type = new UnsignedIntegerType(1, 1);
-export var unsignedInteger16Type = new UnsignedIntegerType(2, 2);
-export var unsignedInteger32Type = new UnsignedIntegerType(3, 4);
-export var unsignedInteger64Type = new UnsignedIntegerType(4, 8);
-export var signedInteger8Type = new SignedIntegerType(5, 1);
-export var signedInteger16Type = new SignedIntegerType(6, 2);
-export var signedInteger32Type = new SignedIntegerType(7, 4);
-export var signedInteger64Type = new SignedIntegerType(8, 8);
-export var float32Type = new FloatType(9, 4);
-export var float64Type = new FloatType(10, 8);
+export const pointerType = new PointerType();
+export const unsignedInteger8Type = new UnsignedIntegerType(1, 1);
+export const unsignedInteger16Type = new UnsignedIntegerType(2, 2);
+export const unsignedInteger32Type = new UnsignedIntegerType(3, 4);
+export const unsignedInteger64Type = new UnsignedIntegerType(4, 8);
+export const signedInteger8Type = new SignedIntegerType(5, 1);
+export const signedInteger16Type = new SignedIntegerType(6, 2);
+export const signedInteger32Type = new SignedIntegerType(7, 4);
+export const signedInteger64Type = new SignedIntegerType(8, 8);
+export const float32Type = new FloatType(9, 4);
+export const float64Type = new FloatType(10, 8);
 
-var index = 0;
-while (index < dataTypeList.length) {
-    var tempDataType = dataTypeList[index];
-    dataTypeMap[tempDataType.getName()] = tempDataType;
-    index += 1;
+for (let dataType of dataTypeList) {
+    dataTypeMap[dataType.getName()] = dataType;
 }
 
 let integerComparator = ((type1, type2) => (type1.byteAmount - type2.byteAmount));

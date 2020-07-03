@@ -28,6 +28,6 @@ export class InstructionUtils {
     }
 }
 
-export var instructionUtils = new InstructionUtils();
+export const instructionUtils = new InstructionUtils();
 
 

@@ -60,9 +60,9 @@ export abstract class Expression {
         if (typeof shouldRecurAfterProcess === "undefined") {
             shouldRecurAfterProcess = false;
         }
-        var output: Expression = this;
+        let output: Expression = this;
         while (true) {
-            var tempResult = output.processExpressionsHelper(processExpression, shouldRecurAfterProcess);
+            let tempResult = output.processExpressionsHelper(processExpression, shouldRecurAfterProcess);
             if (tempResult === null) {
                 return output;
             }
@@ -75,7 +75,7 @@ export abstract class Expression {
     }
     
     evaluateToIdentifier(): Identifier {
-        var output = this.evaluateToIdentifierOrNull();
+        let output = this.evaluateToIdentifierOrNull();
         if (output === null) {
             throw this.createError("Expected identifier.");
         }
@@ -91,7 +91,7 @@ export abstract class Expression {
     }
     
     evaluateToConstant(): Constant {
-        var output = this.evaluateToConstantOrNull();
+        let output = this.evaluateToConstantOrNull();
         if (output === null) {
             throw this.createError("Expected constant.");
         }
@@ -120,11 +120,11 @@ export abstract class Expression {
     }
     
     substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression {
-        var tempIdentifier = this.evaluateToIdentifierOrNull();
+        let tempIdentifier = this.evaluateToIdentifierOrNull();
         if (tempIdentifier === null) {
             return null;
         }
-        var tempExpression = identifierExpressionMap.get(tempIdentifier);
+        let tempExpression = identifierExpressionMap.get(tempIdentifier);
         if (tempExpression === null) {
             return null;
         }
@@ -222,7 +222,7 @@ export interface ArgTerm extends ArgTermInterface {}
 export abstract class ArgTerm extends Expression {
     
     processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
-        var tempResult = processExpression(this);
+        let tempResult = processExpression(this);
         if (tempResult !== null) {
             return tempResult;
         }
@@ -382,7 +382,7 @@ export class UnaryExpression extends Expression {
     }
     
     processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
-        var tempResult = processExpression(this);
+        let tempResult = processExpression(this);
         if (tempResult !== null) {
             return tempResult;
         }
@@ -425,7 +425,7 @@ export class MacroIdentifierExpression extends UnaryExpression {
     }
     
     copy(): Expression {
-        var output = new MacroIdentifierExpression(this.operand.copy());
+        let output = new MacroIdentifierExpression(this.operand.copy());
         output.macroInvocationId = this.macroInvocationId;
         return output;
     }
@@ -476,7 +476,7 @@ export class BinaryExpression extends Expression {
     }
     
     processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
-        var tempResult = processExpression(this);
+        let tempResult = processExpression(this);
         if (tempResult !== null) {
             return tempResult;
         }
@@ -561,7 +561,7 @@ export class SubscriptExpression extends Expression {
     }
     
     processExpressionsHelper(processExpression: ExpressionProcessor, shouldRecurAfterProcess?: boolean): Expression {
-        var tempResult = processExpression(this);
+        let tempResult = processExpression(this);
         if (tempResult !== null) {
             return tempResult;
         }

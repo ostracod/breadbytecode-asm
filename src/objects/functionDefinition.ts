@@ -181,7 +181,7 @@ export abstract class FunctionDefinition extends IndexDefinition {
         if (tempSuffix !== null) {
             tempTitle += ` (${tempSuffix})`;
         }
-        var tempTextList = [tempTitle + ":"];
+        let tempTextList = [tempTitle + ":"];
         if (this.functionImplementation !== null) {
             tempTextList.push(this.functionImplementation.getDisplayString(1));
         }
@@ -341,7 +341,7 @@ export class PublicFunctionDefinition extends ArgPermFunctionDefinition {
     }
     
     getTitleSuffix(): string {
-        var output = this.interfaceIndexExpression.getDisplayString();
+        let output = this.interfaceIndexExpression.getDisplayString();
         if (this.arbiterIndexExpression !== null) {
             output += ", " + this.arbiterIndexExpression.getDisplayString();
         }

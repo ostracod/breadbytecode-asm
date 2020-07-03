@@ -33,6 +33,6 @@ export class MathUtils {
     }
 }
 
-export var mathUtils = new MathUtils();
+export const mathUtils = new MathUtils();
 
 

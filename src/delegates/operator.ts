@@ -20,8 +20,8 @@ import {UnaryExpression, MacroIdentifierExpression, BinaryExpression} from "obje
 import {AssemblyError} from "objects/assemblyError";
 import {NumberConstant, StringConstant} from "objects/constant";
 
-export var unaryOperatorList = [];
-export var binaryOperatorList = [];
+export let unaryOperatorList = [];
+export let binaryOperatorList = [];
 
 export interface UnaryOperator extends UnaryOperatorInterface {}
 
@@ -233,8 +233,8 @@ export abstract class BinaryNumberOperator extends BinaryOperator {
     }
     
     getConstantDataType(operand1: Expression, operand2: Expression): DataType {
-        var tempDataType1 = operand1.getConstantDataType();
-        var tempDataType2 = operand2.getConstantDataType();
+        let tempDataType1 = operand1.getConstantDataType();
+        let tempDataType2 = operand2.getConstantDataType();
         if (!(tempDataType1 instanceof NumberType && tempDataType1 instanceof NumberType)) {
             throw new AssemblyError("Expected numeric value.");
         }
@@ -454,7 +454,7 @@ export class BitshiftRightOperator extends BinaryBitshiftOperator {
 
 new NegationOperator();
 new BitwiseInversionOperator();
-export var macroIdentifierOperator = new MacroIdentifierOperator();
+export const macroIdentifierOperator = new MacroIdentifierOperator();
 new IndexOperator();
 
 new TypeCoercionOperator();

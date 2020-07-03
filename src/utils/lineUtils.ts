@@ -9,12 +9,9 @@ export interface LineUtils extends LineUtilsInterface {}
 export class LineUtils {
     
     copyLines(lineList: AssemblyLine[]): AssemblyLine[] {
-        var output = [];
-        var index = 0;
-        while (index < lineList.length) {
-            var tempLine = lineList[index];
-            output.push(tempLine.copy());
-            index += 1;
+        let output = [];
+        for (let line of lineList) {
+            output.push(line.copy());
         }
         return output;
     }
@@ -24,22 +21,19 @@ export class LineUtils {
         processExpression: ExpressionProcessor,
         shouldRecurAfterProcess?: boolean
     ): void {
-        var index = 0;
-        while (index < lineList.length) {
-            var tempLine = lineList[index];
-            tempLine.processExpressions(processExpression, shouldRecurAfterProcess);
-            index += 1;
+        for (let line of lineList) {
+            line.processExpressions(processExpression, shouldRecurAfterProcess);
         }
     }
     
     substituteIdentifiersInLines(lineList: AssemblyLine[], identifierExpressionMap: IdentifierMap<Expression>): void {
-        lineUtils.processExpressionsInLines(lineList, function(expression) {
+        lineUtils.processExpressionsInLines(lineList, expression => {
             return expression.substituteIdentifiers(identifierExpressionMap);
         });
     }
     
     populateMacroInvocationIdInLines(lineList: AssemblyLine[], macroInvocationId: number): void {
-        lineUtils.processExpressionsInLines(lineList, function(expression) {
+        lineUtils.processExpressionsInLines(lineList, expression => {
             expression.populateMacroInvocationId(macroInvocationId);
             return null;
         });
@@ -49,12 +43,9 @@ export class LineUtils {
         if (typeof indentationLevel === "undefined") {
             indentationLevel = 0;
         }
-        var tempTextList = [];
-        var index = 0;
-        while (index < lineList.length) {
-            var tempLine = lineList[index];
-            tempTextList.push(tempLine.getDisplayString(indentationLevel));
-            index += 1;
+        let tempTextList = [];
+        for (let line of lineList) {
+            tempTextList.push(line.getDisplayString(indentationLevel));
         }
         return tempTextList.join("\n");
     }
@@ -70,51 +61,42 @@ export class LineUtils {
         if (typeof shouldProcessCodeBlocks === "undefined") {
             shouldProcessCodeBlocks = false;
         }
-        var outputLineList: AssemblyLine[] = [];
-        var processCount = 0;
-        var index = 0;
-        while (index < lineList.length) {
-            var tempLine: AssemblyLine = lineList[index];
+        let outputLineList: AssemblyLine[] = [];
+        let processCount = 0;
+        for (let line of lineList) {
             try {
-                var tempResult1 = processLine(tempLine);
+                var tempResult1 = processLine(line);
             } catch(error) {
                 if (error instanceof AssemblyError) {
                     if (error.lineNumber === null) {
-                        error.lineNumber = tempLine.lineNumber;
+                        error.lineNumber = line.lineNumber;
                     }
                     if (error.filePath === null) {
-                        error.filePath = tempLine.filePath;
+                        error.filePath = line.filePath;
                     }
                 }
                 throw error;
             }
             if (tempResult1 === null) {
-                outputLineList.push(tempLine);
+                outputLineList.push(line);
             } else {
-                var tempIndex = 0;
-                while (tempIndex < tempResult1.length) {
-                    var tempLine2 = tempResult1[tempIndex];
-                    outputLineList.push(tempLine2);
-                    tempIndex += 1;
+                for (let tempLine of tempResult1) {
+                    outputLineList.push(tempLine);
                 }
                 processCount += 1;
             }
-            index += 1;
         }
         if (shouldProcessCodeBlocks) {
-            var index = 0;
-            while (index < outputLineList.length) {
-                var tempLine: AssemblyLine = outputLineList[index];
-                index += 1;
-                if (tempLine.codeBlock === null) {
+            for (let line of outputLineList) {
+                if (line.codeBlock === null) {
                     continue;
                 }
-                var tempResult2 = lineUtils.processLines(
-                    tempLine.codeBlock,
+                let tempResult2 = lineUtils.processLines(
+                    line.codeBlock,
                     processLine,
                     shouldProcessCodeBlocks
                 );
-                tempLine.codeBlock = tempResult2.lineList;
+                line.codeBlock = tempResult2.lineList;
                 processCount += tempResult2.processCount;
             }
         }
@@ -125,6 +107,6 @@ export class LineUtils {
     }
 }
 
-export var lineUtils = new LineUtils();
+export const lineUtils = new LineUtils();
 
 

@@ -7,11 +7,9 @@ export interface NiceUtils extends NiceUtilsInterface {}
 export class NiceUtils {
     
     getIndentation(indentationLevel: number): string {
-        var output = "";
-        var tempCount = 0;
-        while (tempCount < indentationLevel) {
+        let output = "";
+        for (let count = 0; count < indentationLevel; count++) {
             output = output + "    ";
-            tempCount += 1;
         }
         return output;
     }
@@ -62,23 +60,19 @@ export class NiceUtils {
     
     // Excludes empty strings.
     joinTextList(textList: string[]): string {
-        var tempTextList = [];
-        var index = 0;
-        while (index < textList.length) {
-            var tempText = textList[index];
-            if (tempText.length > 0) {
-                tempTextList.push(tempText);
+        let tempTextList = [];
+        for (let text of textList) {
+            if (text.length > 0) {
+                tempTextList.push(text);
             }
-            index += 1;
         }
         return tempTextList.join("\n");
     }
     
     getReverseMap(map: {[key: string]: any}): {[key: string]: any} {
-        var output = {};
-        var key;
-        for (key in map) {
-            var tempValue = map[key];
+        let output = {};
+        for (let key in map) {
+            let tempValue = map[key];
             output[tempValue] = key;
         }
         return output;
@@ -93,6 +87,6 @@ export class NiceUtils {
     }
 }
 
-export var niceUtils = new NiceUtils();
+export const niceUtils = new NiceUtils();
 
 

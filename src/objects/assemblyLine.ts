@@ -25,8 +25,8 @@ export class AssemblyLine {
     }
     
     copy(): AssemblyLine {
-        var tempArgList = expressionUtils.copyExpressions(this.argList);
-        var output = new AssemblyLine(this.directiveName, tempArgList);
+        let tempArgList = expressionUtils.copyExpressions(this.argList);
+        let output = new AssemblyLine(this.directiveName, tempArgList);
         output.lineNumber = this.lineNumber;
         output.filePath = this.filePath;
         if (this.codeBlock === null) {
@@ -41,24 +41,18 @@ export class AssemblyLine {
         if (typeof indentationLevel === "undefined") {
             indentationLevel = 0;
         }
-        var tempIndentation = niceUtils.getIndentation(indentationLevel);
-        var tempTextList = [];
-        var index = 0;
-        while (index < this.argList.length) {
-            var tempArg = this.argList[index];
-            tempTextList.push(tempArg.getDisplayString());
-            index += 1;
+        let tempIndentation = niceUtils.getIndentation(indentationLevel);
+        let tempTextList = [];
+        for (let arg of this.argList) {
+            tempTextList.push(arg.getDisplayString());
         }
-        var tempLineText = tempIndentation + this.directiveName + " " + tempTextList.join(", ");
+        let tempLineText = tempIndentation + this.directiveName + " " + tempTextList.join(", ");
         if (this.codeBlock === null) {
             return tempLineText;
         } else {
-            var tempLineTextList = [tempLineText];
-            var index = 0;
-            while (index < this.codeBlock.length) {
-                var tempLine = this.codeBlock[index];
-                tempLineTextList.push(tempLine.getDisplayString(indentationLevel + 1));
-                index += 1;
+            let tempLineTextList = [tempLineText];
+            for (let line of this.codeBlock) {
+                tempLineTextList.push(line.getDisplayString(indentationLevel + 1));
             }
             tempLineTextList.push("END");
             return tempLineTextList.join("\n");
@@ -84,7 +78,7 @@ export class AssemblyLine {
         if (this.argList.length !== tempAmount) {
             throw new AssemblyError(`Expected ${tempInstructionType.argAmount} ${niceUtils.pluralize("argument", tempAmount)}.`);
         }
-        var tempArgList = this.argList.map(expression => {
+        let tempArgList = this.argList.map(expression => {
             return expression.evaluateToInstructionArg();
         });
         return new Instruction(tempInstructionType, tempArgList);

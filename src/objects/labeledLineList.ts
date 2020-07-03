@@ -33,14 +33,14 @@ export class LabeledLineList {
     }
     
     processLines(processLine: LineProcessor): void {
-        var tempResult = lineUtils.processLines(this.lineList, processLine);
+        let tempResult = lineUtils.processLines(this.lineList, processLine);
         this.lineList = tempResult.lineList;
     }
     
     getLineElementIndexMap(): {[lineIndex: number]: number} {
-        var output = {};
-        var elementIndex = 0;
-        var lineIndex = 0;
+        let output = {};
+        let elementIndex = 0;
+        let lineIndex = 0;
         output[lineIndex] = elementIndex;
         this.processLines(line => {
             lineIndex += 1;
@@ -56,13 +56,13 @@ export class LabeledLineList {
         this.labelDefinitionMap = new IdentifierMap();
         let index = 0;
         this.processLines(line => {
-            var tempArgList = line.argList;
+            let tempArgList = line.argList;
             if (line.directiveName == "LBL") {
                 if (tempArgList.length != 1) {
                     throw new AssemblyError("Expected 1 argument.");
                 }
-                var tempIdentifier = tempArgList[0].evaluateToIdentifier();
-                var tempDefinition = new tempLabelDefinitionClass(tempIdentifier, index);
+                let tempIdentifier = tempArgList[0].evaluateToIdentifier();
+                let tempDefinition = new tempLabelDefinitionClass(tempIdentifier, index);
                 this.labelDefinitionMap.setIndexDefinition(tempDefinition);
                 return [];
             }
@@ -83,8 +83,8 @@ export class LabeledLineList {
         if (this.lineList.length <= 0) {
             return "";
         }
-        var tempIndentation = niceUtils.getIndentation(indentationLevel);
-        var tempTextList = [tempIndentation + title + ":"];
+        let tempIndentation = niceUtils.getIndentation(indentationLevel);
+        let tempTextList = [tempIndentation + title + ":"];
         tempTextList.push(lineUtils.getLineListDisplayString(this.lineList, indentationLevel + 1));
         tempTextList.push(niceUtils.getIdentifierMapDisplayString(
             title + " labels",
@@ -177,16 +177,13 @@ export class AppDataLineList extends DataLineList {
     }
     
     getLineElementLength(line: AssemblyLine): number {
-        var output = 0;
-        var index = 0;
-        while (index < line.argList.length) {
-            var tempExpression = line.argList[index];
-            var tempDataType = tempExpression.getConstantDataType();
+        let output = 0;
+        for (let expression of line.argList) {
+            let tempDataType = expression.getConstantDataType();
             if (!(tempDataType instanceof BetaType)) {
                 throw new AssemblyError("Expected beta type.");
             }
             output += (tempDataType as BetaType).byteAmount;
-            index += 1;
         }
         return output;
     }

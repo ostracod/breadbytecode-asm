@@ -50,16 +50,13 @@ export class ArgVariableDefinition extends VariableDefinition {
     }
     
     getDisplayString(): string {
-        var tempTextList = [
+        let tempTextList = [
             this.identifier.getDisplayString(),
             this.dataType.getName()
         ]
-        var index = 0;
-        while (index < this.permList.length) {
-            var tempPerm = this.permList[index];
-            var tempText = tempPerm.getDisplayString();
+        for (let perm of this.permList) {
+            let tempText = perm.getDisplayString();
             tempTextList.push(tempText);
-            index += 1;
         }
         return "ARG " + tempTextList.join(", ");
     }
