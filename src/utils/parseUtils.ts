@@ -366,12 +366,7 @@ export class ParseUtils {
             }
             index += 1;
         }
-        let output = new AssemblyLine(tempDirectiveName, tempArgList);
-        output.processExpressions(expression => {
-            expression.line = output;
-            return null;
-        });
-        return output;
+        return new AssemblyLine(tempDirectiveName, tempArgList);
     }
     
     loadAssemblyFileContent(path: string): string[] {
