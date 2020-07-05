@@ -122,6 +122,10 @@ export class IndexOperator extends UnaryOperator {
         super("?");
     }
     
+    getConstantDataType(operand: Expression): DataType {
+        return unsignedInteger64Type;
+    }
+    
     createConstantOrNull(operand: Expression): Constant {
         let tempIdentifier = operand.evaluateToIdentifier();
         let tempDefinition = operand.scope.getIndexDefinitionByIdentifier(
