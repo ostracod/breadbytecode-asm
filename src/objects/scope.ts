@@ -9,7 +9,7 @@ export interface Scope extends ScopeInterface {}
 export class Scope {
     
     constructor(parentScope?: Scope) {
-        this.indexDefinitionMapList = null;
+        this.indexDefinitionMapList = [];
         this.publicFunctionDefinitionList = null;
         if (typeof parentScope === "undefined") {
             this.parentScope = null;

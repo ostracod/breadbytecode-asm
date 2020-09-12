@@ -39,6 +39,10 @@ export class PointerType extends DataType {
     equals(dataType: DataType): boolean {
         return (dataType instanceof PointerType);
     }
+    
+    getFrameSize(): number {
+        return 1;
+    }
 }
 
 export interface BetaType extends BetaTypeInterface {}
@@ -57,6 +61,10 @@ export abstract class BetaType extends DataType {
         }
         let betaType = dataType as BetaType;
         return (this.byteAmount === betaType.byteAmount);
+    }
+    
+    getFrameSize(): number {
+        return this.byteAmount;
     }
 }
 

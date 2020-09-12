@@ -3,39 +3,39 @@ import {ArgPerm as ArgPermInterface} from "models/objects";
 import {niceUtils} from "utils/niceUtils";
 import {AssemblyError} from "objects/assemblyError";
 
-const PERM_ACCESS = {
+export const PERM_ACCESS = {
     directRead: 0,
     directWrite: 1,
     indirectRead: 2,
     indirectWrite: 3
 };
 
-const PERM_RECIPIENT = {
+export const PERM_RECIPIENT = {
     arbiter: 0,
     implementer: 1,
     caller: 2
 };
 
-const PERM_ATTRIBUTE = {
+export const PERM_ATTRIBUTE = {
     isRecursive: 4,
     propagationCountIsInfinite: 2,
     isTemporary: 1
 };
 
-const characterPairAccessMap = {
+export const characterPairAccessMap = {
     dr: PERM_ACCESS.directRead,
     dw: PERM_ACCESS.directWrite,
     ir: PERM_ACCESS.indirectRead,
     iw: PERM_ACCESS.indirectWrite,
 }
 
-const characterRecipientMap = {
+export const characterRecipientMap = {
     a: PERM_RECIPIENT.arbiter,
     i: PERM_RECIPIENT.implementer,
     c: PERM_RECIPIENT.caller
 }
 
-const characterAttributeMap = {
+export const characterAttributeMap = {
     r: PERM_ATTRIBUTE.isRecursive,
     p: PERM_ATTRIBUTE.propagationCountIsInfinite,
     t: PERM_ATTRIBUTE.isTemporary
@@ -50,36 +50,14 @@ export interface ArgPerm extends ArgPermInterface {}
 
 export class ArgPerm {
     
-    constructor(name: string) {
-        if (name.length < 3) {
-            throw new AssemblyError("Invalid arg perm.");
-        }
-        let tempCharacterPair = name.substring(0, 2);
-        if (!(tempCharacterPair in characterPairAccessMap)) {
-            throw new AssemblyError("Invalid arg perm.");
-        }
-        this.access = characterPairAccessMap[tempCharacterPair];
-        let tempCharacter = name.charAt(2);
-        if (!(tempCharacter in characterRecipientMap)) {
-            throw new AssemblyError("Invalid arg perm.");
-        }
-        this.recipient = characterRecipientMap[tempCharacter];
-        // Map from attribute enumeration value to boolean.
-        this.hasAttributeMap = {};
-        let attributeName;
-        for (attributeName in PERM_ATTRIBUTE) {
-            let tempAttribute = PERM_ATTRIBUTE[attributeName];
-            this.hasAttributeMap[tempAttribute] = false;
-        }
-        for (let index = 3; index < name.length; index++) {
-            let tempCharacter = name.charAt(index);
-            if (tempCharacter in characterAttributeMap) {
-                let tempAttribute = characterAttributeMap[tempCharacter];
-                this.hasAttributeMap[tempAttribute] = true;
-            } else {
-                throw new AssemblyError("Invalid arg perm.");
-            }
-        }
+    constructor(
+        access: number,
+        recipient: number,
+        hasAttributeMap: {[attribute: string]: boolean}
+    ) {
+        this.access = access;
+        this.recipient = recipient;
+        this.hasAttributeMap = hasAttributeMap;
     }
     
     getDisplayString(): string {

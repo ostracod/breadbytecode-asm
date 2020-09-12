@@ -8,6 +8,7 @@ export interface DataType {
     // Concrete subclasses must implement these methods:
     getName(): string;
     equals(dataType: DataType): boolean;
+    getFrameSize(): number;
 }
 
 export interface BetaType extends DataType {

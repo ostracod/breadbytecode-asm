@@ -136,10 +136,10 @@ Declares a guard function which belongs to the given interface. Only valid in an
 `IFACE_FUNC name, arbiterIndex? ... END`
 Declares a interface function. Only valid in an interface file.
 
-`VAR name, dataType`  
+`VAR name, dataType, arrayLen?`  
 Declares a local or global variable. Only valid in an application file.
 
-`ARG name, dataType, argPermModifiers`  
+`ARG name, dataType, arrayLen?, argPermModifiers`  
 Declares an argument variable.
 
 `LBL name`  

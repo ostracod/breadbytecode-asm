@@ -169,6 +169,7 @@ export interface Expression {
     evaluateToIndexDefinitionOrNull(): IndexDefinition;
     evaluateToConstant(): Constant;
     evaluateToNumber(): number;
+    evaluateToArgPerm(): ArgPerm;
     evaluateToDependencyModifier(): number;
     substituteIdentifiers(identifierExpressionMap: IdentifierMap<Expression>): Expression;
     getConstantDataType(): DataType;
@@ -179,8 +180,8 @@ export interface Expression {
     evaluateToConstantOrNull(): Constant;
     evaluateToString(): string;
     evaluateToDataType(): DataType;
-    evaluateToArgPerm(): ArgPerm;
     evaluateToVersionNumber(): VersionNumber;
+    evaluateToArgPermOrNull(): ArgPerm;
     evaluateToDependencyModifierOrNull(): number;
     evaluateToInstructionArg(): InstructionArg;
     evaluateToInstructionRef(): InstructionRef;
@@ -340,6 +341,10 @@ export interface MacroDefinition extends Displayable {
 
 export interface VariableDefinition extends IndexDefinition {
     dataType: DataType;
+    arrayLength: number;
+    
+    getFrameSize(): number;
+    getDisplayStringPrefix(): string;
 }
 
 export interface ArgVariableDefinition extends VariableDefinition {

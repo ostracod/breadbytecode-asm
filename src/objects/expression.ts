@@ -26,6 +26,7 @@ import {PointerType, pointerType, signedInteger64Type, StringType} from "delegat
 import {macroIdentifierOperator} from "delegates/operator";
 
 import {dataTypeUtils} from "utils/dataTypeUtils";
+import {argPermUtils} from "utils/argPermUtils";
 
 export interface Expression extends ExpressionInterface {}
 
@@ -111,6 +112,14 @@ export abstract class Expression {
         return Number(tempNumberConstant.value);
     }
     
+    evaluateToArgPerm(): ArgPerm {
+        let output = this.evaluateToArgPermOrNull();
+        if (output === null) {
+            throw this.createError("Expected arg perm.");
+        }
+        return output;
+    }
+    
     evaluateToDependencyModifier(): number {
         let output = this.evaluateToDependencyModifierOrNull();
         if (output === null) {
@@ -167,12 +176,12 @@ export abstract class Expression {
         throw this.createError("Expected data type.");
     }
     
-    evaluateToArgPerm(): ArgPerm {
-        throw this.createError("Expected arg perm.");
-    }
-    
     evaluateToVersionNumber(): VersionNumber {
         throw this.createError("Expected version number.");
+    }
+    
+    evaluateToArgPermOrNull(): ArgPerm {
+        return null;
     }
     
     evaluateToDependencyModifierOrNull(): number {
@@ -266,8 +275,8 @@ export class ArgWord extends ArgTerm {
         return dataTypeUtils.getDataTypeByName(this.text);
     }
     
-    evaluateToArgPerm(): ArgPerm {
-        return new ArgPerm(this.text);
+    evaluateToArgPermOrNull(): ArgPerm {
+        return argPermUtils.createArgPerm(this.text);
     }
     
     evaluateToDependencyModifierOrNull(): number {
