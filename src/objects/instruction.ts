@@ -59,7 +59,7 @@ export class InstructionRef {
         this.argPrefix = argPrefix;
     }
     
-    createBuffer(dataType: DataType, indexArg: InstructionArg): Buffer {
+    createArgBuffer(dataType: DataType, indexArg: InstructionArg): Buffer {
         return instructionUtils.createArgBuffer(
             this.argPrefix,
             dataType,
@@ -77,7 +77,7 @@ export class PointerInstructionRef extends InstructionRef {
         this.pointerArg = pointerArg;
     }
     
-    createBuffer(dataType: DataType, indexArg: InstructionArg): Buffer {
+    createArgBuffer(dataType: DataType, indexArg: InstructionArg): Buffer {
         return instructionUtils.createArgBuffer(
             this.argPrefix,
             dataType,
@@ -151,7 +151,7 @@ export class RefInstructionArg extends InstructionArg {
     }
     
     createBuffer(): Buffer {
-        return this.instructionRef.createBuffer(this.dataType, this.indexArg);
+        return this.instructionRef.createArgBuffer(this.dataType, this.indexArg);
     }
 }
 

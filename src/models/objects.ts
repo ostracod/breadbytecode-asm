@@ -390,7 +390,7 @@ export interface InstructionRef {
     argPrefix: number;
     
     // Concrete subclasses may override these methods:
-    createBuffer(dataType: DataType, indexArg: InstructionArg): Buffer;
+    createArgBuffer(dataType: DataType, indexArg: InstructionArg): Buffer;
 }
 
 export interface PointerInstructionRef extends InstructionRef {
